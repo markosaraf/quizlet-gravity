@@ -369,9 +369,7 @@ export function GameOverView({
             }}
           />
           <h2 className="GravityUIHeading" style={{ fontSize: '1.875rem' }}>
-            {isNewHighScore
-              ? STRINGS.game_over.title_high_score
-              : STRINGS.game_over.title}
+            {STRINGS.game_over.title}
           </h2>
           <p className="GravityUIParagraph" style={{ fontSize: '1.125rem' }}>
             {format(STRINGS.game_over.score_label, { points, level })}

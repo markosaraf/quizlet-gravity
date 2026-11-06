@@ -63,8 +63,7 @@ export const STRINGS = {
   default_prompt_placeholder: 'Type the answer',
   language_prompt_placeholder: 'Type the answer in {languageName}',
   game_over: {
-    title: 'Nice try!',
-    title_high_score: 'Congratulations',
+    title: 'Congratulations!',
     score_label: 'You scored {points} points and reached level {level}.',
     high_score_label: 'New high score!',
     rank_label: 'Rank {rank} of {total}',

@@ -15,7 +15,7 @@ Android 8.0 or newer and a current Android System WebView are required. Internet
 
 ## Included
 
-- The live website’s set import, paste-terms workflow, editable preview and game.
+- The live website’s shared sets, accounts, leaderboards, editable terms and game.
 - File import through Android’s document picker (CSV, TSV and text), without storage permissions.
 - Local website storage for imported cards and preferences.
 - Keyboard and system-bar insets, portrait/landscape resizing without reloading the game.
@@ -46,6 +46,6 @@ This independent app is for quizletgravity.com; it is not an official Quizlet ap
 
 ## Store releases and iOS
 
-The Android release targets API 36. The iPhone/iPad project is in [ios/](ios/README.md), with the same game and supplied logo variants. The repository name remains unchanged. See [store/README.md](store/README.md) for the submission package and remaining account, signing, screenshot and device-check requirements. An unsigned iOS CI archive is not an upload-ready IPA.
+The Android release targets API 36. The iPhone/iPad project is in [ios/](ios/README.md), with the same game and supplied logo variants. See [store/README.md](store/README.md) for the submission package and remaining account, signing, screenshot and device-check requirements. An unsigned iOS CI archive is not an upload-ready IPA.
 
 [Support](https://markosaraf.github.io/quizletgravity-android/) · [Privacy policy](https://markosaraf.github.io/quizletgravity-android/privacy.html)

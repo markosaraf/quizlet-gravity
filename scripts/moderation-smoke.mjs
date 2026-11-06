@@ -28,7 +28,7 @@ try{
  const page=await admin.newPage();await page.goto(base+'/admin/users');await page.getByRole('heading',{name:'Users',exact:true}).waitFor();await page.getByLabel('Search users').fill(u.name);await page.getByText(u.name,{exact:true}).waitFor();
  await page.setViewportSize({width:390,height:844});assert(await page.getByRole('link',{name:'Users',exact:true}).isVisible());
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
- page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Delete user',exact:true}).click();await page.getByText(u.name,{exact:true}).waitFor({state:'hidden'});
+ page.once('dialog',dialog=>dialog.accept());await page.getByRole('listitem').filter({has:page.getByText(u.name,{exact:true})}).getByRole('button',{name:'Delete user',exact:true}).click();await page.getByText(u.name,{exact:true}).waitFor({state:'hidden'});
  assert.equal((await call(admin,'/api/admin/users')).data.total,before-1);
  const board=await call(anon,`/api/community/sets/${setId}/leaderboard`);assert.equal(board.data.entries[0].username,'Deleted user');assert.equal(board.data.entries[0].score,120);
  assert.equal((await call(member,'/api/community/sets',{title:'Blocked',cards:[{term:'x',definition:'y'},{term:'z',definition:'t'}]})).status,401);

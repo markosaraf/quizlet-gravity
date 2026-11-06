@@ -12,7 +12,7 @@ When Play/Resume opens the gameplay field, a missed asteroid opens the copy-answ
 
 The web view follows the docked keyboard’s top edge, matching Android’s keyboard insets. During a game, the top bar and play area share that resized viewport; the input stays at the bottom of the play area. Import and FAQ pages keep normal scrolling. The extra native Privacy policy / Support footer has been removed from iOS.
 
-Open `QuizletGravity.xcodeproj`, select the shared **QuizletGravity** scheme and your Apple Developer team under **Signing & Capabilities**. The provisional bundle ID is `com.quizletgravity.ios`; register it under your team before submission.
+Open `QuizletGravity.xcodeproj`, select the shared **QuizletGravity** scheme and your Apple Developer team under **Signing & Capabilities**. The bundle ID is `com.quizletgravity.ios`; register it under your team before submission.
 
 ## Build
 
@@ -31,7 +31,7 @@ With the membership signed in to Xcode, open the archive in Organizer and choose
 
 ## Owner checks before submission
 
-On a real iPhone/iPad or TestFlight build, check the carousel, reduced motion, paste/import/edit/play, the Files picker, keyboard sizing, background/pause/resume, portrait/landscape and network-off retry. This project has not been interactively tested on an iPhone by Codex. Follow the release checklist in `store/README.md`.
+On a real iPhone/iPad or TestFlight build, check the carousel, reduced motion, paste/import/edit/play, the Files picker, keyboard sizing, background/pause/resume, portrait/landscape and network-off retry. This release still needs testing on a physical iPhone or iPad. Follow the release checklist in `store/README.md`.
 
 For this update, check a fresh launch and a launch after the website has been cached: all three alternative logos must appear, including white-on-indigo. Also leave and return during the initial 0.67-second hold, a slide and the final gold hold; the intro should resume instead of skipping ahead. Check iPad rotation and Split View after the scene-life-cycle migration.
 

@@ -299,9 +299,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.quizletgravity.ios;
 				PRODUCT_NAME = QuizletGravity;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,6";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -324,9 +324,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.quizletgravity.ios;
 				PRODUCT_NAME = QuizletGravity;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
 			name = Debug;
 		};

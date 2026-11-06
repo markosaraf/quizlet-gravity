@@ -54,6 +54,18 @@ function CopyTermViewBase({
     };
   }, [liveTermId, onSubmit, previouslyTypedText]);
 
+  useEffect(() => {
+    const focus = () => {
+      if (!document.hidden) inputRef.current?.focus({ preventScroll: true });
+    };
+    window.addEventListener('focus', focus);
+    document.addEventListener('visibilitychange', focus);
+    return () => {
+      window.removeEventListener('focus', focus);
+      document.removeEventListener('visibilitychange', focus);
+    };
+  }, []);
+
   // restore the caret after a special-character insertion
   useEffect(() => {
     if (pendingCaretRef.current === null) return;

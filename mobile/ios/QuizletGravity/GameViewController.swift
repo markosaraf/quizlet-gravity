@@ -22,7 +22,12 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
         configuration.applicationNameForUserAgent = "QuizletGravityApp"
+        #if targetEnvironment(macCatalyst)
+        // Use Safari's desktop layout without iPad scaling or touch-layout overrides.
+        configuration.defaultWebpagePreferences.preferredContentMode = .desktop
+        #else
         configuration.defaultWebpagePreferences.preferredContentMode = .mobile
+        #endif
         // Isolated-world UI notification only: no page-accessible native capabilities,
         // input contents, credentials or arbitrary scripts cross this boundary.
         configuration.userContentController.add(
@@ -58,6 +63,13 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     @objc private func keyboardChanged() { configureInputLayout() }
 
     private func configureInputLayout() {
+        #if targetEnvironment(macCatalyst)
+        // Keep the desktop layout, with native keyboard-focus notifications.
+        webView.configuration.userContentController.removeAllUserScripts()
+        webView.configuration.userContentController.addUserScript(WKUserScript(source: Self.gameInputObserver,
+            injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
+        return
+        #else
         let mode = GCKeyboard.coalesced == nil ? "touch" : "keyboard"
         // Native-to-page presentation only: no privileged message handler or JS bridge.
         let source = """
@@ -77,6 +89,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         }
         // Switching keyboards changes layout without reloading or losing the current game.
         webView.evaluateJavaScript(source, completionHandler: nil)
+        #endif
     }
 
     // WebKit permits keyboard presentation for focus initiated by the native client.
@@ -114,8 +127,13 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         guard message.name == "gravityGameInputReady", message.body as? String == "ready",
               message.frameInfo.isMainFrame, let frameURL = message.frameInfo.request.url,
               isInternal(frameURL), let url = webView.url, isInternal(url),
-              view.window != nil, UIApplication.shared.applicationState == .active,
-              GCKeyboard.coalesced == nil else { return }
+              view.window != nil, UIApplication.shared.applicationState == .active else { return }
+        focusGameInput()
+    }
+
+    private func focusGameInput() {
+        guard let url = webView.url, isInternal(url), view.window != nil else { return }
+        webView.becomeFirstResponder()
         webView.evaluateJavaScript("""
         (() => {
             const game = document.querySelector('.GravityGameplayView:not(.has-splash):not(.is-gameOver)');
@@ -226,10 +244,12 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         guard let url = webView.url, isInternal(url) else { fail(); return }
         configureInputLayout()
         webView.evaluateJavaScript(Self.gameInputObserver, in: nil, in: .defaultClient, completionHandler: nil)
+        #if !targetEnvironment(macCatalyst)
         if let scriptURL = Bundle.main.url(forResource: "AppFooter", withExtension: "js"),
            let script = try? String(contentsOf: scriptURL, encoding: .utf8) {
             webView.evaluateJavaScript(script, completionHandler: nil)
         }
+        #endif
         let expected = generation
         // Two browser frames allow layout/paint before fading the native cover.
         webView.callAsyncJavaScript("await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));", arguments: [:], in: nil, in: .page) { [weak self] result in
@@ -250,11 +270,23 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         intro?.pause()
         timeout?.invalidate()
         guard let url = webView.url, isInternal(url) else { return }
-        webView.evaluateJavaScript("(function(){var b=Array.from(document.querySelectorAll('button')).find(function(b){return !b.disabled && (b.getAttribute('aria-label')==='Pause' || b.textContent.trim()==='Pause');});if(b)b.click();})()", completionHandler: nil)
+        webView.evaluateJavaScript("(function(){if(!document.querySelector('.GravityGameplayView:not(.has-splash):not(.is-gameOver)'))return;var b=Array.from(document.querySelectorAll('button')).find(function(b){return !b.disabled && (b.getAttribute('aria-label')==='Pause' || b.textContent.trim()==='Pause');});window.__gravityPausedByApp=!!b;if(b)b.click();})()", completionHandler: nil)
     }
     func sceneDidBecomeActive() {
         intro?.resume()
         configureInputLayout()
+        if let url = webView.url, isInternal(url) {
+            webView.evaluateJavaScript("""
+            (() => {
+                if (window.__gravityPausedByApp) {
+                    window.__gravityPausedByApp = false;
+                    const button = Array.from(document.querySelectorAll('button')).find(b =>
+                        !b.disabled && (b.getAttribute('aria-label') === 'Resume' || b.textContent.trim() === 'Resume'));
+                    button?.click();
+                }
+            })();
+            """, completionHandler: { [weak self] _, _ in self?.focusGameInput() })
+        }
         if !loaded && !failed { armTimeout() }
     }
 

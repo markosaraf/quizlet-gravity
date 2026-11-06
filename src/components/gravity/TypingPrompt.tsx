@@ -66,6 +66,18 @@ function TypingPromptBase({
     }
   }, [isFreeFall, mounted]);
 
+  useEffect(() => {
+    const focus = () => {
+      if (isFreeFall && !document.hidden) inputRef.current?.focus({ preventScroll: true });
+    };
+    window.addEventListener('focus', focus);
+    document.addEventListener('visibilitychange', focus);
+    return () => {
+      window.removeEventListener('focus', focus);
+      document.removeEventListener('visibilitychange', focus);
+    };
+  }, [isFreeFall]);
+
   // restore the caret after a special-character insertion
   useEffect(() => {
     if (pendingCaretRef.current === null) return;

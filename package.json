@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --test tests/*.test.ts",
+    "test": "node --test tests/*.test.ts && tsx --test tests/*.test.cts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

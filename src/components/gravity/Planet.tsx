@@ -16,7 +16,7 @@ interface Props {
   onLoaded?: (level: number) => void;
 }
 
-const TRANSITION = 'all 1500ms ease-out';
+const TRANSITION = 'transform 1500ms ease-out';
 
 /** Position/scale per relative level — exact values from GravityPlanet.getAnimation */
 function getTransform(
@@ -114,17 +114,19 @@ function PlanetBase({
 
   useEffect(() => {
     const img = imgRef.current;
-    if (img?.complete) onLoaded?.(planetLevel);
+    if (img?.complete && img.naturalWidth > 0) {
+      void img.decode().then(() => onLoaded?.(planetLevel)).catch(() => {});
+    }
   }, [onLoaded, planetLevel]);
 
-  // Original hides planets >3 on level 1 splash states
-  if (currentLevel === 1 && isSplashState && planetLevel > 3) return null;
+  // Mount upcoming textures before play so WebKit can decode them before entry.
 
   return (
     <div
       key={`planet${planetLevel}`}
       className={cls}
       style={{
+        backgroundImage: src && !isPlaceholder ? 'none' : undefined,
         height: size,
         width: size,
         transform: `translate(${x}px, ${y}px) scale(${scale}, ${scale})`,
@@ -136,8 +138,12 @@ function PlanetBase({
           ref={imgRef}
           src={src}
           alt=""
-          className="GravityPlanet--preload"
-          onLoad={() => onLoaded?.(planetLevel)}
+          className={isPlaceholder ? 'GravityPlanet--preload' : 'GravityPlanet-texture'}
+          loading="eager"
+          decoding="sync"
+          onLoad={(event) => {
+            void event.currentTarget.decode().then(() => onLoaded?.(planetLevel)).catch(() => {});
+          }}
         />
       ) : null}
     </div>

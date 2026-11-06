@@ -27,7 +27,7 @@ function ModeControlsBase({
   onNewSet,
 }: ControlsProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
-  const pauseDisabled = gameState === GAME_STATES.COPY_ANSWER;
+  const pauseDisabled = gameState !== GAME_STATES.FREE_FALL && !isPaused;
   const pauseHandler = isPaused ? onResume : onPause;
 
   return (
@@ -140,7 +140,7 @@ export function SiteHeader({
   onNewSet,
 }: SiteHeaderProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
-  const pauseDisabled = gameState === GAME_STATES.COPY_ANSWER;
+  const pauseDisabled = gameState !== GAME_STATES.FREE_FALL && !isPaused;
   const pauseHandler = isPaused ? onResume : onPause;
 
   if (!showMobileControls) return null;

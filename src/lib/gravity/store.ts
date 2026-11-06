@@ -161,12 +161,14 @@ export class GravityStore {
   }
 
   pauseGame() {
+    if (this.data?.gameState !== GAME_STATES.FREE_FALL) return;
     this._pauseTimer();
     this._updateGameState(GAME_STATES.PAUSED);
     this.change();
   }
 
   resumeGame() {
+    if (this.data?.gameState !== GAME_STATES.PAUSED) return;
     this._resumeTimer();
     this._updateGameState(GAME_STATES.FREE_FALL);
     this.change();
@@ -246,7 +248,7 @@ export class GravityStore {
   }
 
   gradeAnswer() {
-    if (!this.data) return;
+    if (!this.data || this.data.gameState !== GAME_STATES.FREE_FALL) return;
     const value = this.data.mainTypingPromptValue;
     for (const liveTermId of Object.keys(this.data.liveTerms)) {
       if (this._isCorrectAnswerForTerm(value, liveTermId).isCorrect) {
@@ -260,7 +262,7 @@ export class GravityStore {
   }
 
   missTerm(liveTermId: string, wasSkipped: boolean) {
-    if (!this.data) return;
+    if (!this.data || this.data.gameState !== GAME_STATES.FREE_FALL) return;
     const value = this.data.mainTypingPromptValue;
     if (this._isCorrectAnswerForTerm(value, liveTermId).isCorrect) {
       this._markCorrectAndAdvanceGame(liveTermId);
@@ -274,7 +276,7 @@ export class GravityStore {
   }
 
   checkCopiedAnswer(liveTermId: string, answer: string) {
-    if (!this.data || !this.data.termBeingCopied) return;
+    if (!this.data || this.data.gameState !== GAME_STATES.COPY_ANSWER || !this.data.termBeingCopied) return;
     const correct = this._getCorrectAnswer(liveTermId);
     if (
       grade(correct, answer, {

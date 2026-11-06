@@ -19,13 +19,13 @@ target.build_configurations.each do |config|
     'CURRENT_PROJECT_VERSION' => '12',
     'INFOPLIST_FILE' => 'QuizletGravity/Info.plist',
     'SWIFT_VERSION' => '5.0',
-    'TARGETED_DEVICE_FAMILY' => '1,2',
+    'TARGETED_DEVICE_FAMILY' => '1,2,6',
     'ASSETCATALOG_COMPILER_APPICON_NAME' => 'AppIcon',
     'CODE_SIGN_STYLE' => 'Automatic',
     'ENABLE_USER_SCRIPT_SANDBOXING' => 'YES',
     'GENERATE_INFOPLIST_FILE' => 'NO',
     'IPHONEOS_DEPLOYMENT_TARGET' => '16.0',
-    'SUPPORTS_MACCATALYST' => 'NO',
+    'SUPPORTS_MACCATALYST' => 'YES',
     'LD_RUNPATH_SEARCH_PATHS' => ['$(inherited)', '@executable_path/Frameworks']
   })
 end

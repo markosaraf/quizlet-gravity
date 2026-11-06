@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { api, Leaderboard } from '@/components/community/Community';
+import { api } from '@/components/community/Community';
 import { GAME_STATES } from '@/lib/gravity/constants';
 import { gravityStore } from '@/lib/gravity/store';
 import type { GameData, GravitySet, GravityTerm } from '@/lib/gravity/types';
@@ -17,7 +17,6 @@ export function GravityApp({shared}:{shared?:{set:GravitySet;terms:GravityTerm[]
   const runRef=useRef<string|null>(null);
   const finishedRun=useRef<string|null>(null);
   const [scoreMessage,setScoreMessage]=useState('');
-  const [scoreRefresh,setScoreRefresh]=useState(0);
   const [scoreRetry,setScoreRetry]=useState(0);
   const startingRef=useRef(false);
   const [starting,setStarting]=useState(false);
@@ -85,7 +84,7 @@ export function GravityApp({shared}:{shared?:{set:GravitySet;terms:GravityTerm[]
   useEffect(()=>{
     if(!shared||!data||data.gameState!==GAME_STATES.GAME_OVER||!runRef.current||finishedRun.current===runRef.current)return;
     const id=runRef.current;finishedRun.current=id;
-    api(`runs/${id}/finish`,{score:data.points,level:data.level}).then(()=>{setScoreMessage('Your best score is saved.');setScoreRefresh(n=>n+1);}).catch(e=>{finishedRun.current=null;setScoreMessage('Score not saved: '+e.message);});
+    api(`runs/${id}/finish`,{score:data.points,level:data.level}).then(()=>{setScoreMessage('Your best score is saved.');}).catch(e=>{finishedRun.current=null;setScoreMessage('Score not saved: '+e.message);});
   },[data?.gameState,data?.points,data?.level,shared,scoreRetry]);
 
   // Special characters (ä ö é ß š …) that exist in the CURRENT set —
@@ -251,7 +250,6 @@ export function GravityApp({shared}:{shared?:{set:GravitySet;terms:GravityTerm[]
         </div>
       </div>
       {scoreMessage.startsWith("Score not saved:")&&<button onClick={()=>setScoreRetry(n=>n+1)}>Retry saving score</button>}
-      {shared&&data.gameState===GAME_STATES.GAME_OVER&&<Leaderboard id={shared.set.id} refresh={scoreRefresh}/>}
     </div>
   );
 }

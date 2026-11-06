@@ -94,6 +94,12 @@ export function FaqSection() {
   return (
     <section id="faq" className="GravitySEO" aria-labelledby="faq-heading">
       <div className="GravitySEO-inner">
+        <h2 className="GravitySEO-title">How to play</h2>
+        <p className="GravitySEO-subtitle">
+          Defend your planet from incoming asteroids by typing the correct
+          answers before they land. Find a shared set, import from Quizlet,
+          or create your own and invite friends to its leaderboard.
+        </p>
         <h2 id="faq-heading" className="GravitySEO-title">
           Frequently asked questions
         </h2>

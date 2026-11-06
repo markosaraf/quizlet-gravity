@@ -1277,19 +1277,8 @@
 
 /* ---------------- Import screen (Kysariin-style set input) ---------------- */
 .GravityImportView {
-  background: var(--gray-900)
-    url('/assets/gravity/intro-bg@2x.jpg')
-    no-repeat bottom center fixed;
-
-  /* DPR 1 devices use intro-bg.jpg; DPR 2+ devices use intro-bg@2x.jpg. */
-  background-image: image-set(
-    url('/assets/gravity/intro-bg.jpg') 1x,
-    url('/assets/gravity/intro-bg@2x.jpg') 2x
-  );
-   background-position: bottom center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
+  /* Use the shared viewport-sized asteroid backdrop on Sets and Create set. */
+  background: transparent;
 
   color: #fff;
   display: flex;

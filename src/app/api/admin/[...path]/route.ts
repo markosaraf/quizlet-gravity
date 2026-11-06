@@ -17,6 +17,10 @@ export async function GET(request:NextRequest,{params}:Context){
   const offset=Math.max(0,Math.min(100000,Number(request.nextUrl.searchParams.get('offset'))||0));
   const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);
   const pattern='%'+q.replace(/[\\%_]/g,'\\$&')+'%';
+  if(path.join('/')==='reports'){
+   const {rows}=await db.query(`SELECT r.id,r.target_kind,r.target_id,r.reason,r.created_at,s.title,s.public_id,coalesce(u."displayUsername",u.username,u.name) AS username FROM content_reports r LEFT JOIN shared_sets s ON r.target_kind='set' AND s.id::text=r.target_id LEFT JOIN "user" u ON r.target_kind='user' AND u.id=r.target_id WHERE r.status='open' ORDER BY r.created_at,r.id LIMIT 51 OFFSET $1`,[offset]);
+   return json({reports:rows.slice(0,50),hasMore:rows.length>50});
+  }
   if(path.join('/')==='users'){
    const {rows:counts}=await db.query(`SELECT count(*)::int AS total,count(*) FILTER(WHERE NOT coalesce(u."isAnonymous",false))::int AS accounts,count(*) FILTER(WHERE u."isAnonymous")::int AS guests FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id)`);
    const {rows}=await db.query(`SELECT u.id,coalesce(u."displayUsername",u.username,u.name) AS username,u."isAnonymous" AS guest,u."createdAt" AS created_at,EXISTS(SELECT 1 FROM community_admins a WHERE a.user_id=u.id) AS admin FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id) AND ($1='' OR coalesce(u."displayUsername",u.username,u.name) ILIKE $2 ESCAPE '\\') ORDER BY u."createdAt" DESC,u.id LIMIT 51 OFFSET $3`,[q,pattern,offset]);
@@ -58,4 +62,14 @@ export async function DELETE(request:NextRequest,{params}:Context){
   await client.query('INSERT INTO moderation_log(actor_id,action,target_id) VALUES($1,$2,$3)',[session.user.id,path[0]==='users'?'delete_user':'delete_set',path[1]]);
   await client.query('COMMIT');return json({deleted:true});
  }catch{await client.query('ROLLBACK');return json({error:'Unable to delete. Please retry.'},500);}finally{client.release();}
+}
+
+export async function POST(request:NextRequest,{params}:Context){
+ if(request.headers.get('sec-fetch-site')==='cross-site'||request.headers.get('origin')!==request.nextUrl.origin)return json({error:'Origin not allowed'},403);
+ const session=await auth.api.getSession({headers:request.headers});
+ if(!session||session.user.isAnonymous||!await isAdmin(session.user.id))return json({error:'Administrator access required.'},403);
+ const {path}=await params;
+ if(path.length!==3||path[0]!=='reports'||path[2]!=='resolve'||!/^[0-9a-f-]{36}$/i.test(path[1]))return json({error:'Not found'},404);
+ try{await db.query("UPDATE content_reports SET status='resolved',resolved_at=now(),resolved_by=$2 WHERE id=$1",[path[1],session.user.id]);return json({saved:true});}
+ catch{return json({error:'Unable to resolve report.'},500);}
 }

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { auth } from '@/lib/community/auth';
 import {appleConfigured} from '@/lib/community/apple';
 import { db } from '@/lib/community/db';
+import {assertShareable} from '@/lib/community/content-safety';
 import { fingerprint } from '@/lib/community/sets';
 import { correctPendingEmail } from '@/lib/community/pending-email';
 import { z } from 'zod';
@@ -27,21 +28,22 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{path:str
  try{
  const {path}=await params;await limit(request,'read',180);
  if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN});
+ const viewer=(await auth.api.getSession({headers:request.headers}))?.user.id||null;
  if(path[0]==='sets'&&path.length===1){
  const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request);
  const {rows}=await db.query(`SELECT s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by
  FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by
- WHERE $1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(s.title) LIKE $2 ESCAPE '\\'
- ORDER BY s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset]);
+ WHERE ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
+ ORDER BY s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer]);
  return json({sets:rows.slice(0,24),hasMore:rows.length>24,nextOffset:offset+24});
  }
  if(path[0]==='sets'&&uuid.safeParse(path[1]).success){
  if(path[2]==='leaderboard'){
  const {rows}=await db.query(`SELECT h.score,h.level,h.mode,h.achieved_at,u.id AS player_id,coalesce(u."displayUsername",u.username,u.name) AS username,u."isAnonymous" AS guest
- FROM high_scores h JOIN "user" u ON u.id=h.user_id WHERE h.set_id=$1 ORDER BY h.score DESC,h.achieved_at,u.id LIMIT 51 OFFSET $2`,[path[1],page(request)]);
+ FROM high_scores h JOIN "user" u ON u.id=h.user_id WHERE h.set_id=$1 AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$3 AND b.blocked_id=h.user_id) ORDER BY h.score DESC,h.achieved_at,u.id LIMIT 51 OFFSET $2`,[path[1],page(request),viewer]);
  return json({entries:rows.slice(0,50),hasMore:rows.length>50,offset:page(request)});
  }
- const {rows}=await db.query(`SELECT s.*,coalesce(u."displayUsername",u.username,u.name,'Community') AS added_by FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by WHERE s.id=$1`,[path[1]]);
+ const {rows}=await db.query(`SELECT s.*,coalesce(u."displayUsername",u.username,u.name,'Community') AS added_by FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by WHERE s.id=$1 AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$2 AND b.blocked_id=s.created_by)`,[path[1],viewer]);
  return rows[0]?json(rows[0]):json({error:'Set not found'},404);
  }
  return json({error:'Not found'},404);
@@ -64,6 +66,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{path:st
  await limit(request,'write',30);const input=await body(request);
  if(path[0]==='sets'&&path.length===1){
  const v=z.object({title:z.string().trim().min(1).max(200),cards:cardsSchema,sourceSetId:uuid.optional()}).parse(input);
+ try{assertShareable(v.title,v.cards);}catch(e){return json({error:(e as Error).message},400);}
  let source: {id:string;public_id:string;title:string;cards:{term:string;definition:string}[];creator_name:string|null;creator_url:string|null;source_url:string|null}|undefined;
  if(v.sourceSetId){
   const {rows}=await db.query('SELECT id,public_id,title,cards,creator_name,creator_url,source_url FROM shared_sets WHERE id=$1 AND quizlet_id IS NOT NULL',[v.sourceSetId]);

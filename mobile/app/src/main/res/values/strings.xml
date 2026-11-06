@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Quizlet Gravity</string>
+    <string name="connection_error">Couldn’t load Quizlet Gravity\n\nCheck your internet connection and try again.</string>
+    <string name="retry">Try again</string>
+    <string name="browser_unavailable">No app is available to open this link.</string>
+    <string name="file_unavailable">No file picker is available on this device.</string>
+    <string name="close_title">Close Quizlet Gravity?</string>
+    <string name="close_message">Your current game will end. Imported cards and saved preferences stay on this device.</string>
+    <string name="close">Close</string>
+    <string name="keep_playing">Stay here</string>
+</resources>

@@ -1,0 +1,20 @@
+.gradle/
+**/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+.env*
+*.jks
+*.keystore
+*signing.properties
+dist/
+
+# Apple local signing and generated builds
+DerivedData/
+*.xcarchive/
+*.ipa
+*.p12
+*.mobileprovision
+*.xcuserstate
+xcuserdata/

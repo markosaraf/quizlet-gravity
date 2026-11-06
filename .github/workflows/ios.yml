@@ -1,0 +1,32 @@
+name: iOS release preparation
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: mobile
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require an App Store supported Xcode
+        run: |
+          xcodebuild -version
+          major=$(xcodebuild -version | head -1 | awk '{print $2}' | cut -d. -f1)
+          test "$major" -ge 26
+      - name: Build iPhone and iPad simulator app
+        run: xcodebuild -project ios/QuizletGravity.xcodeproj -scheme QuizletGravity -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build/Simulator CODE_SIGNING_ALLOWED=NO build
+      - name: Archive device app without private signing material
+        run: xcodebuild -project ios/QuizletGravity.xcodeproj -scheme QuizletGravity -configuration Release -destination 'generic/platform=iOS' -archivePath ios/build/QuizletGravity-unsigned.xcarchive CODE_SIGNING_ALLOWED=NO archive
+      - name: Package archive preserving Apple bundle metadata
+        run: ditto -c -k --sequesterRsrc --keepParent ios/build/QuizletGravity-unsigned.xcarchive ios/build/QuizletGravity-iOS-unsigned.xcarchive.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuizletGravity-iOS-unsigned-archive
+          path: mobile/ios/build/QuizletGravity-iOS-unsigned.xcarchive.zip
+          retention-days: 30

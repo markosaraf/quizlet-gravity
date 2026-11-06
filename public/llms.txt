@@ -20,84 +20,76 @@ Quizlet Gravity is Marko Sarafijanovic’s independent Gravity study game. Playe
 - Score submission: play from the shared set page and reach game over; abandoned runs and local custom games do not submit a completed score to that shared leaderboard
 - Difficulties: Sloth, Easy, Medium, Hard, Mad Max
 - Public data: imported/shared sets, terms, titles, creator attribution, leaderboard usernames and scores
-- Private data: account emails and password hashes are not public
+- Private data: account emails and passwords are never shown publicly
 - Local data: unshared pasted/CSV terms and theme preferences stay on the device
 - Guest access: tied to the current browser or app session; registered accounts support signing in across devices
 - Themes: light and dark
 - Author: Marko Sarafijanovic (markosaraf)
 
-## How to play
-
-1. Start in Sets. Search by set title or original Quizlet set creator, or paste a public Quizlet set link into Import a Quizlet set. Text copied with the link from the Quizlet app also works.
-2. To use your own material, open Create set. Paste terms and definitions or upload a CSV, then check the editable terms table. You need at least two term/definition pairs.
-3. Choose a guest username or sign in to import and share sets or join a shared-set leaderboard. You can create an account with email and password or continue with Google. Email/password accounts require email confirmation.
-4. For your own shared set, enter a title under Share this set and choose Create shared link. Open the set and leaderboard, then use Copy set link to invite others. An imported Quizlet set already has its shared page.
-5. Choose Play this set on a shared page to play for its leaderboard. For a local custom game, choose Start studying. Select your difficulty and answer side, then start.
-6. Type the correct answers before the asteroids hit your planet. After a missed term, type the displayed answer to continue. Missing the same term twice ends the game.
-7. At game over, a completed shared-set game is submitted to its leaderboard. Your highest score is kept. Sign in with the same account on another device to keep playing under the same identity.
-
 ## FAQ
 
 ### What is Quizlet Gravity?
 
-Quizlet Gravity is a free study game inspired by Quizlet’s retired Gravity mode. Type answers to your flashcards to defend your planet from falling asteroids. This version adds searchable shared sets, accounts and persistent set leaderboards. It is an independent project and is not affiliated with Quizlet.
+A free flashcard game: type answers to stop asteroids from hitting your planet. Find study sets, share your own and compete with friends. This independent project is not affiliated with Quizlet.
 
 ### How do I find a study set?
 
-The website and apps open in Sets. Search by set title or original Quizlet set creator, then open a card to see its terms and leaderboard. You can also open a set link someone has shared with you.
+Open Sets and search by title or original Quizlet set creator. Select a set to play or view its leaderboard.
 
 ### How do I import a Quizlet set?
 
-Paste a public Quizlet set link into Import a Quizlet set and choose Import set. You can paste the full sharing text copied from the Quizlet app, including the words around the link. Choose a guest username or sign in when prompted. The imported set shows its title and original Quizlet set creator.
-
-### What if someone has already imported the same Quizlet set?
-
-Importing the same Quizlet set again opens its existing shared page. It uses the same link and leaderboard, so scores are not split across duplicate imports. The shared set is a saved copy, not a live connection that automatically follows edits on Quizlet.
+Paste a public Quizlet set link into Import a Quizlet set, then select Import set. The full sharing text copied from the Quizlet app works too.
 
 ### How do I create my own set?
 
-Open Create set and paste terms and definitions, one pair per line, or upload a CSV. Commas, semicolons, dashes and tabs are supported as separators. Check and edit the terms before playing. You need at least two pairs, and you can star terms for Starred-only practice. To adapt an existing set, choose Edit a Quizlet set and change its terms or definitions. Your shared version credits both the original Quizlet set creator and you as the Quizlet Gravity set creator. Unchanged imports reuse the original set and leaderboard.
+Open Create set. Enter terms and definitions, one pair per line, or upload a CSV. Check your entries before playing. You need at least two pairs.
+
+### How do I edit an existing Quizlet set?
+
+Open Create set → Edit a Quizlet set. Import its link, then change the terms or definitions. Your shared version credits both you and the original creator.
 
 ### How do I share a set with friends?
 
-For a custom set, enter a title under Share this set, choose a guest username or sign in, then select Create shared link. Open the set and leaderboard and choose Copy set link. Imported Quizlet sets already have a shared page. Anyone with the link can open the set and join its leaderboard after choosing a guest username or signing in.
+Open a shared set and select Copy set link. For your own set, add a title and select Create shared link first.
 
 ### Do I need an account?
 
-You do not need a Quizlet account. You can browse shared sets and practise with your own pasted terms without signing up. To import, share or record scores on a shared set, choose a guest username or sign in to Quizlet Gravity. A registered account lets you use the same identity across devices.
+No. Choose a guest username to play, import and share sets. Create an account to keep your scores across devices.
 
 ### What is the difference between a guest and an account?
 
-Guests can import sets, share links and appear on leaderboards without an email or password. Their identity is tied to the current browser or app session and can be lost when its data is cleared. An account lets you sign in again and access your leaderboard identity across devices. Creating an account from your active guest session transfers its scores to the account.
+A guest can lose access to their scores if app or browser data is cleared. An account lets you sign back in on any device.
 
-### How do email confirmation and password recovery work?
+### How do I confirm my email or reset my password?
 
-When you create an account with email and password, open the confirmation email before signing in. Check your spam folder or use Resend confirmation if needed. If you forget your password, choose Forgot password? to request a recovery link at your account’s email address. Continue with Google is another way to sign in.
+Open the confirmation email after signing up. Check spam or select Resend confirmation if needed. To reset your password, select Forgot password? on the sign-in screen.
 
-### Which games count towards a leaderboard?
+### When does my score appear on the leaderboard?
 
-Open a shared set and choose Play this set while using a guest username or account. At game over, the completed game is submitted and your highest score for that set is kept, with its level and difficulty. Each player has one personal best per shared set across all difficulties. Local custom games and games abandoned before game over do not add a completed score to that shared leaderboard.
+Choose Play this set on a shared set. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears.
 
-### How does scoring work?
+### How do I earn points?
 
-Correct answers earn points based on your consecutive-answer streak and the game’s gravity bonus. Wrong answers subtract 10 points, without taking your score below zero. A shared-set leaderboard keeps your personal best rather than adding all your attempts together.
+Answer correctly to earn points. Keep a streak going to earn more. Wrong answers cost 10 points.
 
-### What are the difficulty levels, and what happens when I miss?
+### What happens when I miss an asteroid?
 
-Choose Sloth, Easy, Medium, Hard or Mad Max. Difficulty changes the pace and behaviour of the asteroids. When an asteroid lands, type the displayed correct answer to continue. Missing the same term twice ends the game.
+Type the displayed answer to continue. Miss the same term again and the game ends. Choose an easier difficulty if you need more time.
 
 ### Can I play on my phone or tablet?
 
-Yes. You can play in a mobile browser or in the Android and iOS apps. Shared set links and leaderboards use the same service. Sign in with the same account to use your leaderboard identity across devices. Both light and dark themes are available.
+Yes, in your browser or the Android and iOS apps. Sign in with the same account to keep your scores across devices.
 
-### Which information is public, and where is it stored?
+### Can accounts or shared sets be removed?
 
-Imported and shared sets, their titles and terms, creator attribution, leaderboard usernames and scores are public and stored online. Account emails are private, and passwords are stored as hashes rather than readable text. Pasted or CSV terms stay on your device until you choose to share them. Guest access depends on your browser or app session. Only share material you have permission to share.
+Accounts or sets may be removed for spam or abusive content. Removed accounts appear as Deleted user on leaderboards. Removing a set also removes its leaderboard.
+
+### What information is public?
+
+Shared sets, creator usernames and leaderboard scores are public. Your email and password are never shown publicly. Your own unshared sets stay on your device.
 
 ## Links
 
 - Sets: https://www.quizletgravity.com/sets
 - Create set: https://www.quizletgravity.com/create-set
 - FAQ: https://www.quizletgravity.com/#faq
-
-Moderation: An administrator may manually delete accounts or shared sets used for spam, abusive usernames or abusive content. Deleted accounts lose access. Existing leaderboard entries display Deleted user. Deleting a set removes its leaderboard.

@@ -76,7 +76,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "When are accounts or shared sets removed?",
-    "answer": "Accounts or sets may be removed for spam or abusive content. Removed accounts appear as Deleted user on leaderboards. Removing a set also removes its leaderboard."
+    "answer": "To delete your account, open your username menu and choose Delete account. Your sets and scores remain under Deleted user. Accounts or sets may also be removed for spam or abusive content. Removing a set also removes its leaderboard."
   }
 ];
 

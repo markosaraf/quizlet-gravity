@@ -1276,6 +1276,7 @@
 }
 
 /* ---------------- Import screen (Kysariin-style set input) ---------------- */
+.gravity-import-root { background: transparent; }
 .GravityImportView {
   /* Use the shared viewport-sized asteroid backdrop on Sets and Create set. */
   background: transparent;

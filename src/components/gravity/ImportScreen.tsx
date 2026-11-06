@@ -337,7 +337,7 @@ export function ImportScreen({ onStart }: Props) {
   );
 
   return (
-    <div className="gravity-root">
+    <div className="gravity-root gravity-import-root">
       <div className="GravityImportView">
         <div className="GravityImportView-inner">
           <div className="GravityImportCard">

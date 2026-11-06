@@ -48,4 +48,4 @@ This independent app is for quizletgravity.com; it is not an official Quizlet ap
 
 The Android release targets API 36. The iPhone/iPad project is in [ios/](ios/README.md), with the same game and supplied logo variants. See [store/README.md](store/README.md) for the submission package and remaining account, signing, screenshot and device-check requirements. An unsigned iOS CI archive is not an upload-ready IPA.
 
-[Support](https://markosaraf.github.io/quizletgravity-android/) · [Privacy policy](https://markosaraf.github.io/quizletgravity-android/privacy.html)
+[Support](https://www.quizletgravity.com/) · [Privacy policy](https://www.quizletgravity.com/privacy)

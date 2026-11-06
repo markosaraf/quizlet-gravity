@@ -18,15 +18,15 @@ Nutze dein eigenes Lernmaterial:
 • Prüfe und bearbeite deine Karten vor dem Spielen.
 • Übe Wortschatz, Fakten und andere Frage-Antwort-Paare.
 
-Importierte Karten und Einstellungen bleiben im lokalen Webspeicher der App. Du brauchst kein Quizlet-Gravity-Konto. Zum Laden des Spiels und zum Import öffentlicher Sets ist eine Internetverbindung nötig. Ein Import setzt voraus, dass das Set öffentlich und erreichbar ist. Falls es sich nicht einlesen lässt, kannst du deine Begriffe einfügen oder eine lokale Datei auswählen.
+Durchsuche geteilte Sets, teile eigene Set-Links und spiele für die jeweilige Rangliste. Pro Set wird dein bester Punktestand einmal angezeigt. Spiele mit einem Gastnamen oder registriere dich mit bestätigter E-Mail-Adresse und Passwort oder über Google. Lokale Spiele und Einstellungen nutzen zusätzlich den Webspeicher der App. Zum Laden des Spiels und zum Import öffentlicher Sets ist eine Internetverbindung nötig. Ein Import setzt voraus, dass das Set öffentlich und erreichbar ist. Falls es sich nicht einlesen lässt, kannst du deine Begriffe einfügen oder eine lokale Datei auswählen.
 
 Quizlet Gravity ist ein unabhängiges Projekt und keine offizielle Quizlet-App.
 
 Support: quizletgravity@gmail.com
-Datenschutz: https://markosaraf.github.io/quizletgravity-android/privacy.html
+Datenschutz: https://www.quizletgravity.com/privacy
 
 App Store Schlüsselwörter:
 Lernkarten,Vokabeln,Tippspiel,Lernen,Wiederholen,Wortschatz,Üben,Quiz
 
 Versionshinweise:
-Neue mobile Version mit animiertem Startlogo, Dateiimport, lokal gespeicherten Lernkarten und erneutem Laden bei Verbindungsproblemen.
+Durchsuchbare geteilte Sets, Autorenangaben, Konten, E-Mail-Bestätigung und Passwortwiederherstellung, Google-Anmeldung, persönliche Bestleistungen und Moderation.

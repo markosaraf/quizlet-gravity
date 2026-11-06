@@ -588,7 +588,7 @@ export function ImportScreen({ onStart }: Props) {
               </div>
             ) : null}
 
-            <ShareSet title={fileName??"My study set"} cards={shareCards} original={original}/>
+            <ShareSet title={original ? fileName ?? "" : ""} cards={shareCards} original={original}/>
             <div className="GravityImportActions">
               <button
                 className="UIButton UIButton--hero"

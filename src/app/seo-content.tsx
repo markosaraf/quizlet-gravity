@@ -35,24 +35,24 @@ export const FAQ_ITEMS: FaqItem[] = [
     "answer": "Open Sets and search by title or original Quizlet set creator. Select a set to play or view its leaderboard."
   },
   {
+    "question": "Do I need an account?",
+    "answer": "No. Choose a guest username to play, import and share sets. Create an account to keep your scores across devices."
+  },
+  {
     "question": "How do I import a Quizlet set?",
-    "answer": "Paste a public Quizlet set link into Import a Quizlet set, then select Import set. The full sharing text copied from the Quizlet app works too."
+    "answer": "Paste a public Quizlet set link into Import a Quizlet set, then select Import set."
   },
   {
-    "question": "How do I create my own set?",
-    "answer": "Open Create set. Enter terms and definitions, one pair per line, or upload a CSV. Check your entries before playing. You need at least two pairs."
+    "question": "How do I create my own set and how do I edit an existing Quizlet set?",
+    "answer": "Open Create set to enter terms and definitions or upload a CSV. You need at least two pairs. To edit an existing set, choose Edit a Quizlet set, import its link and change the terms or definitions."
   },
   {
-    "question": "How do I edit an existing Quizlet set?",
-    "answer": "Open Create set → Edit a Quizlet set. Import its link, then change the terms or definitions. Your shared version credits both you and the original creator."
+    "question": "How do I earn points, and what happens when I miss an asteroid?",
+    "answer": "Answer correctly to earn points. Keep a streak going to earn more. Wrong answers cost 10 points. If you miss an asteroid, type the displayed answer to continue. Miss the same term again and the game ends."
   },
   {
     "question": "How do I share a set with friends?",
     "answer": "Open a shared set and select Copy set link. For your own set, add a title and select Create shared link first."
-  },
-  {
-    "question": "Do I need an account?",
-    "answer": "No. Choose a guest username to play, import and share sets. Create an account to keep your scores across devices."
   },
   {
     "question": "What is the difference between a guest and an account?",
@@ -64,27 +64,19 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "When does my score appear on the leaderboard?",
-    "answer": "Choose Play this set on a shared set. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears."
+    "answer": "Choose Play this set on a shared set. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears on the leaderboard."
   },
   {
-    "question": "How do I earn points?",
-    "answer": "Answer correctly to earn points. Keep a streak going to earn more. Wrong answers cost 10 points."
-  },
-  {
-    "question": "What happens when I miss an asteroid?",
-    "answer": "Type the displayed answer to continue. Miss the same term again and the game ends. Choose an easier difficulty if you need more time."
+    "question": "What information is public?",
+    "answer": "Shared sets, creator usernames and leaderboard scores are public. Your email and password are never shown publicly. Your own unshared sets stay on your device."
   },
   {
     "question": "Can I play on my phone or tablet?",
     "answer": "Yes, in your browser or the Android and iOS apps. Sign in with the same account to keep your scores across devices."
   },
   {
-    "question": "Can accounts or shared sets be removed?",
+    "question": "When are accounts or shared sets removed?",
     "answer": "Accounts or sets may be removed for spam or abusive content. Removed accounts appear as Deleted user on leaderboards. Removing a set also removes its leaderboard."
-  },
-  {
-    "question": "What information is public?",
-    "answer": "Shared sets, creator usernames and leaderboard scores are public. Your email and password are never shown publicly. Your own unshared sets stay on your device."
   }
 ];
 

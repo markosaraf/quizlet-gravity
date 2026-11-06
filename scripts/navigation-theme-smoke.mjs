@@ -21,7 +21,7 @@ try {
  assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');
  await nav.getByRole('link',{name:'Create set',exact:true}).click();
  await page.waitForURL('**/create-set');
- await page.getByRole('button',{name:'Import Quizlet Set',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Edit a Quizlet set',exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Dark',exact:true}).getAttribute('aria-pressed'),'true');
  await page.getByRole('button',{name:'Light',exact:true}).click();
  await page.waitForFunction(()=>document.documentElement.dataset.theme==='light');

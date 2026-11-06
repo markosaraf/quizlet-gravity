@@ -11,7 +11,7 @@ try{
   await page.route('**/api/auth/send-verification-email',route=>route.fulfill({json:{status:true}}));
   await page.route('**/api/community/pending-email',route=>route.fulfill({json:{sent:true}}));
   await page.goto(base+'/sets');
-  await page.getByRole('button',{name:'Choose your name',exact:true}).click();
+  await page.getByRole('button',{name:'Choose username',exact:true}).click();
   const dialog=page.getByRole('dialog');
   await dialog.getByRole('button',{name:'Create account',exact:true}).click();
   await dialog.getByLabel('Username',{exact:true}).fill('player');

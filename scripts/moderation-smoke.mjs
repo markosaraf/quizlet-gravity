@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {hashPassword} from 'better-auth/crypto';
 import {chromium} from '@playwright/test';
 import pg from 'pg';
-const base='http://localhost:3035';
+const base=process.env.TEST_URL||'http://localhost:3035';
 assert.equal(new URL(process.env.DATABASE_URL).pathname,'/quizzlet_preview');
 const db=new pg.Pool({connectionString:process.env.DATABASE_URL});
 const browser=await chromium.launch();

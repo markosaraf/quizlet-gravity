@@ -59,3 +59,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .admin-list{list-style:none;padding:0;margin:24px 0}.admin-list li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--community-border)}.admin-list li>div{min-width:0;overflow-wrap:anywhere}.admin-list small{display:block;color:var(--community-muted);margin-top:4px}.admin-list button{flex-shrink:0}
 
 @media(max-width:600px){.community-nav>div{gap:8px}.community-nav a.community-nav-sets{padding-left:8px}.community-nav button{min-width:0;flex-shrink:1}}
+
+/* Reserve the full screen before the directory request completes, so the
+   How to play section never flashes into view at launch or on navigation. */
+.community-directory-screen{display:flow-root;min-height:100vh;min-height:100svh}

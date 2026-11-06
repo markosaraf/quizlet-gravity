@@ -60,6 +60,25 @@ try {
  const guestSession=await context.internalAdapter.createSession(guest.id);
  await db.query('UPDATE session SET "createdAt"=now()-interval \'1 day\' WHERE id=$1',[guestSession.id]);
  await deleteOwnAccount(db,guest.id,guestSession.id,undefined,async()=>false);
+ // Apple revocation must happen before personal data is erased. A provider
+ // failure rolls back, keeping the token available for a subsequent retry.
+ const apple=await context.internalAdapter.createUser({email:'apple@example.test',emailVerified:true,name:'Apple test'}, {method:'test'});
+ await context.internalAdapter.linkAccount({userId:apple.id,accountId:'apple-test-id',providerId:'apple',refreshToken:'isolated-test-token'});
+ const appleSession=await context.internalAdapter.createSession(apple.id);
+ const originalFetch=globalThis.fetch;
+ try {
+  globalThis.fetch=async(input,options)=>{
+   assert.equal(input,'https://appleid.apple.com/auth/revoke');
+   assert.equal((options!.body as URLSearchParams).get('token'),'isolated-test-token');
+   return new Response(null,{status:503});
+  };
+  await assert.rejects(()=>deleteOwnAccount(db,apple.id,appleSession.id,undefined,async()=>false));
+  assert.equal((await db.query('SELECT email FROM "user" WHERE id=$1',[apple.id])).rows[0].email,'apple@example.test');
+  assert.equal((await db.query('SELECT count(*)::int n FROM account WHERE "userId"=$1',[apple.id])).rows[0].n,1);
+  globalThis.fetch=async()=>new Response(null,{status:200});
+  await deleteOwnAccount(db,apple.id,appleSession.id,undefined,async()=>false);
+  assert.equal((await db.query('SELECT name FROM "user" WHERE id=$1',[apple.id])).rows[0].name,'Deleted user');
+ }finally{globalThis.fetch=originalFetch;}
  console.log('PASS: origin/auth/confirmation/password checks; full session and credential revocation; personal details erased; scores and sets retained as Deleted user; email/username reusable; social reauthentication and guest deletion. All fixtures isolated.');
 } finally {
  await pool?.end();await maintenance.query(`DROP SCHEMA "${schema}" CASCADE`);await maintenance.end();

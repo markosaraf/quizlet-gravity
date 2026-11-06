@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { createEmailVerificationToken } from 'better-auth/api';
 import { username, anonymous, oneTimeToken } from 'better-auth/plugins';
 import { db } from './db';
+import { appleConfigured, appleClientSecret } from './apple';
 import {displayPlayerName,normalizePlayerName,validPlayerName} from './usernames';
 import { sendRecovery, sendConfirmation } from './recovery';
 export const auth = betterAuth({
@@ -29,9 +30,11 @@ export const auth = betterAuth({
       await sendConfirmation(user.email,link.href,(user as {displayUsername?:string;username?:string}).displayUsername || (user as {username?:string}).username);
     },
   },
-  socialProviders: process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? {
-    google: { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET }
-  } : {},
+  trustedOrigins: ['https://appleid.apple.com'],
+  socialProviders: {
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? { google: { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET } } : {}),
+    ...(appleConfigured() ? { apple: async () => ({ clientId: process.env.APPLE_CLIENT_ID!, clientSecret: await appleClientSecret() }) } : {}),
+  },
   rateLimit: { enabled: true, storage: 'database', window: 60, max: 30, customRules: { '/send-verification-email': {window:60,max:3}, '/sign-up/email': {window:60,max:5}, '/sign-in/username': {window:60,max:5} } },
   session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 86400 },
   plugins: [oneTimeToken({expiresIn:2,storeToken:"hashed",disableClientRequest:true}),username({ minUsernameLength: 3, maxUsernameLength: 24, usernameValidator: validPlayerName, usernameNormalization: normalizePlayerName, displayUsernameNormalization: displayPlayerName, validationOrder: {username:'post-normalization',displayUsername:'post-normalization'} }), anonymous({

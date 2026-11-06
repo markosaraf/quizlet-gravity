@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { auth } from '@/lib/community/auth';
+import {appleConfigured} from '@/lib/community/apple';
 import { db } from '@/lib/community/db';
 import { fingerprint } from '@/lib/community/sets';
 import { correctPendingEmail } from '@/lib/community/pending-email';
@@ -25,7 +26,7 @@ async function body(request:NextRequest){
 export async function GET(request:NextRequest,{params}:{params:Promise<{path:string[]}>}){
  try{
  const {path}=await params;await limit(request,'read',180);
- if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,recovery:!!process.env.GMAIL_REFRESH_TOKEN});
+ if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN});
  if(path[0]==='sets'&&path.length===1){
  const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request);
  const {rows}=await db.query(`SELECT s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by

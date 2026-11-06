@@ -2,6 +2,7 @@ import {NextRequest,NextResponse} from 'next/server';
 import {randomUUID} from 'node:crypto';
 import {auth} from '@/lib/community/auth';
 import {db} from '@/lib/community/db';
+import {revokeAppleAccess} from '@/lib/community/apple';
 import {isAdmin} from '@/lib/community/admin';
 export const runtime='nodejs';
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
@@ -44,6 +45,7 @@ export async function DELETE(request:NextRequest,{params}:Context){
    if(!rows.length){await client.query('ROLLBACK');return json({error:'User not found.'},404);}
    const admins=await client.query('SELECT 1 FROM community_admins WHERE user_id=$1',[path[1]]);
    if(admins.rows.length){await client.query('ROLLBACK');return json({error:'Administrator accounts cannot be deleted here.'},400);}
+   await revokeAppleAccess(client,path[1]);
    await client.query('DELETE FROM session WHERE "userId"=$1',[path[1]]);
    await client.query('DELETE FROM account WHERE "userId"=$1',[path[1]]);
    await client.query('DELETE FROM verification WHERE identifier=$1 OR value=$2',[rows[0].email,path[1]]);

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
+import { revokeAppleAccess } from './apple';
 
 export class AccountDeletionError extends Error {
   constructor(message: string, public status: number, public code?: string) { super(message); }
@@ -25,6 +26,7 @@ export async function deleteOwnAccount(
     } else if (!users[0].isAnonymous && Date.now() - new Date(sessions[0].createdAt).getTime() > 5 * 60 * 1000) {
       throw new AccountDeletionError('Sign in again, then return here to delete your account.', 403, 'REAUTH_REQUIRED');
     }
+    await revokeAppleAccess(client, userId);
     await client.query('DELETE FROM session WHERE "userId"=$1', [userId]);
     await client.query('DELETE FROM account WHERE "userId"=$1', [userId]);
     await client.query('DELETE FROM verification WHERE identifier=$1 OR value=$2', [users[0].email, userId]);

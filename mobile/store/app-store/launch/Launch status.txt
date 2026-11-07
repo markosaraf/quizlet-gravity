@@ -4,7 +4,7 @@ Version 2.0.0 (14). App Store app ID 6831804079.
 NO APP STORE REVIEW SUBMISSION OR RELEASE PERFORMED.
 
 COMPLETED
-English listing text is prepared for iPhone/iPad and Mac Catalyst.
+English listing text is prepared for iPhone, iPad and Mac.
 App Store Connect contains iOS and macOS 2.0.0 drafts with manual release selected.
 Subtitle, Education / Games-Word categories and privacy-policy URL saved and verified.
 Review contact and guest-review instructions saved for both platforms.
@@ -23,13 +23,14 @@ No test email was sent.
 
 NOT YET READY FOR SUBMISSION
 1. Distribution builds: upload is complete for both platforms. The signed IPA and corrected Mac PKG are saved in Downloads/Quizlet Gravity – App Store Review/Signed builds. The earlier Mac package without sandbox entitlements was replaced in that review folder.
-2. Native verification: iPhone 17 Pro, iPhone 17 Pro Max and iPad 13-inch automated screenshot runs passed. The compact phone layout and native navigation-height fix are included in build 14 archives. Mac correction flow and game-over screen were checked with clean test input. A final installed distribution-build check remains outstanding. No owner-phone test was performed.
-3. Screenshots: reviewed native captures are saved in Downloads/Quizlet Gravity – App Store Review/Screenshots. Six 1206×2622 iPhone captures and seven 2752×2064 iPad captures are saved in the App Store Connect draft. Seven 1280×800 Mac captures are also saved in its App Store Connect draft. Additional large-iPhone captures are prepared locally. No level-up simulation has been uploaded. These are screenshot-flow checks, not a complete account/authentication regression test.
-4. Apple login: provider configuration is live, but a complete real Apple sign-in and deletion/revocation cycle remains to be tested.
-5. App Privacy: URL is saved. The data-collection questionnaire and labels remain incomplete. Use DATA-INVENTORY.md and confirm provider analytics/retention settings.
-6. Age rating, content rights and DSA trader declarations remain incomplete. Confirm these facts with the owner before declaring them.
-7. Review branding/third-party rights. The independence disclaimer is not proof of permission.
-8. Final owner review is required before submitting. Both platform builds are uploaded and attached. Neither platform has been submitted for review or released.
+2. Native verification: iPhone 17 Pro, iPhone 17 Pro Max and iPad 13-inch automated screenshot runs passed. The compact phone layout and native navigation-height fix are included in build 14 archives. Mac correction flow and game-over screen were checked with clean test input. The local Mac test app now opens at the usable desktop size (1792×1003 on this Mac), leaving the menu bar and Dock visible. This native startup sizing fix is not yet included in the uploaded build 14. A final installed distribution-build check remains outstanding. No owner-phone test was performed.
+3. Screenshots: reviewed native captures are saved in Downloads/Quizlet Gravity – App Store Review/Screenshots. Six 1206×2622 iPhone captures and seven 2752×2064 iPad captures are saved in the App Store Connect draft. Seven 1280×800 Mac captures are also saved in its App Store Connect draft. Seven additional 1320×2868 iPhone 17 Pro Max captures are uploaded and verified after reload in the large Dynamic Island section. iPad captures use the 13-inch iPad Pro (M5). The iPhone and iPad results captures show 3,570 points from actual play. The Mac result capture now shows 4,110 points and level 3 from actual play, replacing the zero-point image in the saved draft. No level-up simulation has been uploaded. These are screenshot-flow checks, not a complete account/authentication regression test.
+4. Image support: the requested Quizlet image imports, manual image attachments and image-answer gameplay remain unfinished. Complete these before final launch assets/builds.
+5. Apple login: provider configuration is live, but a complete real Apple sign-in and deletion/revocation cycle remains to be tested.
+6. App Privacy: URL is saved. The data-collection questionnaire and labels remain incomplete. Use DATA-INVENTORY.md and confirm provider analytics/retention settings.
+7. Age rating, content rights and DSA trader declarations remain incomplete. Confirm these facts with the owner before declaring them.
+8. Review branding/third-party rights. The independence disclaimer is not proof of permission.
+9. Final owner review is required before submitting. Both platform builds are uploaded and attached. Neither platform has been submitted for review or released.
 
 REFERENCES
 https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/

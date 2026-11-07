@@ -26,7 +26,7 @@ const json = (p,v) => fs.writeFileSync(p, JSON.stringify(v,null,2)+'\n');
   }
   const dir=path.join(assets,'AppIcon.appiconset');fs.mkdirSync(dir,{recursive:true});
   const images=[];
-  for(const [idiom, size, scales] of [['iphone',20,[2,3]],['iphone',29,[2,3]],['iphone',40,[2,3]],['iphone',60,[2,3]],['ipad',20,[1,2]],['ipad',29,[1,2]],['ipad',40,[1,2]],['ipad',76,[1,2]],['ipad',83.5,[2]],['ios-marketing',1024,[1]]]) {
+  for(const [idiom, size, scales] of [['iphone',20,[2,3]],['iphone',29,[2,3]],['iphone',40,[2,3]],['iphone',60,[2,3]],['ipad',20,[1,2]],['ipad',29,[1,2]],['ipad',40,[1,2]],['ipad',76,[1,2]],['ipad',83.5,[2]],['ios-marketing',1024,[1]],['mac',16,[1,2]],['mac',32,[1,2]],['mac',128,[1,2]],['mac',256,[1,2]],['mac',512,[1,2]]]) {
     for(const scale of scales){
       const filename=`${idiom}-${size}-${scale}.png`;
       await sharp(iosIconSource).resize(size*scale,size*scale).flatten().png().toFile(path.join(dir,filename));

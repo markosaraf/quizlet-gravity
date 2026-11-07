@@ -70,7 +70,9 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
             injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
         return
         #else
-        let mode = GCKeyboard.coalesced == nil ? "touch" : "keyboard"
+        // A keyboard changes input, not the space available on an iPhone screen.
+        // Keep compact controls on phones even when a hardware keyboard connects.
+        let mode = UIDevice.current.userInterfaceIdiom == .phone || GCKeyboard.coalesced == nil ? "touch" : "keyboard"
         // Native-to-page presentation only: no privileged message handler or JS bridge.
         let source = """
         if (location.protocol === 'https:' && ['www.quizletgravity.com', 'quizletgravity.com'].includes(location.hostname)) {

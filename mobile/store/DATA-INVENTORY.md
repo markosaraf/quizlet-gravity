@@ -1,6 +1,6 @@
 # Data inventory for store declarations
 
-Source review: 6 November 2026. Covers the native containers **and the live web content**, not only native SDKs. The website is loaded remotely and can change independently of the app. Revisit declarations whenever its behaviour or providers change.
+Source review: 7 November 2026. Covers the native containers **and the live web content**, not only native SDKs. The website is loaded remotely and can change independently of the app. Revisit declarations whenever its behaviour or providers change.
 
 | Data | Processing | Purpose / disclosure considerations |
 | --- | --- | --- |
@@ -11,12 +11,13 @@ Source review: 6 November 2026. Covers the native containers **and the live web 
 | Performance/timing metrics and technical environment | Website includes Vercel Speed Insights. | App performance/diagnostics. |
 | Support correspondence | If a user emails support, Gmail receives the message and email address. | Optional customer support. Email addresses are also collected for email/password registration and Google sign-in. |
 
-| Username, account email, verified status, password hash or Google identity, session identifiers | Stored in the production database. Passwords are hashed. Email and credentials are not returned by public set/leaderboard endpoints. | Authentication, recovery, email verification and account continuity. |
+| Username, account email, verified status, password hash or Google/Apple identity, session identifiers | Stored in the production database. Passwords are hashed. Email and credentials are not returned by public set/leaderboard endpoints. | Authentication, recovery, email verification and account continuity. |
 | Shared set contents, title, creator attribution and scores | Stored in the database. Shared sets, displayed usernames and leaderboard scores are public. Each user has one best score per set. | Sharing, search and leaderboards. |
 | Verification and recovery emails | Sent from quizletgravity@gmail.com through Gmail OAuth in response to player requests. | Account confirmation and password recovery. |
+| Reports, reported content identifiers and reasons, personal blocked-user lists | Stored in the database. Reports are visible to administrators, and blocking preferences belong to the reporting player. | User safety, filtering and moderation. |
 | Administrator moderation actions | Recorded in a restricted server-side audit log. | Abuse prevention and moderation. |
 
-There is no added advertising SDK, purchase flow, native location access, contacts access, camera, microphone, tracking permission or privileged JavaScript bridge. User accounts are supported. Administrator deletion removes login credentials and sessions, frees the email/username, and retains leaderboard scores under “Deleted user”. Review account-deletion requirements before store submission. Do not infer that the service collects no data from these facts.
+There is no added advertising SDK, purchase flow, native location access, contacts access, camera, microphone, tracking permission or privileged JavaScript bridge. User accounts are supported. Self-service and administrator deletion remove login credentials and sessions, free the email/username, and retain leaderboard scores and shared sets under “Deleted user”. Apple authorization is revoked before deletion when applicable. Do not infer that the service collects no data from these facts.
 
 The iOS privacy manifest declares no native tracking and no required-reason API usage by the native Swift source. It is **not a replacement for App Store Connect App Privacy labels**. Website processing must be included in the labels. Android INTERNET permission alone likewise does not describe the entire service's data handling.
 

@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "build": "14",
+  "bundleId": "com.quizletgravity.ios",
+  "platforms": [
+    "iOS (iPhone and iPad)",
+    "macOS (Mac Catalyst: Intel and Apple silicon)"
+  ],
+  "primaryCategory": "Education",
+  "secondaryCategory": "Games / Word",
+  "release": "Manual release; not submitted",
+  "locale": "en-US",
+  "fields": {
+    "name": "Quizlet Gravity",
+    "subtitle": "Flashcards. Asteroids. Scores.",
+    "promotional-text": "Create, import and share study sets. Type answers to stop falling asteroids, build your streak and challenge friends on each set’s leaderboard.",
+    "keywords": "flashcards,study,vocabulary,typing,revision,learning,language,practice,asteroids,quiz",
+    "description": "Turn your study sets into an asteroid-defending typing game.\n\nType the correct answer before an asteroid reaches your planet. Practise vocabulary, facts and more with your own terms and definitions.\n\nFIND OR CREATE YOUR NEXT SET\nBrowse and search shared sets, import a public Quizlet set, write your own cards or upload a CSV. Share a set link so friends can study and compete on the same leaderboard.\n\nPLAY YOUR WAY\nChoose from five difficulty modes. Answer with terms, definitions or both, and focus on starred cards when you want extra practice.\n\nLEARN FROM MISSED ANSWERS\nMiss an asteroid and practise typing the correct answer. Watch out for red asteroids: missing the same term twice ends the game.\n\nCHALLENGE YOUR PERSONAL BEST\nBuild a streak and earn points. Shared-set leaderboards keep your highest score for each set. Play with a guest username or create an account.\n\nON iPHONE, iPAD AND MAC\nPlay with touch controls or a keyboard. An internet connection is required.\n\nQuizlet Gravity is an independent project and is not affiliated with, endorsed by or sponsored by Quizlet.",
+    "support-url": "https://www.quizletgravity.com/",
+    "marketing-url": "https://www.quizletgravity.com/",
+    "privacy-policy-url": "https://www.quizletgravity.com/privacy",
+    "copyright": "2026 Marko Sarafijanovic",
+    "review-notes": "Quizlet Gravity is a flashcard-based typing game for iPhone, iPad and Mac Catalyst. It requires an internet connection and loads the production service at https://www.quizletgravity.com/.\n\nTo review without registering:\n1. Open Sets and select a shared set, or open Create set and choose Write your own.\n2. For a local example, enter one pair per line: le soleil, sun / la lune, moon / le ciel, sky. Use actual line breaks between pairs.\n3. Select Start studying, Get Started, choose the options, then Let's go and Start Game.\n4. Type the answer shown by the chosen answer direction. Missing a term opens the correct-answer typing step. Missing the same term twice ends the game.\n\nFor shared-set leaderboards, choose a guest username, open a shared set and select Play this set. Account registration uses email verification. Google and Sign in with Apple are also offered. Account deletion is available from Your account → Delete account. Deleted accounts retain anonymised leaderboard scores as Deleted user. No purchases or subscriptions are sold in the app.\n\nThe native Mac app is built with Mac Catalyst for Intel and Apple silicon. It uses a desktop layout and physical keyboard input. CSV import uses the system file picker.\n\nReview contact: quizletgravity@gmail.com\n\nUser safety: shared sets and leaderboard entries offer reporting and personal blocking. Blocked users can be managed from Your account. Administrators review reports in the moderation queue."
+  }
+}

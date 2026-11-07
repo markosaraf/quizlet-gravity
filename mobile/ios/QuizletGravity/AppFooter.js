@@ -35,8 +35,8 @@
       }
       html[data-gravity-input] .gravity-root:has(> .GravityModeLayout) {
         position: fixed;
-        inset: 0;
-        height: 100%;
+        inset: var(--gravity-native-nav-height, 0px) 0 0;
+        height: calc(100% - var(--gravity-native-nav-height, 0px));
         min-height: 0;
         display: flex;
         flex-direction: column;
@@ -70,6 +70,27 @@
       }
     `;
     document.head.appendChild(style);
+  }
+  // The community navigation lives outside the game root. Reserve its actual
+  // height, including the two-row phone layout, instead of covering game controls.
+  const observeNavigation = () => {
+    const nav = document.querySelector('.community-nav');
+    if (!nav) return false;
+    const update = () => document.documentElement.style.setProperty(
+      '--gravity-native-nav-height', `${nav.getBoundingClientRect().height}px`
+    );
+    update();
+    new ResizeObserver(update).observe(nav);
+    return true;
+  };
+  if (!window.__gravityNativeNavigationObserver) {
+    window.__gravityNativeNavigationObserver = true;
+    if (!observeNavigation()) {
+      const observer = new MutationObserver(() => {
+        if (observeNavigation()) observer.disconnect();
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
   }
   document.getElementById('gravity-native-support')?.remove();
 })();

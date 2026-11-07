@@ -11,12 +11,13 @@ end
   target.resources_build_phase.add_file_reference(group.new_file(file))
 end
 group.new_file('Info.plist')
+group.new_file('Mac.entitlements')
 target.build_configurations.each do |config|
   config.build_settings.merge!({
     'PRODUCT_BUNDLE_IDENTIFIER' => 'com.quizletgravity.ios',
     'PRODUCT_NAME' => 'QuizletGravity',
-    'MARKETING_VERSION' => '1.2.7',
-    'CURRENT_PROJECT_VERSION' => '12',
+    'MARKETING_VERSION' => '2.0.0',
+    'CURRENT_PROJECT_VERSION' => '14',
     'INFOPLIST_FILE' => 'QuizletGravity/Info.plist',
     'SWIFT_VERSION' => '5.0',
     'TARGETED_DEVICE_FAMILY' => '1,2,6',
@@ -26,6 +27,9 @@ target.build_configurations.each do |config|
     'GENERATE_INFOPLIST_FILE' => 'NO',
     'IPHONEOS_DEPLOYMENT_TARGET' => '16.0',
     'SUPPORTS_MACCATALYST' => 'YES',
+    'DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER' => 'NO',
+    'CODE_SIGN_ENTITLEMENTS[sdk=macosx*]' => 'QuizletGravity/Mac.entitlements',
+    'DEVELOPMENT_TEAM' => 'K2273P6PJC',
     'LD_RUNPATH_SEARCH_PATHS' => ['$(inherited)', '@executable_path/Frameworks']
   })
 end

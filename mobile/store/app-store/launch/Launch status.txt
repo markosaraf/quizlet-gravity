@@ -1,0 +1,36 @@
+QUIZLET GRAVITY — APP STORE PREPARATION
+Updated 7 November 2026
+Version 2.0.0 (14). App Store app ID 6831804079.
+NO APP STORE REVIEW SUBMISSION OR RELEASE PERFORMED.
+
+COMPLETED
+English listing text is prepared for iPhone/iPad and Mac Catalyst.
+App Store Connect contains iOS and macOS 2.0.0 drafts with manual release selected.
+Subtitle, Education / Games-Word categories and privacy-policy URL saved and verified.
+Review contact and guest-review instructions saved for both platforms.
+1024px store icon and complete Mac app icon sizes prepared.
+One bundle identifier for universal purchase: com.quizletgravity.ios.
+iOS and universal Mac Catalyst release archives compiled without distribution signing.
+Website/game-over heading always says Congratulations!.
+Self-service deletion is live. Scores and shared sets remain attributed to Deleted user.
+Sign in with Apple configuration and implementation deployed alongside Google login.
+Player reporting, personal blocking and administrator report queue deployed and tested.
+Account email templates deployed with galaxy/asteroids behind a readable card and Q logo.
+No test email was sent.
+
+NOT YET READY FOR SUBMISSION
+1. Signing/export: Xcode's Apple account session has expired. The owner must sign back in under Xcode Settings > Accounts. Export failed because valid distribution signing/provisioning was unavailable. Existing unsigned archives are not uploadable packages.
+2. Native verification: iPhone 17 Pro, iPhone 17 Pro Max and iPad 13-inch automated screenshot runs passed. The compact phone layout and native navigation-height fix are included in build 14 archives. Mac correction flow and game-over screen were checked with clean test input. Repeat final signed-device checks after export. No owner-phone test was performed.
+3. Screenshots: reviewed native captures are saved in Downloads/Quizlet Gravity – App Store Review/Screenshots. Six 1206×2622 iPhone captures and seven 2752×2064 iPad captures are saved in the App Store Connect draft. Seven 1280×800 Mac captures are also saved in its App Store Connect draft. Additional large-iPhone captures are prepared locally. No level-up simulation has been uploaded. These are screenshot-flow checks, not a complete account/authentication regression test.
+4. Apple login: provider configuration is live, but a complete real Apple sign-in and deletion/revocation cycle remains to be tested.
+5. App Privacy: URL is saved. The data-collection questionnaire and labels remain incomplete. Use DATA-INVENTORY.md and confirm provider analytics/retention settings.
+6. Age rating, content rights and DSA trader declarations remain incomplete. Confirm these facts with the owner before declaring them.
+7. Review branding/third-party rights. The independence disclaimer is not proof of permission.
+8. Final owner review is required before submitting. No build has been uploaded and neither platform has been submitted.
+
+REFERENCES
+https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/
+https://developer.apple.com/support/universal-purchase/
+https://developer.apple.com/support/offering-account-deletion-in-your-app/
+https://developer.apple.com/app-store/review/guidelines/
+https://developer.apple.com/app-store/app-privacy-details/

@@ -29,6 +29,7 @@ target.build_configurations.each do |config|
     'SUPPORTS_MACCATALYST' => 'YES',
     'DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER' => 'NO',
     'CODE_SIGN_ENTITLEMENTS[sdk=macosx*]' => 'QuizletGravity/Mac.entitlements',
+    'ENABLE_APP_SANDBOX[sdk=macosx*]' => 'YES',
     'DEVELOPMENT_TEAM' => 'K2273P6PJC',
     'LD_RUNPATH_SEARCH_PATHS' => ['$(inherited)', '@executable_path/Frameworks']
   })

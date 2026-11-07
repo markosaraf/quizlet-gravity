@@ -13,7 +13,7 @@ import { StartView, GameOverView, type LeaderboardEntry } from './StartScreens';
 import { ImportScreen } from './ImportScreen';
 import { setGameStarted } from './LandingSections';
 
-export function GravityApp({shared}:{shared?:{set:GravitySet;terms:GravityTerm[]}}) {
+export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean}) {
   const runRef=useRef<string|null>(null);
   const finishedRun=useRef<string|null>(null);
   const [scoreMessage,setScoreMessage]=useState('');
@@ -73,7 +73,7 @@ export function GravityApp({shared}:{shared?:{set:GravitySet;terms:GravityTerm[]
     setLastRecordedKey(null);
   }, []);
 
-  useEffect(()=>{if(shared)handleStartSet(shared.set,shared.terms);},[shared,handleStartSet]);
+  useEffect(()=>{const initial=shared??localGame;if(initial){handleStartSet(initial.set,initial.terms);if(autoPlay){gravityStore.changeDifficultyLevel('BEGINNER');gravityStore.changeShowingSide('word');gravityStore.startGame();}}return()=>gravityStore.dispose();},[shared,localGame,autoPlay,handleStartSet]);
   const beginGame=async(restart=false)=>{
     if(startingRef.current)return;
     startingRef.current=true;setStarting(true);setScoreMessage('');
@@ -153,13 +153,13 @@ export function GravityApp({shared}:{shared?:{set:GravitySet;terms:GravityTerm[]
   }, [started, data]);
 
   const handleNewSet = useCallback(() => {
-    if (shared) { window.location.assign("/create-set"); return; }
+    if (shared || localGame) { window.location.assign("/create-set"); return; }
     gravityStore.dispose();
     setStarted(false);
     setLeaderboard([]);
     setCurrentTryIndex(-1);
     setLastRecordedKey(null);
-  }, [shared]);
+  }, [shared,localGame]);
 
   // Mirror the `started` flag into the LandingSections store: while a
   // game session is running, the "How to play" + FAQ landing sections
@@ -211,7 +211,7 @@ export function GravityApp({shared}:{shared?:{set:GravitySet;terms:GravityTerm[]
               onMissed={(id) => gravityStore.missTerm(id, false)}
               onType={(v) => gravityStore.updateMainTypingPromptValue(v)}
               onGrade={() => gravityStore.gradeAnswer()}
-              onCopyAnswer={(id, answer) => gravityStore.checkCopiedAnswer(id, answer)}
+              onCopyAnswer={(id, answer, acknowledgeImage) => gravityStore.checkCopiedAnswer(id, answer, acknowledgeImage)}
               onPlanetLoaded={(level) => gravityStore.markPlanetLoaded(level)}
               windowWidth={size.w || 800}
               windowHeight={size.h || 600}

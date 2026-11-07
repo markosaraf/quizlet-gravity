@@ -23,7 +23,7 @@ interface Props {
   onMissed: (liveTermId: string) => void;
   onType: (value: string) => void;
   onGrade: () => void;
-  onCopyAnswer: (liveTermId: string, answer: string) => void;
+  onCopyAnswer: (liveTermId: string, answer: string, acknowledgeImage?: boolean) => void;
   onPlanetLoaded: (level: number) => void;
   windowWidth: number;
   windowHeight: number;

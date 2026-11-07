@@ -27,7 +27,8 @@ function AsteroidBase({
   onMissed,
 }: Props) {
   const text = term[showingSide] ?? '';
-  const hasImage = showingSide === 'definition' && !!term._imageUrl;
+  const image = showingSide === 'definition' ? term._imageUrl : term._wordImageUrl;
+  const hasImage = !!image;
   const maxLen = getMaxTextLength(promptLang, hasImage);
   const termSize = getTermSize(Math.min(text.length, maxLen), maxLen, hasImage);
   const textLength = Math.min(text.length, maxLen);
@@ -91,10 +92,10 @@ function AsteroidBase({
           {hasImage ? (
             <div className="dvzmxm1">
               <img
-                alt={term.definition}
+                alt={text || "Study image"}
                 className="i13a2vzw"
                 data-testid="GravityTerm-image"
-                src={term._imageUrl}
+                src={image}
               />
             </div>
           ) : null}

@@ -6,6 +6,7 @@ export interface GravityTerm {
   word: string;
   definition: string;
   _imageUrl?: string;
+  _wordImageUrl?: string;
   starred?: boolean;
 }
 

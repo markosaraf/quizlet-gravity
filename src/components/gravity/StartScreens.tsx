@@ -135,7 +135,7 @@ export function OptionsView({
                     type="button"
                     role="radio"
                     aria-checked={answerSideValue === 'word'}
-                    disabled={data.hasPhotoOnlyDefinitions}
+
                     className={`GravityUIToggle-option ${answerSideValue === 'word' ? 'is-selected' : ''}`}
                     onClick={() => onSideChange('definition')}
                   >
@@ -145,7 +145,7 @@ export function OptionsView({
                     type="button"
                     role="radio"
                     aria-checked={answerSideValue === 'definition'}
-                    disabled={data.hasPhotoOnlyDefinitions}
+
                     className={`GravityUIToggle-option ${answerSideValue === 'definition' ? 'is-selected' : ''}`}
                     onClick={() => onSideChange('word')}
                   >
@@ -155,7 +155,7 @@ export function OptionsView({
                     type="button"
                     role="radio"
                     aria-checked={answerSideValue === 'random'}
-                    disabled={data.hasPhotoOnlyDefinitions}
+
                     className={`GravityUIToggle-option ${answerSideValue === 'random' ? 'is-selected' : ''}`}
                     onClick={() => onSideChange('random')}
                   >

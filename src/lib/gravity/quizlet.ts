@@ -13,7 +13,7 @@ export class QuizletImportError extends Error {
   }
 }
 
-const UNAVAILABLE = "Couldn't read the complete Quizlet set. Make sure it is public, or paste the terms below.";
+const UNAVAILABLE = "Couldn't read the complete Quizlet set. Make sure it is public, or use Create set → Write your own.";
 const MAX_RESPONSE_BYTES = 12 * 1024 * 1024;
 
 async function readResponse(response: Response): Promise<string> {
@@ -52,7 +52,7 @@ export async function fetchQuizletSet(rawUrl: string, options: FetchOptions = {}
     (process.env.NODE_ENV !== 'production' && process.env.FIRECRAWL_ALLOW_KEYLESS === 'true');
   if (!apiKey && !allowKeyless) {
     throw new QuizletImportError('not_configured', 503,
-      'Link import is temporarily unavailable. You can still paste your terms below or upload a file.');
+      'Link import is temporarily unavailable. You can still use Create set → Write your own or upload a file.');
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 50_000);
@@ -68,7 +68,7 @@ export async function fetchQuizletSet(rawUrl: string, options: FetchOptions = {}
       if (response.status === 429 || response.status === 402) {
         await response.body?.cancel();
         throw new QuizletImportError('provider_limit', 429,
-          'Link imports have reached their current limit. Please try later, or paste your terms below.');
+          'Link imports have reached their current limit. Please try later, or use Create set → Write your own.');
       }
       if (!response.ok) {
         await response.body?.cancel();
@@ -127,7 +127,7 @@ export async function fetchQuizletSet(rawUrl: string, options: FetchOptions = {}
     if (error instanceof QuizletImportError) throw error;
     if (controller.signal.aborted) {
       throw new QuizletImportError('provider_timeout', 504,
-        'The set took too long to load. Please try again, or paste your terms below.');
+        'The set took too long to load. Please try again, or use Create set → Write your own.');
     }
     throw new QuizletImportError('provider_response_failed', 502, UNAVAILABLE);
   } finally {

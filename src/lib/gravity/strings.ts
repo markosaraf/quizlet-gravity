@@ -70,7 +70,7 @@ export const STRINGS = {
     leaderboard_title: 'Session leaderboard',
     you_label: 'you',
     play_again_button: 'Play again',
-    new_set_button: 'New set',
+    new_set_button: 'New game',
   },
   error_no_available_terms: {
     heading: 'Ran out of terms',
@@ -112,11 +112,11 @@ export const STRINGS = {
       success: 'Imported {count} terms from “{title}”.',
       skipped_note: ' {count} card(s) skipped (missing text).',
       imported_hint: 'Edit imported cards in the table to preserve line breaks and tabs. Editing the text above replaces the cards using the paste format.',
-      manual_fallback: 'You can paste the terms below or upload a CSV file.',
+      manual_fallback: 'You can use Create game → Write your own or upload a CSV file.',
       error_no_url: 'Paste a Quizlet set link first.',
       error_generic:
         'Couldn’t import that Quizlet set right now. Please try again in a moment.',
-      error_timeout: 'The import took too long and was stopped. Try again or paste the terms below.',
+      error_timeout: 'The import took too long and was stopped. Try again or use Create game → Write your own.',
       progress_label: 'Fetching your set from Quizlet…',
       progress_done: 'Done!',
       progress_hint: 'This usually takes a few seconds — large sets can take up to a minute.',

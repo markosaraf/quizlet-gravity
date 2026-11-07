@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {randomUUID} from 'node:crypto';
 import {auth} from '@/lib/community/auth';
+import {tutorialEnabled} from '@/lib/community/settings';
 import {db} from '@/lib/community/db';
 import {revokeAppleAccess} from '@/lib/community/apple';
 import {isAdmin} from '@/lib/community/admin';
@@ -14,6 +15,7 @@ export async function GET(request:NextRequest,{params}:Context){
   const {path}=await params;
   if(path.join('/')==='status')return json({admin});
   if(!admin)return json({error:'Administrator access required.'},403);
+  if(path.join('/')==='settings')return json({tutorialEnabled:await tutorialEnabled()});
   const offset=Math.max(0,Math.min(100000,Number(request.nextUrl.searchParams.get('offset'))||0));
   const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);
   const pattern='%'+q.replace(/[\\%_]/g,'\\$&')+'%';
@@ -23,7 +25,7 @@ export async function GET(request:NextRequest,{params}:Context){
   }
   if(path.join('/')==='users'){
    const {rows:counts}=await db.query(`SELECT count(*)::int AS total,count(*) FILTER(WHERE NOT coalesce(u."isAnonymous",false))::int AS accounts,count(*) FILTER(WHERE u."isAnonymous")::int AS guests FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id)`);
-   const {rows}=await db.query(`SELECT u.id,coalesce(u."displayUsername",u.username,u.name) AS username,u."isAnonymous" AS guest,u."createdAt" AS created_at,EXISTS(SELECT 1 FROM community_admins a WHERE a.user_id=u.id) AS admin FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id) AND ($1='' OR coalesce(u."displayUsername",u.username,u.name) ILIKE $2 ESCAPE '\\') ORDER BY u."createdAt" DESC,u.id LIMIT 51 OFFSET $3`,[q,pattern,offset]);
+   const {rows}=await db.query(`SELECT u.id,coalesce(u."displayUsername",u.username,u.name) AS username,CASE WHEN coalesce(u."isAnonymous",false) THEN NULL ELSE u.email END AS email,u."isAnonymous" AS guest,u."createdAt" AS created_at,EXISTS(SELECT 1 FROM community_admins a WHERE a.user_id=u.id) AS admin FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id) AND ($1='' OR coalesce(u."displayUsername",u.username,u.name) ILIKE $2 ESCAPE '\\') ORDER BY u."createdAt" DESC,u.id LIMIT 51 OFFSET $3`,[q,pattern,offset]);
    return json({users:rows.slice(0,50),hasMore:rows.length>50,...counts[0]});
   }
   if(path.join('/')==='sets'){
@@ -69,6 +71,14 @@ export async function POST(request:NextRequest,{params}:Context){
  const session=await auth.api.getSession({headers:request.headers});
  if(!session||session.user.isAnonymous||!await isAdmin(session.user.id))return json({error:'Administrator access required.'},403);
  const {path}=await params;
+ if(path.join('/')==='settings'){
+  try{
+   const input=await request.json();
+   if(typeof input.tutorialEnabled!=='boolean')return json({error:'Choose on or off.'},400);
+   await db.query("INSERT INTO community_settings(key,enabled) VALUES('tutorial',$1) ON CONFLICT(key) DO UPDATE SET enabled=EXCLUDED.enabled,updated_at=now()",[input.tutorialEnabled]);
+   return json({tutorialEnabled:input.tutorialEnabled});
+  }catch{return json({error:'Unable to save tutorial setting.'},500);}
+ }
  if(path.length!==3||path[0]!=='reports'||path[2]!=='resolve'||!/^[0-9a-f-]{36}$/i.test(path[1]))return json({error:'Not found'},404);
  try{await db.query("UPDATE content_reports SET status='resolved',resolved_at=now(),resolved_by=$2 WHERE id=$1",[path[1],session.user.id]);return json({saved:true});}
  catch{return json({error:'Unable to resolve report.'},500);}

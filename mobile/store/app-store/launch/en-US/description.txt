@@ -1,20 +1,19 @@
-Turn your study sets into an asteroid-defending typing game.
+Learn by playing games. Challenge friends on the leaderboard.
 
-Type the correct answer before an asteroid reaches your planet. Practise vocabulary, facts and more with your own terms and definitions.
+Try the example game with one tap, choose a shared game, or search by title or creator. Type answers before falling asteroids reach your planet.
 
-FIND OR CREATE YOUR NEXT SET
-Browse and search shared sets, import a public Quizlet set, write your own cards or upload a CSV. Share a set link so friends can study and compete on the same leaderboard.
+CREATE, IMPORT & SHARE
+Create a game with your own terms, answers and images, or upload a CSV. Import a public Quizlet set, including supported images, or edit it to make your own game. Share a game link with friends.
 
 PLAY YOUR WAY
-Choose from five difficulty modes. Answer with terms, definitions or both, and focus on starred cards when you want extra practice.
+Choose your difficulty and practise with terms, definitions or both. Star cards to focus on the ones you want to learn.
 
-LEARN FROM MISSED ANSWERS
-Miss an asteroid and practise typing the correct answer. Watch out for red asteroids: missing the same term twice ends the game.
+LEARN FROM MISTAKES
+Miss an asteroid and practise the correct answer. Watch out for red asteroids: missing one ends the game.
 
-CHALLENGE YOUR PERSONAL BEST
-Build a streak and earn points. Shared-set leaderboards keep your highest score for each set. Play with a guest username or create an account.
+CHALLENGE FRIENDS
+Play with a guest username or an account. Your highest score for each shared game appears on its leaderboard.
 
-ON iPHONE, iPAD AND MAC
-Play with touch controls or a keyboard. An internet connection is required.
+An internet connection is required. Quizlet imports depend on the source set being public and accessible.
 
 Quizlet Gravity is an independent project and is not affiliated with, endorsed by or sponsored by Quizlet.

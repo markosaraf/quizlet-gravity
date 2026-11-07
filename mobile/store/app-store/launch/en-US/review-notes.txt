@@ -1,12 +1,12 @@
 Quizlet Gravity is a flashcard-based typing game for iPhone, iPad and Mac. It requires an internet connection and loads the production service at https://www.quizletgravity.com/.
 
 To review without registering:
-1. Open Sets and select a shared set, or open Create set and choose Write your own.
-2. For a local example, enter one pair per line: le soleil, sun / la lune, moon / le ciel, sky. Use actual line breaks between pairs.
-3. Select Start studying, Get Started, choose the options, then Let's go and Start Game.
-4. Type the answer shown by the chosen answer direction. Missing a term opens the correct-answer typing step. Missing the same term twice ends the game.
+1. Select Try Example Game on the landing page. It starts immediately and requires no account.
+2. Type answers to the arithmetic questions on the asteroids. Exit returns to the games page.
+3. Alternatively choose a shared game, create your own game, or import a public Quizlet set.
+4. Missing a term opens the correct-answer step. Missing a red asteroid ends the game.
 
-For shared-set leaderboards, choose a guest username, open a shared set and select Play this set. Account registration uses email verification. Google and Sign in with Apple are also offered. Account deletion is available from Your account → Delete account. Deleted accounts retain anonymised leaderboard scores as Deleted user. No purchases or subscriptions are sold in the app.
+For shared-set leaderboards, choose a guest username, open a shared set and select Play this game. Account registration uses email verification. Google and Sign in with Apple are also offered. Account deletion is available from Your account → Delete account. Deleted accounts retain anonymised leaderboard scores as Deleted user. No purchases or subscriptions are sold in the app.
 
 The Mac app supports Intel and Apple silicon. It uses a desktop layout and physical keyboard input. CSV import uses the system file picker.
 

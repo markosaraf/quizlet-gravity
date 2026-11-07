@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import {CardImagePicker} from './CardImagePicker';
 import {canonicalCards} from '@/lib/community/set-content';
 import { quizletPasteValue } from '@/lib/gravity/quizlet-share-input';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -47,7 +48,7 @@ export function ImportScreen({ onStart }: Props) {
   // Structured cards remain intact until the user replaces the pasted text/file.
   const [structuredImport, setStructuredImport] = useState(false);
   const [terms, setTerms] = useState<GravityTerm[]>([]);
-  const shareCards=useMemo(()=>terms.map(t=>({term:t.word.trim(),definition:t.definition.trim()})).filter(t=>t.term&&t.definition),[terms]);
+  const shareCards=useMemo(()=>terms.map(t=>({term:t.word.trim(),definition:t.definition.trim(),...(t._wordImageUrl?{termImage:t._wordImageUrl}:{}),...(t._imageUrl?{definitionImage:t._imageUrl}:{})})).filter(t=>(t.term||t.termImage)&&(t.definition||t.definitionImage)),[terms]);
 
   const previewRef = useRef<HTMLDivElement>(null);
   const resizePreviewFields = useCallback(() => {
@@ -264,7 +265,7 @@ export function ImportScreen({ onStart }: Props) {
     // filter out empty rows so the user can leave blanks while editing
     const cleaned = terms
       .map((t) => ({ ...t, word: t.word.trim(), definition: t.definition.trim() }))
-      .filter((t) => t.word !== '' || t.definition !== '');
+      .filter((t) => (t.word !== '' || t._wordImageUrl) && (t.definition !== '' || t._imageUrl));
     if (cleaned.length < 2) {
       setError(
         cleaned.length === 0
@@ -317,6 +318,7 @@ export function ImportScreen({ onStart }: Props) {
   }, []);
 
   const addBlankTerm = useCallback(() => {
+    setStructuredImport(true);
     setTerms((prev) => [
       ...prev,
       {
@@ -510,6 +512,7 @@ export function ImportScreen({ onStart }: Props) {
               </>
             ) : null}
 
+            {!visibleTerms.length && <button type="button" className="UIButton UIButton--default" onClick={addBlankTerm}>Add cards with text or images</button>}
             {visibleTerms.length > 0 ? (
               <div className="GravityImportPreview" aria-live="polite">
                 <div className="GravityImportPreview-header">
@@ -541,7 +544,7 @@ export function ImportScreen({ onStart }: Props) {
                   {visibleTerms.map((t, i) => (
                     <div key={t.id} className="GravityImportPreview-row">
                       <span className="GravityImportPreview-index">{i + 1}</span>
-                      <textarea
+                      <div className="GravityImportPreview-side"><textarea
                         className="GravityImportPreview-input GravityImportPreview-input--term"
                         rows={1}
                         value={t.word}
@@ -549,7 +552,8 @@ export function ImportScreen({ onStart }: Props) {
                         onChange={(e) => updateTermWord(t.id, e.target.value)}
                         aria-label={`Row ${i + 1} term`}
                       />
-                      <textarea
+                      <CardImagePicker label={`Row ${i + 1} term`} image={t._wordImageUrl} onChange={image=>{setStructuredImport(true);setTerms(prev=>prev.map(row=>row.id===t.id?{...row,_wordImageUrl:image}:row));}} /></div>
+                      <div className="GravityImportPreview-side"><textarea
                         className="GravityImportPreview-input GravityImportPreview-input--definition"
                         rows={1}
                         value={t.definition}
@@ -557,6 +561,7 @@ export function ImportScreen({ onStart }: Props) {
                         onChange={(e) => updateTermDefinition(t.id, e.target.value)}
                         aria-label={`Row ${i + 1} definition`}
                       />
+                      <CardImagePicker label={`Row ${i + 1} definition`} image={t._imageUrl} onChange={image=>{setStructuredImport(true);setTerms(prev=>prev.map(row=>row.id===t.id?{...row,_imageUrl:image}:row));}} /></div>
                       <button
                         type="button"
                         className={`GravityImportPreview-starRow ${t.starred ? 'is-starred' : ''}`}
@@ -593,7 +598,7 @@ export function ImportScreen({ onStart }: Props) {
               <button
                 className="UIButton UIButton--hero"
                 onClick={handleStart}
-                disabled={terms.length < 2 || (!!original && original.snapshot === canonicalCards(shareCards))}
+                disabled={shareCards.length < 2 || (!!original && original.snapshot === canonicalCards(shareCards))}
               >
                 {STRINGS.import.start_button}
               </button>

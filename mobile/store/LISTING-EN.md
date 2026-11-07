@@ -1,32 +1,37 @@
 # English store copy
 
-Name: Quizlet Gravity
+Name: Quizlet Gravity: Play & Learn
 
 Google Play short description (80 characters maximum):
-Import Quizlet sets and turn your flashcards into a typing game.
+Learn by playing games. Share flashcards and challenge friends on leaderboards.
 
 App Store subtitle (30 characters maximum):
-Flashcards meet a typing game
+Flashcards & leaderboards
 
 Description:
 
-Import a public Quizlet set by pasting its link, paste your terms and definitions, or choose a CSV/TSV text file. Defend your planet from falling asteroids by typing the correct answers.
+Learn by playing games. Challenge friends on the leaderboard.
 
-Bring your own learning material:
-• Import a public Quizlet set by pasting its link, including links copied from the Quizlet sharing menu.
-• Paste terms and definitions, or choose a CSV/TSV text file.
-• Review and edit your cards before playing.
-• Practise vocabulary, facts and other question-and-answer pairs.
+Try the example game with one tap, choose a shared game, or search by title or creator. Type answers before falling asteroids reach your planet.
 
-Browse searchable shared sets, share your own set link and compete on its leaderboard. Your highest score is kept once per set. Play with a guest username, or create an account with verified email/password or Google sign-in. Local custom games and preferences also use the app's website storage. An internet connection is needed to load the game and import public sets. Import availability depends on the source set being public and accessible. If an import cannot be read, you can paste your terms or select a local file instead.
+CREATE, IMPORT & SHARE
+Create a game with your own terms, answers and images, or upload a CSV. Import a public Quizlet set, including supported images, or edit it to make your own game. Share a game link with friends.
 
-Quizlet Gravity is an independent project and is not an official Quizlet app.
+PLAY YOUR WAY
+Choose your difficulty and practise with terms, definitions or both. Star cards to focus on the ones you want to learn.
+
+LEARN FROM MISTAKES
+Miss an asteroid and practise the correct answer. Watch out for red asteroids: missing one ends the game.
+
+CHALLENGE FRIENDS
+Play with a guest username or an account. Your highest score for each shared game appears on its leaderboard.
+
+An internet connection is required. Quizlet imports depend on the source set being public and accessible.
+
+Quizlet Gravity is an independent project and is not affiliated with, endorsed by or sponsored by Quizlet.
 
 Support: quizletgravity@gmail.com
 Privacy: https://www.quizletgravity.com/privacy
 
-App Store keywords (100 characters maximum):
-flashcards,vocabulary,typing,study,revision,learning,words,practice,quiz
-
-Version notes:
-Searchable shared sets, creator attribution, accounts, email confirmation and recovery, Google sign-in, personal best scores and community moderation.
+App Store keywords:
+flashcards,study,vocabulary,typing,revision,learning,language,practice,asteroids,quiz

@@ -275,10 +275,11 @@ export class GravityStore {
     this.change();
   }
 
-  checkCopiedAnswer(liveTermId: string, answer: string) {
-    if (!this.data || this.data.gameState !== GAME_STATES.COPY_ANSWER || !this.data.termBeingCopied) return;
+  checkCopiedAnswer(liveTermId: string, answer: string, acknowledgeImage = false) {
+    if (!this.data || this.data.gameState !== GAME_STATES.COPY_ANSWER || this.data.termBeingCopied !== liveTermId) return;
     const correct = this._getCorrectAnswer(liveTermId);
     if (
+      this._hasImageOnlyAnswer(liveTermId) ? acknowledgeImage :
       grade(correct, answer, {
         acceptsPartialAnswer: this.data.acceptsPartialAnswer,
       }).isCorrect
@@ -333,9 +334,8 @@ export class GravityStore {
       // options screen, drop any term that isn't flagged as starred.
       if (d.selectedOnly && !term.starred) return false;
       return (
-        term.word !== '' &&
-        (term.definition !== '' || !!term._imageUrl) &&
-        (showing !== 'word' || term.definition !== '')
+        (term.word !== '' || !!term._wordImageUrl) &&
+        (term.definition !== '' || !!term._imageUrl)
       );
     });
   }
@@ -380,7 +380,16 @@ export class GravityStore {
     return this._getLangFor(luid, this._getAnswerSide(liveTermId));
   }
 
+  _hasImageOnlyAnswer(liveTermId: string): boolean {
+    const term = this.data?.terms[this._getTermLuidFromLiveTermId(liveTermId)];
+    if (!term) return false;
+    return this._getAnswerSide(liveTermId) === 'word'
+      ? !term.word.trim() && !!term._wordImageUrl
+      : !term.definition.trim() && !!term._imageUrl;
+  }
+
   _isCorrectAnswerForTerm(value: string, liveTermId: string) {
+    if (this._hasImageOnlyAnswer(liveTermId)) return {isCorrect: false};
     const correct = this._getCorrectAnswer(liveTermId);
     return grade(correct, value, {
       acceptsPartialAnswer: this.data?.acceptsPartialAnswer,
@@ -752,6 +761,7 @@ export class GravityStore {
       side =
         term.definition === ''
           ? 'definition'
+          : term.word === '' ? 'word'
           : Math.random() >= 0.5
             ? 'word'
             : 'definition';

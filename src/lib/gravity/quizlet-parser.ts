@@ -2,9 +2,13 @@
  * This module performs no fetching and never infers cards from page text.
  */
 
+import { isCardImage } from './card-images.ts';
+
 export interface QuizletCard {
   term: string;
   definition: string;
+  termImage?: string;
+  definitionImage?: string;
 }
 
 export interface QuizletImportResult {
@@ -206,6 +210,11 @@ function sideText(value: unknown): string {
   return text;
 }
 
+function sideImage(side: JsonObject): string | undefined {
+  if (!Array.isArray(side.media)) return undefined;
+  return side.media.map(value => object(value, 'card media')).find(media => media.type === 2 && isCardImage(media.url))?.url as string | undefined;
+}
+
 function itemCard(item: JsonObject): QuizletCard {
   if (!Array.isArray(item.cardSides) || item.cardSides.length !== 2) {
     throw new Error('Quizlet returned unsupported card sides.');
@@ -216,7 +225,10 @@ function itemCard(item: JsonObject): QuizletCard {
   if (words.length !== 1 || definitions.length !== 1) {
     throw new Error('Quizlet returned ambiguous card sides.');
   }
-  return { term: sideText(words[0]), definition: sideText(definitions[0]) };
+  const termImage = sideImage(words[0]);
+  const definitionImage = sideImage(definitions[0]);
+  return { term: sideText(words[0]), definition: sideText(definitions[0]),
+    ...(termImage ? {termImage} : {}), ...(definitionImage ? {definitionImage} : {}) };
 }
 
 /** Parse only the scoped state observed in Quizlet's actual set-page payload.
@@ -286,7 +298,7 @@ export function parseQuizletHtml(html: string, url: string, setId: string, addit
     const card = itemCard(item);
     const previous = active.get(id);
     if (previous) {
-      if (previous.rank !== rank || previous.card.term !== card.term || previous.card.definition !== card.definition) {
+      if (previous.rank !== rank || JSON.stringify(previous.card) !== JSON.stringify(card)) {
         throw new Error('Quizlet returned conflicting versions of a card.');
       }
       continue;
@@ -299,9 +311,9 @@ export function parseQuizletHtml(html: string, url: string, setId: string, addit
   if (active.size < total) throw new IncompleteQuizletSetError(total);
   if (active.size > total) throw new Error('Quizlet returned an incomplete or inconsistent set count.');
   const ordered = [...active.values()].sort((left, right) => left.rank - right.rank);
-  const cards = ordered.map(({ card }) => card).filter(({ term, definition }) => term && definition);
+  const cards = ordered.map(({ card }) => card).filter(c => (c.term || c.termImage) && (c.definition || c.definitionImage));
   const skipped = total - cards.length;
-  if (cards.length < 2) throw new Error('The set needs at least two cards with text on both sides.');
+  if (cards.length < 2) throw new Error('The set needs at least two cards with text or an image on each side.');
   const setPage = redux.setPage as JsonObject;
   const creator = [setPage.creator, setPage.creatorUser, set.creator].find(v => v && typeof v === 'object') as JsonObject | undefined;
   const creatorName = typeof creator?.username === 'string' ? creator.username : undefined;

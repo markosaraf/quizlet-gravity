@@ -1,3 +1,3 @@
-import { SetsDirectory } from '@/components/community/Community';
-import { SetsLandingHelp } from '../seo-content';
-export default function SetsPage(){return <><SetsDirectory/><SetsLandingHelp path="/sets"/></>;}
+import {DiscoveryLanding} from '@/components/discovery/Discovery';
+import {SetsLandingHelp} from '@/app/seo-content';
+export default function Page(){return <><DiscoveryLanding/><SetsLandingHelp/></>;}

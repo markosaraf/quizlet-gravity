@@ -15,7 +15,7 @@ interface Props {
       squares (which rest above the MAIN typing field, unmoving) can
       insert into this field while the copy view is open */
   insertRef: { current: CharInserter | null };
-  onSubmit: (liveTermId: string, answer: string) => void;
+  onSubmit: (liveTermId: string, answer: string, acknowledgeImage?: boolean) => void;
   liveTermId: string;
 }
 
@@ -27,6 +27,10 @@ function CopyTermViewBase({
   onSubmit,
   liveTermId,
 }: Props) {
+  const promptImage = showingSide === 'word' ? term._wordImageUrl : term._imageUrl;
+  const answerImage = showingSide === 'word' ? term._imageUrl : term._wordImageUrl;
+  const answerText = showingSide === 'word' ? term.definition : term.word;
+  const imageOnlyAnswer = !answerText.trim() && !!answerImage;
   const [inputValue, setInputValue] = useState(previouslyTypedText);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const submitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,6 +49,7 @@ function CopyTermViewBase({
   }, []);
 
   useEffect(() => {
+    if (imageOnlyAnswer) return;
     // initial auto-submit of the previously typed text (original behavior)
     submitTimer.current = setTimeout(() => {
       onSubmit(liveTermId, previouslyTypedText);
@@ -52,7 +57,7 @@ function CopyTermViewBase({
     return () => {
       if (submitTimer.current) clearTimeout(submitTimer.current);
     };
-  }, [liveTermId, onSubmit, previouslyTypedText]);
+  }, [liveTermId, onSubmit, previouslyTypedText, imageOnlyAnswer]);
 
   useEffect(() => {
     const focus = () => {
@@ -121,11 +126,11 @@ function CopyTermViewBase({
         </div>
         <div className="GravityCopyTermView-prompt">
           <div className="GravityCopyTermView-promptText">{promptSideContent}</div>
-          {showingSide === 'definition' && term._imageUrl ? (
+          {promptImage ? (
             <img
               alt={term.definition}
               className="GravityCopyTermView-definitionImage"
-              src={term._imageUrl}
+              src={promptImage}
             />
           ) : null}
         </div>
@@ -134,6 +139,7 @@ function CopyTermViewBase({
         </div>
         <div className="GravityCopyTermView-answer">
           <div>{answerSideContent}</div>
+          {answerImage && <img className="GravityCopyTermView-definitionImage" src={answerImage} alt="Correct answer image"/>}
         </div>
         <div className="GravityCopyTermView-inputWrapper">
           {/* NOTE: intentionally NO special-character squares here — they
@@ -148,8 +154,10 @@ function CopyTermViewBase({
             className="GravityCopyTermView-input"
             rows={1}
             spellCheck={false}
-            value={inputValue}
-            placeholder={STRINGS.copy_answer_modal.placeholder}
+            value={imageOnlyAnswer ? "" : inputValue}
+            readOnly={imageOnlyAnswer}
+            aria-label={imageOnlyAnswer ? "Review the image, then continue" : "Type the correct answer"}
+            placeholder={imageOnlyAnswer ? "Review the image" : STRINGS.copy_answer_modal.placeholder}
             onChange={(e) => {
               const v = e.currentTarget.value;
               setInputValue(v);
@@ -159,6 +167,7 @@ function CopyTermViewBase({
               if (e.key === 'Enter') e.preventDefault();
             }}
           />
+          {imageOnlyAnswer && <button className="UIButton UIButton--hero" onClick={()=>onSubmit(liveTermId,"",true)}>Continue</button>}
         </div>
       </div>
     </div>

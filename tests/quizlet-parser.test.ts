@@ -270,3 +270,18 @@ test('attributes the set creator rather than a viewing user', () => {
   delete redux.setPage.creator;
   assert.equal(parseQuizletHtml(html(redux), URL, SET_ID).creatorName, undefined);
 });
+
+
+test('imports image-only sides while retaining text when image media is unsupported', () => {
+ const first=item(11,0,'Tree','');
+ (first.cardSides[1].media as unknown[]).push({type:2,url:'https://o.quizlet.com/tree_m.jpg'});
+ const second=item(12,1,'','Leaf');
+ (second.cardSides[0].media as unknown[]).push({type:2,url:'https://o.quizlet.com/leaf_m.jpg'});
+ const third=item(13,2,'Text term','Text definition');
+ (third.cardSides[1].media as unknown[]).push({type:2,url:'https://untrusted.example/picture.png'});
+ const result=parseQuizletHtml(html(state([first,second,third])),URL,SET_ID);
+ assert.equal(result.cards.length,3);assert.equal(result.skipped,0);
+ assert.equal(result.cards[0].definitionImage,'https://o.quizlet.com/tree_m.jpg');
+ assert.equal(result.cards[1].termImage,'https://o.quizlet.com/leaf_m.jpg');
+ assert.deepEqual(result.cards[2],{term:'Text term',definition:'Text definition'});
+});

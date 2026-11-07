@@ -54,3 +54,21 @@ test('active play still pauses/resumes and an explicit restart resets the run', 
     assert.equal(store.getSnapshot().level,1);
   } finally {store._endGame();}
 });
+
+
+test('image-only answers require Continue, while text-and-image answers require text',()=>{
+ const store=game();try{
+ let d=store.data!;
+ d.terms['term-1']._imageUrl='https://o.quizlet.com/tree.jpg';d.terms['term-1'].definition='';
+ d.liveTerms['live-1']={luid:'term-1',side:'word'} as any;
+ d.termBeingCopied='live-1';d.gameState=GAME_STATES.COPY_ANSWER;
+ store.checkCopiedAnswer('live-1','');assert.equal(d.gameState,GAME_STATES.COPY_ANSWER);
+ store.checkCopiedAnswer('live-1','',true);assert.notEqual(d.gameState,GAME_STATES.COPY_ANSWER);
+ d=store.data!;
+ d.terms['term-2']._imageUrl='https://o.quizlet.com/tree.jpg';
+ d.liveTerms['live-2']={luid:'term-2',side:'word'} as any;
+ d.termBeingCopied='live-2';d.gameState=GAME_STATES.COPY_ANSWER;
+ store.checkCopiedAnswer('live-2','',true);assert.equal(d.gameState,GAME_STATES.COPY_ANSWER);
+ store.checkCopiedAnswer('live-2','2');assert.notEqual(d.gameState,GAME_STATES.COPY_ANSWER);
+ }finally{store._endGame();}
+});

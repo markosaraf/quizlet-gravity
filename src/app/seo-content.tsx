@@ -5,7 +5,7 @@ import "./seo-content.css";
 
 /** Feature list — also fed into the VideoGame JSON-LD in layout.tsx. */
 export const GAME_FEATURES: string[] = [
-  "Search shared study sets by title or original Quizlet set creator",
+  "Search shared games by title or original Quizlet set creator",
   "Import public Quizlet links, including text copied from the Quizlet app",
   "Create sets from pasted terms or CSV files",
   "Share a set link and compete on its persistent leaderboard",
@@ -28,31 +28,31 @@ export interface FaqItem {
 export const FAQ_ITEMS: FaqItem[] = [
   {
     "question": "What is Quizlet Gravity?",
-    "answer": "A free flashcard game: type answers to stop asteroids from hitting your planet. Find study sets, share your own and compete with friends. This independent project is not affiliated with Quizlet."
+    "answer": "A free flashcard game: type answers to stop asteroids from hitting your planet. Find games, share your own and compete with friends. This independent project is not affiliated with Quizlet."
   },
   {
-    "question": "How do I find a study set?",
-    "answer": "Open Sets and search by title or original Quizlet set creator. Select a set to play or view its leaderboard."
+    "question": "How do I find a game?",
+    "answer": "Search games by title or creator, then choose a game to play or view its leaderboard."
   },
   {
     "question": "Do I need an account?",
-    "answer": "No. Choose a guest username to play, import and share sets. Create an account to keep your scores across devices."
+    "answer": "No. Choose a guest username to play, import and share games. Create an account to keep your scores across devices."
   },
   {
     "question": "How do I import a Quizlet set?",
-    "answer": "Paste a public Quizlet set link into Import a Quizlet set, then select Import set."
+    "answer": "Choose Import game from Quizlet, paste a public Quizlet set link and select Add & play."
   },
   {
-    "question": "How do I create my own set and how do I edit an existing Quizlet set?",
-    "answer": "Open Create set to enter terms and definitions or upload a CSV. You need at least two pairs. To edit an existing set, choose Edit a Quizlet set, import its link and change the terms or definitions."
+    "question": "How do I create my own game and how do I edit an existing Quizlet set?",
+    "answer": "Open Create game, add a title and at least two pairs of text or images. You can also paste pairs or upload a CSV. To adapt a Quizlet set, choose Import & edit from Quizlet."
   },
   {
     "question": "How do I earn points, and what happens when I miss an asteroid?",
     "answer": "Answer correctly to earn points. Keep a streak going to earn more. Wrong answers cost 10 points. If you miss an asteroid, type the displayed answer to continue. Miss the same term again and the game ends."
   },
   {
-    "question": "How do I share a set with friends?",
-    "answer": "Open a shared set and select Copy set link. For your own set, add a title and select Create shared link first."
+    "question": "How do I share a game with friends?",
+    "answer": "Open a game and select Copy game link. For your own game, select Create & play first."
   },
   {
     "question": "What is the difference between a guest and an account?",
@@ -64,18 +64,18 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "When does my score appear on the leaderboard?",
-    "answer": "Choose Play this set on a shared set. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears on the leaderboard."
+    "answer": "Choose Play this game on a shared game. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears on the leaderboard."
   },
   {
     "question": "What information is public?",
-    "answer": "Shared sets, creator usernames and leaderboard scores are public. Your email and password are never shown publicly. Your own unshared sets stay on your device."
+    "answer": "Shared games, creator usernames and leaderboard scores are public. Your email and password are never shown publicly. Games become public when you create or import them."
   },
   {
     "question": "Can I play on my phone or tablet?",
     "answer": "Yes, in your browser or the Android and iOS apps. Sign in with the same account to keep your scores across devices."
   },
   {
-    "question": "When are accounts or shared sets removed?",
+    "question": "When are accounts or shared games removed?",
     "answer": "To delete your account, open your username menu and choose Delete account. Your sets and scores remain under Deleted user. Accounts or sets may also be removed for spam or abusive content. Removing a set also removes its leaderboard."
   }
 ];
@@ -96,7 +96,7 @@ export function FaqSection() {
           Frequently asked questions
         </h2>
         <p className="GravitySEO-subtitle">
-          Find out about sets, importing, sharing, accounts, leaderboards and
+          Find out about games, importing, sharing, accounts, leaderboards and
           privacy.
         </p>
         <div className="GravitySEO-faqList">

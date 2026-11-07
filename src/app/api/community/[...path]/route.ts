@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { auth } from '@/lib/community/auth';
 import {appleConfigured} from '@/lib/community/apple';
+import {tutorialEnabled} from '@/lib/community/settings';
 import { db } from '@/lib/community/db';
 import {assertShareable} from '@/lib/community/content-safety';
 import { fingerprint } from '@/lib/community/sets';
 import { correctPendingEmail } from '@/lib/community/pending-email';
 import { z } from 'zod';
+import { isCardImage } from '@/lib/gravity/card-images';
 export const runtime='nodejs';
 const noCache={'Cache-Control':'no-store'};
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:noCache});
 const uuid=z.string().uuid();
-const cardsSchema=z.array(z.object({term:z.string().trim().min(1).max(10000),definition:z.string().trim().min(1).max(10000)})).min(2).max(5000);
+const imageSchema=z.string().refine(isCardImage,'Choose a supported image.').optional();
+const cardsSchema=z.array(z.object({term:z.string().trim().max(10000),definition:z.string().trim().max(10000),termImage:imageSchema,definitionImage:imageSchema}).refine(c=>!!(c.term||c.termImage)&&!!(c.definition||c.definitionImage),'Each side needs text or an image.')).min(2).max(5000);
 async function limit(request:NextRequest, scope:string, max:number){
  const ip=request.headers.get('x-real-ip')||request.headers.get('x-forwarded-for')?.split(',')[0]||'local';
  const key=createHash('sha256').update(scope+ip).digest('hex');
@@ -27,14 +30,14 @@ async function body(request:NextRequest){
 export async function GET(request:NextRequest,{params}:{params:Promise<{path:string[]}>}){
  try{
  const {path}=await params;await limit(request,'read',180);
- if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN});
+ if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN,tutorialEnabled:await tutorialEnabled()});
  const viewer=(await auth.api.getSession({headers:request.headers}))?.user.id||null;
  if(path[0]==='sets'&&path.length===1){
  const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request);
  const {rows}=await db.query(`SELECT s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by
  FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by
- WHERE ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
- ORDER BY s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer]);
+ WHERE ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(coalesce(s.creator_name,'')||' '||coalesce(u."displayUsername",u.username,u.name,'')) LIKE $2 OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
+ ORDER BY (SELECT count(*) FROM high_scores h WHERE h.set_id=s.id) DESC,s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer]);
  return json({sets:rows.slice(0,24),hasMore:rows.length>24,nextOffset:offset+24});
  }
  if(path[0]==='sets'&&uuid.safeParse(path[1]).success){

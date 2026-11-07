@@ -1,3 +1,4 @@
+import { isCardImage } from './card-images.ts';
 import type { GravityTerm } from './types';
 
 /** Validate API cards and retain their text without a lossy TSV round trip. */
@@ -9,8 +10,10 @@ export function importedCardsToTerms(cards: unknown): GravityTerm[] | null {
       !card ||
       typeof card.term !== 'string' ||
       typeof card.definition !== 'string' ||
-      !card.term.trim() ||
-      !card.definition.trim()
+      (!card.term.trim() && !isCardImage(card.termImage)) ||
+      (!card.definition.trim() && !isCardImage(card.definitionImage)) ||
+      (card.termImage !== undefined && !isCardImage(card.termImage)) ||
+      (card.definitionImage !== undefined && !isCardImage(card.definitionImage))
     ) {
       return null;
     }
@@ -21,6 +24,8 @@ export function importedCardsToTerms(cards: unknown): GravityTerm[] | null {
       word: card.term,
       definition: card.definition,
       starred: false,
+      ...(card.termImage ? {_wordImageUrl: card.termImage} : {}),
+      ...(card.definitionImage ? {_imageUrl: card.definitionImage} : {}),
     });
   }
   return terms;

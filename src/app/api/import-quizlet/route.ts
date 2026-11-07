@@ -38,7 +38,7 @@ async function importSet(request: NextRequest, raw: unknown) {
   if (!session) return failure('Choose a guest name or sign in before importing.', 401);
   if (!session.user.isAnonymous && !session.user.emailVerified) return failure('Confirm your email before importing.',403);
   const existing = await db.query('SELECT * FROM shared_sets WHERE quizlet_id=$1',[normalized.setId]);
-  if (existing.rows[0]) {
+  if (existing.rows[0]?.import_version >= 2) {
     const s=existing.rows[0];
     return NextResponse.json({title:s.title,cards:s.cards,setId:s.quizlet_id,url:s.source_url,creatorName:s.creator_name,creatorUrl:s.creator_url,sharedId:s.id,sharePath:sharedSetPath(s),skipped:0},{headers:NO_STORE});
   }
@@ -49,7 +49,7 @@ async function importSet(request: NextRequest, raw: unknown) {
     // parameters. Exceptions are never saved as successful cache entries.
     const task = guard.run(normalized.setId, () => unstable_cache(
       () => fetchQuizletSet(normalized.url),
-      ['quizlet-firecrawl-v1', normalized.setId],
+      ['quizlet-firecrawl-images-v2', normalized.setId],
       { revalidate: 3600 },
     )());
     if (!task) return failure('Other sets are importing. Please try again in a moment.', 429);
@@ -57,10 +57,14 @@ async function importSet(request: NextRequest, raw: unknown) {
     const saved = await saveQuizletSet(result,session.user.id);
     return NextResponse.json({...result,sharedId:saved.id,sharePath:sharedSetPath(saved)}, { headers: NO_STORE });
   } catch (error) {
+    if (existing.rows[0]) {
+      const s = existing.rows[0];
+      return NextResponse.json({title:s.title,cards:s.cards,setId:s.quizlet_id,url:s.source_url,creatorName:s.creator_name,creatorUrl:s.creator_url,sharedId:s.id,sharePath:sharedSetPath(s),skipped:0,warning:'Showing the saved set. Images could not be refreshed. Try importing again later.'},{headers:NO_STORE});
+    }
     const known = error instanceof QuizletImportError;
     console.error(JSON.stringify({ event: 'quizlet_import_failed', setId: normalized.setId,
       code: known ? error.code : 'unexpected_error' }));
-    return failure(known ? error.message : "Couldn't import that set. Try again or paste your terms below.",
+    return failure(known ? error.message : "Couldn't import that set. Try again or use Create game.",
       known ? error.status : 502);
   }
 }

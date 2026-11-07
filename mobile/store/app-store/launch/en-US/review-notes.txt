@@ -8,7 +8,7 @@ To review without registering:
 
 For shared-set leaderboards, choose a guest username, open a shared set and select Play this game. Account registration uses email verification. Google and Sign in with Apple are also offered. Account deletion is available from Your account → Delete account. Deleted accounts retain anonymised leaderboard scores as Deleted user. No purchases or subscriptions are sold in the app.
 
-The Mac app supports Intel and Apple silicon. It uses a desktop layout and physical keyboard input. CSV import uses the system file picker.
+The Mac app supports Intel and Apple silicon. It uses a desktop layout and physical keyboard input.
 
 Review contact: quizletgravity@gmail.com
 

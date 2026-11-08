@@ -17,9 +17,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     private var lastBottomInset: Int?
     private var presentationTimer: Timer?
     private let bottomSurface = UIView()
-    private let numberToolbar = UIToolbar()
     private var keyboardOverlap: CGFloat = 0
-    private var numericGameInput = false
     private let pageBackground = UIColor(red: 11/255, green: 16/255, blue: 51/255, alpha: 1)
 
     override func viewDidLoad() {
@@ -73,10 +71,6 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         bottomSurface.isUserInteractionEnabled = false
         bottomSurface.backgroundColor = pageBackground
         view.insertSubview(bottomSurface, belowSubview: webView)
-        numberToolbar.items = [UIBarButtonItem(systemItem: .flexibleSpace),
-            UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(finishNumericAnswer))]
-        numberToolbar.isHidden = true
-        view.addSubview(numberToolbar)
         presentationTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             self?.refreshMobilePresentation()
         }
@@ -90,8 +84,6 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         #if !targetEnvironment(macCatalyst)
         bottomSurface.frame = CGRect(x: 0, y: view.safeAreaLayoutGuide.layoutFrame.maxY,
             width: view.bounds.width, height: view.safeAreaInsets.bottom)
-        numberToolbar.frame = CGRect(x: 0, y: view.bounds.height - keyboardOverlap - 44,
-            width: view.bounds.width, height: 44)
         #endif
     }
 
@@ -102,7 +94,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         let hidden = notification.name == UIResponder.keyboardWillHideNotification
         let overlap = hidden ? 0 : max(0, view.bounds.maxY - local.minY)
         keyboardOverlap = overlap
-        updateNumericToolbar()
+        updateKeyboardInset()
         let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
         UIView.animate(withDuration: duration) { self.view.layoutIfNeeded() }
         #endif
@@ -114,16 +106,11 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         webView.evaluateJavaScript("""
         (() => {
             const surface = document.querySelector('.d-landing .d-alternatives');
-            const input = document.activeElement;
-            const numeric = input?.matches('textarea.GravityTypingPrompt-input, textarea.GravityCopyTermView-input') &&
-                ['numeric', 'decimal'].includes(input.inputMode);
-            return {background: surface ? getComputedStyle(surface).backgroundColor : '', numeric: !!numeric};
+            return {background: surface ? getComputedStyle(surface).backgroundColor : ''};
         })()
         """, in: nil, in: .defaultClient) { [weak self] result in
             guard let self, case .success(let value) = result,
                   let state = value as? [String: Any] else { return }
-            self.numericGameInput = state["numeric"] as? Bool ?? false
-            self.updateNumericToolbar()
             let css = state["background"] as? String ?? ""
             let components = css.components(separatedBy: CharacterSet.decimalDigits.inverted)
                 .compactMap { Double($0) }
@@ -133,27 +120,14 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         }
     }
 
-    private func updateNumericToolbar() {
+    private func updateKeyboardInset() {
         #if !targetEnvironment(macCatalyst)
-        let show = numericGameInput && keyboardOverlap > 0 && GCKeyboard.coalesced == nil
-        numberToolbar.isHidden = !show
-        let constant = -keyboardOverlap - (show ? 44 : 0)
+        let constant = -keyboardOverlap
         if bottomConstraint.constant != constant {
             bottomConstraint.constant = constant
             view.setNeedsLayout()
         }
         #endif
-    }
-
-    @objc private func finishNumericAnswer() {
-        guard let url = webView.url, isInternal(url) else { return }
-        webView.evaluateJavaScript("""
-        (() => {
-            const input = document.activeElement;
-            if (!input?.matches('textarea.GravityTypingPrompt-input, textarea.GravityCopyTermView-input')) return;
-            input.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', code:'Enter', bubbles:true, cancelable:true}));
-        })()
-        """, completionHandler: nil)
     }
 
     private func updateBottomInset(force: Bool = false) {

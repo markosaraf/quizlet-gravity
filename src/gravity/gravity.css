@@ -2658,18 +2658,6 @@
 .GravityCopyTermView-inputWrapper textarea { min-width: 0; flex: 1; }
 .GravityCopyTermView-definitionImage { max-width: min(100%, 280px); max-height: 190px; object-fit: contain; }
 
-/* Phone number pads may not include a return key. Keep submission reachable
-   without dismissing the keyboard or changing the input's vertical position. */
-.GravityTypingPrompt-numberSubmit { display: none; }
-@media (pointer: coarse) {
-  .GravityTypingPrompt-inputWrapper.has-numberKeyboard { position: relative; }
-  .has-numberKeyboard .GravityTypingPrompt-input { padding-right: 5.5rem; }
-  .GravityTypingPrompt-numberSubmit.UIButton {
-    display: block; position: absolute; right: .5rem; bottom: .5rem;
-    min-height: 2.5rem; padding: .375rem .75rem; font-size: 1rem;
-  }
-}
-
 /* A table-cell must not force the numeric answer controls beyond phone width. */
 .GravityTypingPrompt { table-layout: fixed; }
 .GravityTypingPrompt-inputWrapper { width: min(26.25rem, 100%); box-sizing: border-box; }

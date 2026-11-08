@@ -121,7 +121,7 @@ function TypingPromptBase({
       }${isCopyState ? ' is-copyState' : ''}`}
     >
       <div className="GravityTypingPrompt-inner">
-        <div className={`GravityTypingPrompt-inputWrapper${answerInputMode(expectedAnswer) === 'decimal' ? ' has-numberKeyboard' : ''}`}>
+        <div className="GravityTypingPrompt-inputWrapper">
           {/* Special characters that exist in the current set — click to
               insert at the caret of the ACTIVE field. These squares stay
               in this exact spot even while the copy-the-answer view is
@@ -163,17 +163,7 @@ function TypingPromptBase({
               }
             }}
           />
-          {inputShown && answerInputMode(expectedAnswer) === 'decimal' && (
-            <button
-              className="GravityTypingPrompt-numberSubmit UIButton UIButton--hero"
-              disabled={!textValue.trim() || !isFreeFall}
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={onSubmit}
-              aria-label="Submit answer"
-            >
-              Enter
-            </button>
-          )}
+
         </div>
       </div>
     </div>

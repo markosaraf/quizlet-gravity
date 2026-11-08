@@ -2669,3 +2669,8 @@
     min-height: 2.5rem; padding: .375rem .75rem; font-size: 1rem;
   }
 }
+
+/* A table-cell must not force the numeric answer controls beyond phone width. */
+.GravityTypingPrompt { table-layout: fixed; }
+.GravityTypingPrompt-inputWrapper { width: min(26.25rem, 100%); box-sizing: border-box; }
+.GravityTypingPrompt-input { box-sizing: border-box; }

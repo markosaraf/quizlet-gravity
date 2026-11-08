@@ -364,14 +364,11 @@ export function GameOverView({
             {format(STRINGS.game_over.score_label, { points, level })}
           </p>
 
-          {sharedSetId ? (
-            <Leaderboard id={sharedSetId} compact aroundPlayer ready={scoreSettled} refresh={leaderboardRefresh}/>
-          ) : null}
-
           <div
             style={{
               display: 'flex',
               gap: '1rem',
+              flexWrap: 'wrap',
               justifyContent: 'center',
               marginTop: '1.5rem',
             }}
@@ -383,6 +380,11 @@ export function GameOverView({
               {STRINGS.game_over.new_set_button}
             </button>
           </div>
+
+          {sharedSetId ? (
+            <Leaderboard id={sharedSetId} compact aroundPlayer ready={scoreSettled} refresh={leaderboardRefresh}/>
+          ) : null}
+
         </div>
       </div>
     </div>

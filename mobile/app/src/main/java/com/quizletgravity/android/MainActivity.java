@@ -50,6 +50,28 @@ public final class MainActivity extends ComponentActivity {
     private String authVerifier, authState;
     private long authStarted;
     private FrameLayout root;
+    private int navigationInset;
+    private int navigationSurface;
+    private final Runnable updateNavigationSurface = new Runnable() {
+        @Override public void run() {
+            if (foreground && webView != null && webView.getUrl() != null && NavigationPolicy.isInternal(webView.getUrl())) {
+                webView.evaluateJavascript("(function(){var e=document.querySelector('.d-landing .d-alternatives');return e?getComputedStyle(e).backgroundColor:'';})()", value -> {
+                    int colour = getColor(R.color.navy);
+                    if (value != null && value.contains("rgb")) {
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("([0-9]+),\\s*([0-9]+),\\s*([0-9]+)").matcher(value);
+                        if (m.find()) colour = Color.rgb(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)));
+                    }
+                    if (colour != navigationSurface) {
+                        navigationSurface = colour;
+                        root.invalidate();
+                        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                            .setAppearanceLightNavigationBars(androidx.core.graphics.ColorUtils.calculateLuminance(colour) > 0.5);
+                    }
+                });
+            }
+            handler.postDelayed(this, 400);
+        }
+    };
     private LinearLayout overlay;
     private LogoCarouselView logo;
     private ValueAnimator revealAnimation;
@@ -127,18 +149,31 @@ public final class MainActivity extends ComponentActivity {
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightNavigationBars(false);
         root = new FrameLayout(this);
-        root.setBackgroundColor(getColor(R.color.navy));
+        navigationSurface = getColor(R.color.navy);
+        root.setBackground(new android.graphics.drawable.Drawable() {
+            private final android.graphics.Paint paint = new android.graphics.Paint();
+            @Override public void draw(android.graphics.Canvas canvas) {
+                canvas.drawColor(getColor(R.color.navy));
+                paint.setColor(navigationSurface);
+                canvas.drawRect(0, getBounds().height() - navigationInset, getBounds().width(), getBounds().height(), paint);
+            }
+            @Override public void setAlpha(int alpha) {}
+            @Override public void setColorFilter(android.graphics.ColorFilter filter) {}
+            @Override public int getOpacity() { return android.graphics.PixelFormat.OPAQUE; }
+        });
         setContentView(root);
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
             Insets keyboard = insets.getInsets(WindowInsetsCompat.Type.ime());
+            navigationInset = bars.bottom;
             view.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, keyboard.bottom));
             return WindowInsetsCompat.CONSUMED;
         });
         createOverlay();
         createWebView();
         loadHome();
+        handler.post(updateNavigationSurface);
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
                 if (webView.canGoBack()) webView.goBack();
@@ -218,9 +253,15 @@ public final class MainActivity extends ComponentActivity {
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("*/*");
-                intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                        "text/csv", "text/comma-separated-values", "text/tab-separated-values",
-                        "text/plain", "application/csv", "application/vnd.ms-excel"});
+                boolean choosingImage = java.util.Arrays.stream(params.getAcceptTypes())
+                        .anyMatch(type -> type != null && type.startsWith("image/"));
+                if (choosingImage) {
+                    intent.setType("image/*");
+                } else {
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                            "text/csv", "text/comma-separated-values", "text/tab-separated-values",
+                            "text/plain", "application/csv", "application/vnd.ms-excel"});
+                }
                 try { filePicker.launch(intent); }
                 catch (ActivityNotFoundException e) {
                     fileCallback.onReceiveValue(null);

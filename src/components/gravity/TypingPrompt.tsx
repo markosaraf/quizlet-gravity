@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef } from 'react';
 import { answerInputMode } from '@/lib/gravity/answer-keyboard';
 import { GAME_STATES } from '@/lib/gravity/constants';
 import { useDelayedUnmount } from './useDelayedUnmount';
@@ -39,6 +39,11 @@ function TypingPromptBase({
   onSubmit,
 }: Props) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Keep the last keyboard during the brief gaps between asteroids.
+  const lastAnswerRef = useRef(expectedAnswer);
+  if (expectedAnswer.trim()) lastAnswerRef.current = expectedAnswer;
+  const inputMode = answerInputMode(lastAnswerRef.current);
+  const focusedModeRef = useRef(inputMode);
   // caret position to restore after a special-char square inserts text
   // (the value is controlled, so the caret must be re-set after the
   // store round-trips the new value back into the textarea)
@@ -53,6 +58,23 @@ function TypingPromptBase({
   // jumping to the top with the copy-the-answer field.
   const barShown = inputShown || isCopyState;
   const mounted = useDelayedUnmount(barShown, 400);
+
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    const changed = focusedModeRef.current !== inputMode;
+    focusedModeRef.current = inputMode;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    // WebKit may retain the old keyboard for an already-focused textarea.
+    // Reacquire focus only when its keyboard type actually changes.
+    if (changed && isIOS && input && document.activeElement === input && isFreeFall) {
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      input.blur();
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(start, end);
+    }
+  }, [inputMode, isFreeFall]);
 
   // keep the input focused during gameplay (original behavior).
   // focus({ preventScroll: true }) stops mobile browsers from auto-scrolling
@@ -138,7 +160,7 @@ function TypingPromptBase({
             autoCorrect="off"
             className="GravityTypingPrompt-input"
             rows={1}
-            inputMode={answerInputMode(expectedAnswer)}
+            inputMode={inputMode}
             enterKeyHint="send"
             spellCheck={false}
             value={textValue}

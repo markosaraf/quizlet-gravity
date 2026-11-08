@@ -66,6 +66,14 @@ function GameplayViewBase({
         )
       : STRINGS.default_prompt_placeholder;
 
+  // Set the right keyboard before focusing the field, not only after launch.
+  const queuedTermId = data.currentLevelTermsRemaining[0];
+  const queuedTerm = data.terms[queuedTermId];
+  const queuedSide = (data.missedTermsToSide[queuedTermId] as 'word' | 'definition' | undefined) ?? data.showingTermSide;
+  const queuedAnswer = queuedTerm && queuedSide !== 'random'
+    ? (queuedSide === 'word' ? queuedTerm.definition : queuedTerm.word) : '';
+  const expectedAnswer = nextAnswer(data.liveTerms, data.terms) || queuedAnswer;
+
   const termBeingCopied = data.termBeingCopied;
   const copiedLive = termBeingCopied ? data.liveTerms[termBeingCopied] : null;
 
@@ -132,7 +140,7 @@ function GameplayViewBase({
             gameState={data.gameState}
             textValue={data.mainTypingPromptValue}
             placeholderText={placeholder}
-            expectedAnswer={nextAnswer(data.liveTerms, data.terms)}
+            expectedAnswer={expectedAnswer}
             specialChars={specialChars}
             insertRef={mainInsertRef}
             onInsertChar={handleInsertChar}

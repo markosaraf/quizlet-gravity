@@ -13,6 +13,13 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     private var generation = 0
     private var loaded = false
     private var failed = false
+    private var bottomConstraint: NSLayoutConstraint!
+    private var lastBottomInset: Int?
+    private var presentationTimer: Timer?
+    private let bottomSurface = UIView()
+    private let numberToolbar = UIToolbar()
+    private var keyboardOverlap: CGFloat = 0
+    private var numericGameInput = false
     private let pageBackground = UIColor(red: 11/255, green: 16/255, blue: 51/255, alpha: 1)
 
     override func viewDidLoad() {
@@ -48,16 +55,116 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         configureInputLayout()
         webView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(webView)
+        bottomConstraint = webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)),
+            name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardFrameChanged(_:)),
+            name: UIResponder.keyboardWillHideNotification, object: nil)
         NSLayoutConstraint.activate([
             webView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             // Match Android's IME insets/adjustResize: resize the whole web viewport
             // above the keyboard instead of letting WebKit pan down to the input.
-            // With the keyboard hidden this anchor is the bottom safe-area edge.
-            webView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
+            // With the keyboard hidden, paint through the home-indicator area.
+            bottomConstraint
         ])
+        #if !targetEnvironment(macCatalyst)
+        bottomSurface.isUserInteractionEnabled = false
+        bottomSurface.backgroundColor = pageBackground
+        view.insertSubview(bottomSurface, belowSubview: webView)
+        numberToolbar.items = [UIBarButtonItem(systemItem: .flexibleSpace),
+            UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(finishNumericAnswer))]
+        numberToolbar.isHidden = true
+        view.addSubview(numberToolbar)
+        presentationTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            self?.refreshMobilePresentation()
+        }
+        #endif
         loadGame()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateBottomInset()
+        #if !targetEnvironment(macCatalyst)
+        bottomSurface.frame = CGRect(x: 0, y: view.safeAreaLayoutGuide.layoutFrame.maxY,
+            width: view.bounds.width, height: view.safeAreaInsets.bottom)
+        numberToolbar.frame = CGRect(x: 0, y: view.bounds.height - keyboardOverlap - 44,
+            width: view.bounds.width, height: 44)
+        #endif
+    }
+
+    @objc private func keyboardFrameChanged(_ notification: Notification) {
+        #if !targetEnvironment(macCatalyst)
+        guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        let local = view.convert(frame, from: nil)
+        let hidden = notification.name == UIResponder.keyboardWillHideNotification
+        let overlap = hidden ? 0 : max(0, view.bounds.maxY - local.minY)
+        keyboardOverlap = overlap
+        updateNumericToolbar()
+        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
+        UIView.animate(withDuration: duration) { self.view.layoutIfNeeded() }
+        #endif
+    }
+
+    private func refreshMobilePresentation() {
+        guard let url = webView.url, isInternal(url), view.window != nil,
+              UIApplication.shared.applicationState == .active else { return }
+        webView.evaluateJavaScript("""
+        (() => {
+            const surface = document.querySelector('.d-landing .d-alternatives');
+            const input = document.activeElement;
+            const numeric = input?.matches('textarea.GravityTypingPrompt-input, textarea.GravityCopyTermView-input') &&
+                ['numeric', 'decimal'].includes(input.inputMode);
+            return {background: surface ? getComputedStyle(surface).backgroundColor : '', numeric: !!numeric};
+        })()
+        """, in: nil, in: .defaultClient) { [weak self] result in
+            guard let self, case .success(let value) = result,
+                  let state = value as? [String: Any] else { return }
+            self.numericGameInput = state["numeric"] as? Bool ?? false
+            self.updateNumericToolbar()
+            let css = state["background"] as? String ?? ""
+            let components = css.components(separatedBy: CharacterSet.decimalDigits.inverted)
+                .compactMap { Double($0) }
+            self.bottomSurface.backgroundColor = components.count >= 3
+                ? UIColor(red: components[0]/255, green: components[1]/255, blue: components[2]/255, alpha: 1)
+                : self.pageBackground
+        }
+    }
+
+    private func updateNumericToolbar() {
+        #if !targetEnvironment(macCatalyst)
+        let show = numericGameInput && keyboardOverlap > 0 && GCKeyboard.coalesced == nil
+        numberToolbar.isHidden = !show
+        let constant = -keyboardOverlap - (show ? 44 : 0)
+        if bottomConstraint.constant != constant {
+            bottomConstraint.constant = constant
+            view.setNeedsLayout()
+        }
+        #endif
+    }
+
+    @objc private func finishNumericAnswer() {
+        guard let url = webView.url, isInternal(url) else { return }
+        webView.evaluateJavaScript("""
+        (() => {
+            const input = document.activeElement;
+            if (!input?.matches('textarea.GravityTypingPrompt-input, textarea.GravityCopyTermView-input')) return;
+            input.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', code:'Enter', bubbles:true, cancelable:true}));
+        })()
+        """, completionHandler: nil)
+    }
+
+    private func updateBottomInset(force: Bool = false) {
+        #if !targetEnvironment(macCatalyst)
+        guard webView != nil, let url = webView.url, isInternal(url) else { return }
+        // Presentation-only safe space for controls; the background remains full-bleed.
+        let inset = Int(max(0, webView.frame.maxY - view.safeAreaLayoutGuide.layoutFrame.maxY).rounded(.up))
+        guard force || inset != lastBottomInset else { return }
+        lastBottomInset = inset
+        webView.evaluateJavaScript("document.documentElement.style.setProperty('--gravity-native-bottom-inset', '\(inset)px')", completionHandler: nil)
+        #endif
     }
 
     @objc private func keyboardChanged() { configureInputLayout() }
@@ -103,6 +210,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         if (!['https://www.quizletgravity.com', 'https://quizletgravity.com'].includes(location.origin)) return;
         if (window.__gravityGameInputObserver) { window.__gravityGameInputObserver.scan(); return; }
         let previousInput = null;
+        let previousMode = null;
         const scan = () => {
             const game = document.querySelector('.GravityGameplayView:not(.has-splash):not(.is-gameOver)');
             const input = game?.querySelector('textarea.GravityCopyTermView-input') ||
@@ -110,15 +218,18 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
             if (!input || input.disabled || input.readOnly || !input.getClientRects().length ||
                 getComputedStyle(input).visibility !== 'visible') {
                 previousInput = null;
+                previousMode = null;
                 return;
             }
-            if (input === previousInput) return;
+            const mode = input.inputMode;
+            if (input === previousInput && mode === previousMode) return;
             previousInput = input;
+            previousMode = mode;
             window.webkit.messageHandlers.gravityGameInputReady.postMessage('ready');
         };
         const observer = new MutationObserver(scan);
         observer.observe(document.documentElement, {childList: true, subtree: true,
-            attributes: true, attributeFilter: ['class', 'hidden', 'disabled', 'readonly']});
+            attributes: true, attributeFilter: ['class', 'hidden', 'disabled', 'readonly', 'inputmode']});
         window.__gravityGameInputObserver = {scan, observer};
         scan();
     })();
@@ -252,6 +363,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
             webView.evaluateJavaScript(script, completionHandler: nil)
         }
         #endif
+        updateBottomInset(force: true)
         let expected = generation
         // Two browser frames allow layout/paint before fading the native cover.
         webView.callAsyncJavaScript("await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));", arguments: [:], in: nil, in: .page) { [weak self] result in
@@ -311,7 +423,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         present(alert, animated: true)
     }
 
-    deinit { timeout?.invalidate(); NotificationCenter.default.removeObserver(self) }
+    deinit { presentationTimer?.invalidate(); timeout?.invalidate(); NotificationCenter.default.removeObserver(self) }
 }
 
 // The content controller owns its handler; avoid retaining the view controller.

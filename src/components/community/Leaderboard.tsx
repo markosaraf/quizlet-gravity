@@ -1,6 +1,7 @@
 'use client';
 
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
+import {revealResultRow} from './result-scroll';
 import {authClient} from '@/lib/community/auth-client';
 import {STRINGS} from '@/lib/gravity/strings';
 import {SafetyActions} from './Safety';
@@ -24,6 +25,8 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
  const [offset,setOffset]=useState<number|null>(null);
  const [retry,setRetry]=useState(0);
  const [result,setResult]=useState<{key:string;page?:Page;error?:string}|null>(null);
+ const sectionRef=useRef<HTMLElement>(null);
+ const revealedResult=useRef<string|null>(null);
  // Key the result to its request so old rows never flash under a new page number.
  const requestKey=JSON.stringify([id,offset,refresh,retry,session?.user.id,aroundPlayer]);
  useEffect(()=>{
@@ -39,10 +42,26 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
  },[id,offset,ready,requestKey,aroundPlayer]);
  const current=result?.key===requestKey?result:null;
  const page=current?.page;
+ const revealKey=JSON.stringify([id,refresh]);
+ useEffect(()=>{
+  if(!compact||!aroundPlayer||offset!==null||!page?.entries.some(entry=>entry.is_current)||revealedResult.current===revealKey)return;
+  // Allow the keyboard to close first. Never override a user's own scrolling.
+  const cancel=()=>{revealedResult.current=revealKey;window.clearTimeout(timer);};
+  const timer=window.setTimeout(()=>{
+   revealedResult.current=revealKey;
+   if(sectionRef.current)revealResultRow(sectionRef.current);
+  },300);
+  const events=['pointerdown','touchstart','wheel','keydown'] as const;
+  events.forEach(event=>window.addEventListener(event,cancel,{passive:true}));
+  return()=>{
+   window.clearTimeout(timer);
+   events.forEach(event=>window.removeEventListener(event,cancel));
+  };
+ },[compact,aroundPlayer,offset,page,revealKey]);
  const loading=!ready||!current;
  const pageNumber=page?Math.floor(page.offset/PAGE_SIZE)+1:1;
  const pageCount=page?Math.max(1,Math.ceil(page.total/PAGE_SIZE)):1;
- return <section className={`shared-leaderboard${compact?' shared-leaderboard--compact':''}`} aria-label="Leaderboard" aria-busy={loading}>
+ return <section ref={sectionRef} className={`shared-leaderboard${compact?' shared-leaderboard--compact':''}`} aria-label="Leaderboard" aria-busy={loading}>
   <h2>Leaderboard</h2>
   {page?.current_rank!=null?<p className="shared-leaderboard-summary">Your best: rank {page.current_rank} of {page.total}</p>:!compact?<p className="shared-leaderboard-summary">Each player’s best score.</p>:null}
   {loading?<p role="status">{ready?'Loading leaderboard…':'Saving your score…'}</p>:current?.error?<div role="alert"><p>{current.error}</p><button onClick={()=>setRetry(n=>n+1)}>Retry leaderboard</button></div>:page?<>

@@ -51,3 +51,8 @@
  .d-landing .d-alternatives .d-button{min-height:52px;text-align:center}
  [data-theme="dark"] .d-landing .d-alternatives{background:#293246}
 }
+
+/* iOS supplies its actual home-indicator inset when CSS env() is unavailable. */
+@media(max-width:760px){
+ .d-landing .d-alternatives{padding-bottom:calc(12px + max(env(safe-area-inset-bottom,0px), var(--gravity-native-bottom-inset,0px)))}
+}

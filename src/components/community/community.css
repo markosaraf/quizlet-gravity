@@ -73,3 +73,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .community-apple-signin img{display:block;width:240px;max-width:100%;height:auto}
 
 .community-safety{margin-top:1rem;font-size:.9rem}.community-safety summary{cursor:pointer}.community-safety form{display:flex;flex-wrap:wrap;gap:.75rem;align-items:end;margin:1rem 0}.community-safety select{display:block;padding:.5rem;max-width:100%;color:inherit;background:var(--community-card,#fff)}
+
+/* Keep the play area visible without requiring a manual scroll on touch devices. */
+@media (max-width: 1024px), (pointer: coarse) {
+  body:has(.gravity-root[data-playing="true"]) .community-nav { display: none; }
+}

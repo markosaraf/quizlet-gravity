@@ -105,7 +105,7 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
   // No screen-size/device blockers — the game is playable everywhere
   // (mobile layout in the top bar handles narrow widths).
   return (
-    <div className="gravity-root">
+    <div className="gravity-root" data-playing={[GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP, GAME_STATES.PAUSED].some(state => state === data.gameState) ? "true" : "false"}>
       {(scoreMessage||starting)&&<p className="community-message" role="status">{starting?"Starting ranked game…":scoreMessage}</p>}
       <SiteHeader
         title={data.set.title}

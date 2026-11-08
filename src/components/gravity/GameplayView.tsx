@@ -4,6 +4,7 @@ import {
   PLANET_ASSET_PATHS,
   RESIZE_DEBOUNCE,
 } from '@/lib/gravity/constants';
+import { nextAnswer } from '@/lib/gravity/answer-keyboard';
 import { STRINGS } from '@/lib/gravity/strings';
 import type { GameData } from '@/lib/gravity/types';
 import { Asteroid } from './Asteroid';
@@ -131,6 +132,7 @@ function GameplayViewBase({
             gameState={data.gameState}
             textValue={data.mainTypingPromptValue}
             placeholderText={placeholder}
+            expectedAnswer={nextAnswer(data.liveTerms, data.terms)}
             specialChars={specialChars}
             insertRef={mainInsertRef}
             onInsertChar={handleInsertChar}

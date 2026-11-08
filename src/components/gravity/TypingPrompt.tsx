@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
+import { answerInputMode } from '@/lib/gravity/answer-keyboard';
 import { GAME_STATES } from '@/lib/gravity/constants';
 import { useDelayedUnmount } from './useDelayedUnmount';
 import { SpecialCharBar } from './SpecialCharBar';
@@ -15,6 +16,7 @@ interface Props {
   gameState: string;
   textValue: string;
   placeholderText: string;
+  expectedAnswer: string;
   specialChars: string[];
   /** this field publishes its inserter here so the squares can reach it */
   insertRef: { current: CharInserter | null };
@@ -29,6 +31,7 @@ function TypingPromptBase({
   gameState,
   textValue,
   placeholderText,
+  expectedAnswer,
   specialChars,
   insertRef,
   onInsertChar,
@@ -118,7 +121,7 @@ function TypingPromptBase({
       }${isCopyState ? ' is-copyState' : ''}`}
     >
       <div className="GravityTypingPrompt-inner">
-        <div className="GravityTypingPrompt-inputWrapper">
+        <div className={`GravityTypingPrompt-inputWrapper${answerInputMode(expectedAnswer) === 'decimal' ? ' has-numberKeyboard' : ''}`}>
           {/* Special characters that exist in the current set — click to
               insert at the caret of the ACTIVE field. These squares stay
               in this exact spot even while the copy-the-answer view is
@@ -135,6 +138,8 @@ function TypingPromptBase({
             autoCorrect="off"
             className="GravityTypingPrompt-input"
             rows={1}
+            inputMode={answerInputMode(expectedAnswer)}
+            enterKeyHint="send"
             spellCheck={false}
             value={textValue}
             placeholder={placeholderText}
@@ -158,6 +163,17 @@ function TypingPromptBase({
               }
             }}
           />
+          {inputShown && answerInputMode(expectedAnswer) === 'decimal' && (
+            <button
+              className="GravityTypingPrompt-numberSubmit UIButton UIButton--hero"
+              disabled={!textValue.trim() || !isFreeFall}
+              onPointerDown={(event) => event.preventDefault()}
+              onClick={onSubmit}
+              aria-label="Submit answer"
+            >
+              Enter
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { COPY_SUBMIT_DEBOUNCE, COPY_SUBMIT_INITIAL_DELAY, COPY_FOCUS_DELAY } from '@/lib/gravity/constants';
+import { answerInputMode } from '@/lib/gravity/answer-keyboard';
 import { STRINGS } from '@/lib/gravity/strings';
 import type { GravityTerm } from '@/lib/gravity/types';
 
@@ -153,6 +154,7 @@ function CopyTermViewBase({
             autoCorrect="off"
             className="GravityCopyTermView-input"
             rows={1}
+            inputMode={answerInputMode(answerText)}
             spellCheck={false}
             value={imageOnlyAnswer ? "" : inputValue}
             readOnly={imageOnlyAnswer}

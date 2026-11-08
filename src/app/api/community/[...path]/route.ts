@@ -4,6 +4,7 @@ import { auth } from '@/lib/community/auth';
 import {appleConfigured} from '@/lib/community/apple';
 import {tutorialEnabled} from '@/lib/community/settings';
 import { db } from '@/lib/community/db';
+import { leaderboardQuery, leaderboardPageSize } from '@/lib/community/leaderboard';
 import {assertShareable} from '@/lib/community/content-safety';
 import { fingerprint } from '@/lib/community/sets';
 import { correctPendingEmail } from '@/lib/community/pending-email';
@@ -42,9 +43,9 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{path:str
  }
  if(path[0]==='sets'&&uuid.safeParse(path[1]).success){
  if(path[2]==='leaderboard'){
- const {rows}=await db.query(`SELECT h.score,h.level,h.mode,h.achieved_at,u.id AS player_id,coalesce(u."displayUsername",u.username,u.name) AS username,u."isAnonymous" AS guest
- FROM high_scores h JOIN "user" u ON u.id=h.user_id WHERE h.set_id=$1 AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$3 AND b.blocked_id=h.user_id) ORDER BY h.score DESC,h.achieved_at,u.id LIMIT 51 OFFSET $2`,[path[1],page(request),viewer]);
- return json({entries:rows.slice(0,50),hasMore:rows.length>50,offset:page(request)});
+ const size=leaderboardPageSize(request.nextUrl.searchParams.get('limit'));
+ const {rows}=await db.query(leaderboardQuery,[path[1],page(request),viewer,size,request.nextUrl.searchParams.get('around')==='me']);
+ return json(rows[0]);
  }
  const {rows}=await db.query(`SELECT s.*,coalesce(u."displayUsername",u.username,u.name,'Community') AS added_by FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by WHERE s.id=$1 AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$2 AND b.blocked_id=s.created_by)`,[path[1],viewer]);
  return rows[0]?json(rows[0]):json({error:'Set not found'},404);

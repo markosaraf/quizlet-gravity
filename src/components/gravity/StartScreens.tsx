@@ -1,3 +1,4 @@
+import { Leaderboard } from '@/components/community/Leaderboard';
 import { DIFFICULTY_ORDER, GAME_STATES } from '@/lib/gravity/constants';
 import { STRINGS, format } from '@/lib/gravity/strings';
 import type { Difficulty, Side } from '@/lib/gravity/constants';
@@ -323,35 +324,23 @@ export function StartView({
 
 /* ---------------- Game over view ---------------- */
 
-/** A single session-score entry: the score and the index of the try it represents. */
-export interface LeaderboardEntry {
-  /** Original chronological index of this try (0-based). */
-  tryIndex: number;
-  points: number;
-  level: number;
-}
-
 export function GameOverView({
   points,
   level,
-  leaderboard,
-  currentTryIndex,
+  sharedSetId,
+  scoreSettled,
+  leaderboardRefresh,
   onRestart,
   onNewSet,
 }: {
   points: number;
   level: number;
-  /** All tries this session, sorted descending by points. */
-  leaderboard: LeaderboardEntry[];
-  /** Chronological index of the try that just ended. */
-  currentTryIndex: number;
+  sharedSetId?: string;
+  scoreSettled: boolean;
+  leaderboardRefresh: string;
   onRestart: () => void;
   onNewSet: () => void;
 }) {
-  const sortedByPoints = [...leaderboard].sort((a, b) => b.points - a.points);
-  const rank = sortedByPoints.findIndex((e) => e.tryIndex === currentTryIndex) + 1;
-  const isNewHighScore = rank === 1 && leaderboard.length > 1;
-
   return (
     <div className="GravityUIModal">
       <div className="GravityUIModal-box">
@@ -375,54 +364,8 @@ export function GameOverView({
             {format(STRINGS.game_over.score_label, { points, level })}
           </p>
 
-          {isNewHighScore ? (
-            <p className="GravityGameOverView-highScoreLabel">
-              {STRINGS.game_over.high_score_label}
-            </p>
-          ) : (
-            <p className="GravityGameOverView-rankLabel">
-              {format(STRINGS.game_over.rank_label, {
-                rank,
-                total: leaderboard.length,
-              })}
-            </p>
-          )}
-
-          {/* Session leaderboard — ranked list of all tries in this session */}
-          {leaderboard.length > 0 ? (
-            <div className="GravityGameOverView-leaderboard">
-              <div className="GravityGameOverView-leaderboardTitle">
-                {STRINGS.game_over.leaderboard_title}
-              </div>
-              <ol className="GravityGameOverView-leaderboardList">
-                {sortedByPoints.map((entry, i) => {
-                  const isCurrent = entry.tryIndex === currentTryIndex;
-                  return (
-                    <li
-                      key={entry.tryIndex}
-                      className={`GravityGameOverView-leaderboardRow ${isCurrent ? 'is-current' : ''}`}
-                    >
-                      <span className={`GravityGameOverView-leaderboardRank ${i === 0 ? 'is-top' : ''}`}>
-                        {i + 1}.
-                      </span>
-                      <span
-                        className={`GravityGameOverView-leaderboardPoints ${isCurrent ? 'is-current' : ''}`}
-                      >
-                        {entry.points.toLocaleString()} pts
-                        <span className="GravityGameOverView-leaderboardLevel">
-                          {' '}· L{entry.level}
-                        </span>
-                      </span>
-                      {isCurrent ? (
-                        <span className="GravityGameOverView-leaderboardYou">
-                          {STRINGS.game_over.you_label}
-                        </span>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
+          {sharedSetId ? (
+            <Leaderboard id={sharedSetId} compact aroundPlayer ready={scoreSettled} refresh={leaderboardRefresh}/>
           ) : null}
 
           <div

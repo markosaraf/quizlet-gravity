@@ -9,7 +9,7 @@ import { getStoredPartialAnswer } from '@/lib/gravity/parse';
 import { collectSpecialChars } from '@/lib/gravity/specialChars';
 import { GameplayView, useGameplaySize } from './GameplayView';
 import { ModeControls, SiteHeader } from './ModeControls';
-import { StartView, GameOverView, type LeaderboardEntry } from './StartScreens';
+import { StartView, GameOverView } from './StartScreens';
 import { ImportScreen } from './ImportScreen';
 import { setGameStarted } from './LandingSections';
 
@@ -29,36 +29,8 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
     () => null as unknown as GameData,
   );
 
-  // ---- session leaderboard (in-memory only; not persisted across devices) ----
-  // Each entry = one completed game. tryIndex is the 0-based chronological
-  // index of the try; we use it to highlight the just-finished try on the
-  // leaderboard.
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [currentTryIndex, setCurrentTryIndex] = useState(-1);
-  // Dedup key — tracks the last GAME_OVER we recorded so we don't double-count
-  // when the store fires multiple change() calls during the GAME_OVER state.
-  // State (not a ref) so the "adjust state during render" pattern is lint-clean.
-  const [lastRecordedKey, setLastRecordedKey] = useState<string | null>(null);
-
-  // Record the score when a game ends. Uses the "adjust state during render"
-  // pattern (see React docs:
-  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
-  // instead of an effect+setState, to satisfy the set-state-in-effect rule.
-  const currentKey =
-    data && data.gameState === GAME_STATES.GAME_OVER
-      ? `${data.gameState}:${data.points}:${data.level}`
-      : null;
-  if (currentKey !== lastRecordedKey) {
-    setLastRecordedKey(currentKey);
-    if (currentKey !== null && data) {
-      const tryIndex = leaderboard.length;
-      setLeaderboard([
-        ...leaderboard,
-        { tryIndex, points: data.points, level: data.level },
-      ]);
-      setCurrentTryIndex(tryIndex);
-    }
-  }
+  const [savedRun,setSavedRun]=useState<string|null>(null);
+  const [failedRun,setFailedRun]=useState<string|null>(null);
 
   const handleStartSet = useCallback((set: GravitySet, terms: GravityTerm[]) => {
     gravityStore.setup({
@@ -67,16 +39,12 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
       acceptsPartialAnswer: getStoredPartialAnswer(),
     });
     setStarted(true);
-    // reset the session leaderboard when a brand-new set is loaded
-    setLeaderboard([]);
-    setCurrentTryIndex(-1);
-    setLastRecordedKey(null);
   }, []);
 
   useEffect(()=>{const initial=shared??localGame;if(initial){handleStartSet(initial.set,initial.terms);if(autoPlay){gravityStore.changeDifficultyLevel('BEGINNER');gravityStore.changeShowingSide('word');gravityStore.startGame();}}return()=>gravityStore.dispose();},[shared,localGame,autoPlay,handleStartSet]);
   const beginGame=async(restart=false)=>{
     if(startingRef.current)return;
-    startingRef.current=true;setStarting(true);setScoreMessage('');
+    startingRef.current=true;setStarting(true);setScoreMessage('');setSavedRun(null);setFailedRun(null);
     try{if(shared){const run=await api('runs',{setId:shared.set.id,mode:gravityStore.getSnapshot().difficultyLevel});runRef.current=run.id;finishedRun.current=null;}
       if(restart)gravityStore.restartGame();else gravityStore.startGame();
     }catch(e){setScoreMessage((e as Error).message);}finally{startingRef.current=false;setStarting(false);}
@@ -84,7 +52,7 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
   useEffect(()=>{
     if(!shared||!data||data.gameState!==GAME_STATES.GAME_OVER||!runRef.current||finishedRun.current===runRef.current)return;
     const id=runRef.current;finishedRun.current=id;
-    api(`runs/${id}/finish`,{score:data.points,level:data.level}).then(()=>{setScoreMessage('Your best score is saved.');}).catch(e=>{finishedRun.current=null;setScoreMessage('Score not saved: '+e.message);});
+    api(`runs/${id}/finish`,{score:data.points,level:data.level}).then(()=>{if(runRef.current!==id)return;setSavedRun(id);setFailedRun(null);setScoreMessage('Your best score is saved.');}).catch(e=>{if(runRef.current!==id)return;finishedRun.current=null;setFailedRun(id);setScoreMessage('Score not saved: '+e.message);});
   },[data?.gameState,data?.points,data?.level,shared,scoreRetry]);
 
   // Special characters (ä ö é ß š …) that exist in the CURRENT set —
@@ -120,9 +88,6 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
     if (shared || localGame) { window.location.assign("/create-set"); return; }
     gravityStore.dispose();
     setStarted(false);
-    setLeaderboard([]);
-    setCurrentTryIndex(-1);
-    setLastRecordedKey(null);
   }, [shared,localGame]);
 
   // Mirror the `started` flag into the LandingSections store: while a
@@ -204,8 +169,9 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
               <GameOverView
                 points={data.points}
                 level={data.level}
-                leaderboard={leaderboard}
-                currentTryIndex={currentTryIndex}
+                sharedSetId={shared?.set.id}
+                scoreSettled={!!(savedRun||failedRun)}
+                leaderboardRefresh={savedRun??''}
                 onRestart={() => void beginGame(true)}
                 onNewSet={handleNewSet}
               />

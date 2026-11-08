@@ -67,7 +67,7 @@ export const STRINGS = {
     score_label: 'You scored {points} points and reached level {level}.',
     high_score_label: 'New high score!',
     rank_label: 'Rank {rank} of {total}',
-    leaderboard_title: 'Session leaderboard',
+    leaderboard_title: 'Leaderboard',
     you_label: 'you',
     play_again_button: 'Play again',
     new_set_button: 'New game',

@@ -12,3 +12,11 @@ test('normalizes accents, preserves graphemes and ignores ASCII and invisible ch
   assert.deepEqual(new Set(collectSpecialChars(terms, 'word')), new Set(['é', '👩🏽‍🚀']));
   assert.deepEqual(collectSpecialChars(terms, 'definition'), []);
 });
+test('admin switches independently hide letters and symbols while preserving answer-side filtering', () => {
+  assert.deepEqual(collectSpecialChars(terms,'word',{specialLettersEnabled:true,specialCharactersEnabled:false}),['à','é']);
+  assert.deepEqual(new Set(collectSpecialChars(terms,'definition',{specialLettersEnabled:false,specialCharactersEnabled:true})),new Set([',','.',':']));
+  assert.deepEqual(collectSpecialChars(terms,'random',{specialLettersEnabled:false,specialCharactersEnabled:false}),[]);
+  const all=collectSpecialChars(terms,'random');
+  assert.deepEqual(all.slice(0,3),['à','é','Ü']);
+  assert.equal(all.length,8);
+});

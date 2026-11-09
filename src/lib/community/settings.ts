@@ -1,5 +1,11 @@
 import {db} from './db';
-export async function tutorialEnabled():Promise<boolean>{
- const {rows}=await db.query("SELECT enabled FROM community_settings WHERE key='tutorial'");
- return rows[0]?.enabled!==false;
+
+export async function communitySettings(){
+ const {rows}=await db.query("SELECT key,enabled FROM community_settings WHERE key=ANY($1::text[])",[['tutorial','special_letters','special_characters']]);
+ const values=new Map<string,boolean>(rows.map(row=>[row.key,row.enabled]));
+ return {
+  tutorialEnabled:values.get('tutorial')!==false,
+  specialLettersEnabled:values.get('special_letters')!==false,
+  specialCharactersEnabled:values.get('special_characters')!==false,
+ };
 }

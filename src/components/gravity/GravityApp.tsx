@@ -16,6 +16,16 @@ import { setGameStarted } from './LandingSections';
 
 export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
   const textSize = useGameplayTextSize();
+  const [characterVisibility,setCharacterVisibility]=useState({specialLettersEnabled:true,specialCharactersEnabled:true});
+  useEffect(()=>{
+    let active=true;
+    const refresh=()=>{void api('config').then(config=>{
+      if(active)setCharacterVisibility({specialLettersEnabled:config.specialLettersEnabled!==false,specialCharactersEnabled:config.specialCharactersEnabled!==false});
+    }).catch(()=>{});};
+    refresh();
+    window.addEventListener('focus',refresh);
+    return()=>{active=false;window.removeEventListener('focus',refresh);};
+  },[]);
   const runRef=useRef<string|null>(null);
   const finishedRun=useRef<string|null>(null);
   const [scoreMessage,setScoreMessage]=useState('');
@@ -62,8 +72,9 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
     () => data ? collectSpecialChars(
       Object.values(data.terms),
       data.showingTermSide === 'word' ? 'definition' : data.showingTermSide === 'definition' ? 'word' : 'random',
+      characterVisibility,
     ) : [],
-    [data?.terms, data?.showingTermSide],
+    [data?.terms, data?.showingTermSide, characterVisibility],
   );
 
   // keyboard: ESC skips the first live term (keymaster GAMEPLAY scope)

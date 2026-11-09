@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { auth } from '@/lib/community/auth';
 import {appleConfigured} from '@/lib/community/apple';
-import {tutorialEnabled} from '@/lib/community/settings';
+import {communitySettings} from '@/lib/community/settings';
 import { db } from '@/lib/community/db';
 import { leaderboardQuery, leaderboardPageSize } from '@/lib/community/leaderboard';
 import {assertShareable} from '@/lib/community/content-safety';
@@ -31,7 +31,7 @@ async function body(request:NextRequest){
 export async function GET(request:NextRequest,{params}:{params:Promise<{path:string[]}>}){
  try{
  const {path}=await params;await limit(request,'read',180);
- if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN,tutorialEnabled:await tutorialEnabled()});
+ if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN,...await communitySettings()});
  const viewer=(await auth.api.getSession({headers:request.headers}))?.user.id||null;
  if(path[0]==='sets'&&path.length===1){
  const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request);

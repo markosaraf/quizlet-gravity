@@ -11,14 +11,14 @@ function baseLetter(ch: string): string {
   return ch.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
 
-export function collectSpecialChars(terms: GravityTerm[], answerSide: 'word' | 'definition' | 'random'): string[] {
+export function collectSpecialChars(terms: GravityTerm[], answerSide: 'word' | 'definition' | 'random', visibility: {specialLettersEnabled:boolean;specialCharactersEnabled:boolean} = {specialLettersEnabled:true,specialCharactersEnabled:true}): string[] {
   const seen = new Set<string>();
   for (const term of terms) {
     for (const text of (answerSide === 'random' ? [term.word, term.definition] : [term[answerSide]])) {
       if (!text) continue;
       for (const { segment: ch } of graphemes.segment(text.normalize('NFC'))) {
         if (!/^[a-zA-Z0-9\s\p{Cc}\p{Cf}]+$/u.test(ch)) {
-          seen.add(ch);
+          if (/\p{L}/u.test(ch) ? visibility.specialLettersEnabled : visibility.specialCharactersEnabled) seen.add(ch);
         }
       }
     }

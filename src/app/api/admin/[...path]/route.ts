@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {randomUUID} from 'node:crypto';
 import {auth} from '@/lib/community/auth';
-import {tutorialEnabled} from '@/lib/community/settings';
+import {communitySettings} from '@/lib/community/settings';
 import {db} from '@/lib/community/db';
 import {revokeAppleAccess} from '@/lib/community/apple';
 import {isAdmin} from '@/lib/community/admin';
@@ -15,7 +15,7 @@ export async function GET(request:NextRequest,{params}:Context){
   const {path}=await params;
   if(path.join('/')==='status')return json({admin});
   if(!admin)return json({error:'Administrator access required.'},403);
-  if(path.join('/')==='settings')return json({tutorialEnabled:await tutorialEnabled()});
+  if(path.join('/')==='settings')return json(await communitySettings());
   const offset=Math.max(0,Math.min(100000,Number(request.nextUrl.searchParams.get('offset'))||0));
   const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);
   const pattern='%'+q.replace(/[\\%_]/g,'\\$&')+'%';
@@ -74,10 +74,14 @@ export async function POST(request:NextRequest,{params}:Context){
  if(path.join('/')==='settings'){
   try{
    const input=await request.json();
-   if(typeof input.tutorialEnabled!=='boolean')return json({error:'Choose on or off.'},400);
-   await db.query("INSERT INTO community_settings(key,enabled) VALUES('tutorial',$1) ON CONFLICT(key) DO UPDATE SET enabled=EXCLUDED.enabled,updated_at=now()",[input.tutorialEnabled]);
-   return json({tutorialEnabled:input.tutorialEnabled});
-  }catch{return json({error:'Unable to save tutorial setting.'},500);}
+   const fields={tutorialEnabled:'tutorial',specialLettersEnabled:'special_letters',specialCharactersEnabled:'special_characters'} as const;
+   if(!input||typeof input!=='object'||Array.isArray(input))return json({error:'Choose on or off.'},400);
+   const entries=Object.entries(input);
+   if(!entries.length||entries.some(([key,value])=>!Object.hasOwn(fields,key)||typeof value!=='boolean'))return json({error:'Choose on or off.'},400);
+   const keys=entries.map(([key])=>fields[key as keyof typeof fields]);
+   await db.query("INSERT INTO community_settings(key,enabled) SELECT * FROM unnest($1::text[],$2::boolean[]) ON CONFLICT(key) DO UPDATE SET enabled=EXCLUDED.enabled,updated_at=now()",[keys,entries.map(([,value])=>value)]);
+   return json(await communitySettings());
+  }catch{return json({error:'Unable to save settings.'},500);}
  }
  if(path.length!==3||path[0]!=='reports'||path[2]!=='resolve'||!/^[0-9a-f-]{36}$/i.test(path[1]))return json({error:'Not found'},404);
  try{await db.query("UPDATE content_reports SET status='resolved',resolved_at=now(),resolved_by=$2 WHERE id=$1",[path[1],session.user.id]);return json({saved:true});}

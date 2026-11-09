@@ -2672,9 +2672,9 @@
 }
 
 /* Keep example Exit gold in both themes and every control layout. */
-.gravity-root .GravityExample-exit,
-.gravity-root .GravityExample-exit:hover,
-.gravity-root .GravityExample-exit:focus-visible {
+[data-theme] .gravity-root .GravityExample-exit,
+[data-theme] .gravity-root .GravityExample-exit:hover:not(:disabled),
+[data-theme] .gravity-root .GravityExample-exit:focus-visible {
   background: #d4af37;
   border-color: #d4af37;
   color: #000;

@@ -74,7 +74,7 @@ function ModeControlsBase({
               {STRINGS.sidebar.restart_button}
             </button>
           </div>
-          {exitHref && <Link href={exitHref} className="UIButton UIButton--hero">Exit</Link>}
+          {exitHref && <Link href={exitHref} className="UIButton UIButton--hero GravityExample-exit">Exit</Link>}
           <div className="GravityModeControls-newSetButton">
             <button className="UILink UILink--white" onClick={onNewSet}>
               {STRINGS.game_over.new_set_button}
@@ -200,7 +200,7 @@ export function SiteHeader({
             >
               <HeaderIcon name="newSet" />
             </button>
-            {exitHref && <Link href={exitHref} className="GravitySiteHeader-iconButton GravitySiteHeader-exit">Exit</Link>}
+            {exitHref && <Link href={exitHref} className="GravitySiteHeader-iconButton GravitySiteHeader-exit GravityExample-exit">Exit</Link>}
           </div>
         </div>
       ) : null}

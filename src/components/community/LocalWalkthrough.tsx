@@ -21,7 +21,7 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
  const directory=path==='/'||path==='/sets';
  const usernameStep=VERSION===1||step===3;
  const active=directory&&!done&&!(usernameStep&&hasUser);
- const title=usernameStep?'Choose a username':steps[step].title;
+ const title=usernameStep?'Log in':steps[step].title;
  const selectors=usernameStep?['[data-tour="username"]']:steps[step].targets;
  const stepCount=hasUser?3:4;
  const key=selectors.join('|');
@@ -122,7 +122,7 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
     </g>;
    })}
   </svg>
-  {targets.map((target,index)=><button key={selectors[index]} ref={index===0?targetRef:undefined} className="local-tour-target-button" aria-label={usernameStep?'Choose username':selectors[index].includes('d-gallery')?'Open highlighted game':selectors[index].includes('games')?'Games':selectors[index].includes('create')?'Create game':'Enter Quizlet game link'} onClick={()=>activateTarget(index)} style={{left:target.x,top:target.y,width:target.width,height:target.height}}/>)}
+  {targets.map((target,index)=><button key={selectors[index]} ref={index===0?targetRef:undefined} className="local-tour-target-button" aria-label={usernameStep?'Log in':selectors[index].includes('d-gallery')?'Open highlighted game':selectors[index].includes('games')?'Games':selectors[index].includes('create')?'Create game':'Enter Quizlet game link'} onClick={()=>activateTarget(index)} style={{left:target.x,top:target.y,width:target.width,height:target.height}}/>)}
   <div ref={panelRef} className="local-tour-card" role="dialog" aria-modal="true" aria-labelledby="local-tour-heading" style={{left:panel.x,top:panel.y,width:panel.width}}>
    {VERSION===2&&<div className="local-tour-progress" aria-label={`Step ${step+1} of ${stepCount}`}>{Array.from({length:stepCount},(_,i)=><span key={i} className={i===step?'current':''}/>)}</div>}
    <h2 id="local-tour-heading">{title}</h2>

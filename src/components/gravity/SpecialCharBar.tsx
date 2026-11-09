@@ -33,6 +33,7 @@ function SpecialCharBarBase({ chars, onInsert }: Props) {
           key={ch}
           type="button"
           className="GravitySpecialChars-button"
+          onPointerDown={(e) => e.preventDefault() /* retain focus on touch */}
           onMouseDown={(e) => e.preventDefault() /* keep textarea focus + caret */}
           onClick={() => onInsert(ch)}
           title={`Insert "${ch}"`}

@@ -150,7 +150,7 @@ function TypingPromptBase({
         barShown ? ' is-showingBar' : ''
       }${isCopyState ? ' is-copyState' : ''}`}
     >
-      {customKeyboard && inputShown && <GlassKeyboard inputRef={inputRef} mode={inputMode} onChange={onChange} onSubmit={() => { if (isFreeFall && inputRef.current?.value.trim()) onSubmit(); }} />}
+      {customKeyboard && inputShown && <GlassKeyboard specialChars={specialChars} inputRef={inputRef} mode={inputMode} onChange={onChange} onSubmit={() => { if (isFreeFall && inputRef.current?.value.trim()) onSubmit(); }} />}
       <div className="GravityTypingPrompt-inner">
         <div className="GravityTypingPrompt-inputWrapper">
           {/* Special characters that exist in the current set — click to

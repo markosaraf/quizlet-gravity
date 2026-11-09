@@ -13,6 +13,7 @@ type CharInserter = (char: string) => void;
 
 interface Props {
   term: GravityTerm;
+  specialChars: string[];
   showingSide: 'word' | 'definition';
   previouslyTypedText: string;
   /** this field publishes its inserter here so the special-character
@@ -25,6 +26,7 @@ interface Props {
 
 function CopyTermViewBase({
   term,
+  specialChars,
   showingSide,
   previouslyTypedText,
   insertRef,
@@ -131,7 +133,7 @@ function CopyTermViewBase({
 
   return (
     <div className="GravityCopyTermView">
-      {customKeyboard && !imageOnlyAnswer && <GlassKeyboard inputRef={inputRef} mode={answerInputMode(answerText)} onChange={v => { setInputValue(v); scheduleSubmit(v); }} onSubmit={submitNow} />}
+      {customKeyboard && !imageOnlyAnswer && <GlassKeyboard specialChars={specialChars} inputRef={inputRef} mode={answerInputMode(answerText)} onChange={v => { setInputValue(v); scheduleSubmit(v); }} onSubmit={submitNow} />}
       <div className="GravityCopyTermView-inner">
         <div className="GravityCopyTermView-heading">
           {STRINGS.copy_answer_modal.prompt}

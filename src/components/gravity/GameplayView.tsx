@@ -124,6 +124,7 @@ function GameplayViewBase({
         {copiedLive && termBeingCopied ? (
           <div className="GravityGameplayView-copyTermWrapper">
             <CopyTermView
+              specialChars={specialChars}
               key={`CopyTermView-${copiedLive.luid}`}
               liveTermId={termBeingCopied}
               term={data.terms[copiedLive.luid]}

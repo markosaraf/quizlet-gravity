@@ -57,14 +57,13 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
     api(`runs/${id}/finish`,{score:data.points,level:data.level}).then(()=>{if(runRef.current!==id)return;setSavedRun(id);setFailedRun(null);setScoreMessage('Your best score is saved.');}).catch(e=>{if(runRef.current!==id)return;finishedRun.current=null;setFailedRun(id);setScoreMessage('Score not saved: '+e.message);});
   },[data?.gameState,data?.points,data?.level,shared,scoreRetry]);
 
-  // Special characters (ä ö é ß š …) that exist in the CURRENT set —
-  // shown as clickable insert buttons above the typing field and the
-  // copy-the-answer input. Collected from BOTH sides of every term.
-  // data.terms keeps a stable reference across store ticks (change()
-  // shallow-copies data), so this only recomputes when a new set loads.
+  // The stored side is the prompt, so collect keys from the opposite (answer) side.
   const specialChars = useMemo(
-    () => (data ? collectSpecialChars(Object.values(data.terms)) : []),
-    [data?.terms],
+    () => data ? collectSpecialChars(
+      Object.values(data.terms),
+      data.showingTermSide === 'word' ? 'definition' : data.showingTermSide === 'definition' ? 'word' : 'random',
+    ) : [],
+    [data?.terms, data?.showingTermSide],
   );
 
   // keyboard: ESC skips the first live term (keymaster GAMEPLAY scope)

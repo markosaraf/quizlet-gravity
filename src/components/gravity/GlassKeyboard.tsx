@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './GlassKeyboard.css';
+import { SpecialCharBar } from './SpecialCharBar';
 import { keyboardTap } from './keyboardHaptics';
 
 type Props = {
   inputRef: { current: HTMLTextAreaElement | null };
   mode: 'decimal' | 'text';
+  specialChars: string[];
   onChange: (value: string) => void;
   onSubmit: () => void;
 };
@@ -16,7 +18,7 @@ const letters = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 const accents = ['àáâäæèéêë', 'ìíîïòóôöœ', 'ùúûüçñßšž'];
 
 /** Edits the actual game input and calls its submit handler. */
-export function GlassKeyboard({ inputRef, mode, onChange, onSubmit }: Props) {
+export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit }: Props) {
   const [layout, setLayout] = useState<'text' | 'decimal' | 'symbols' | 'accents'>(mode);
   const [shift, setShift] = useState(false);
   const [caps, setCaps] = useState(false);
@@ -87,6 +89,7 @@ export function GlassKeyboard({ inputRef, mode, onChange, onSubmit }: Props) {
   return createPortal(<div ref={panelRef} className={`glass-keyboard ${layout === 'decimal' ? 'numeric' : 'alphabetic'}`} role="group" aria-label="Transparent game keyboard"
     onPointerDownCapture={e => { if ((e.target as Element).closest('button')) keyboardTap(); }}
     onClickCapture={e => { if (e.detail === 0 && (e.target as Element).closest('button')) keyboardTap(); }}>
+    {specialChars.length > 0 && <div className="glass-special-characters"><SpecialCharBar chars={specialChars} onInsert={char => edit(char)} /></div>}
     {layout === 'decimal' ? <div className="number-grid">
       {key('7')}{key('8')}{key('9')}{backspace('num-delete')}
       {key('4')}{key('5')}{key('6')}{key('-', '−', 'num-minus')}

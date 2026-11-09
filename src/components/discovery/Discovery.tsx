@@ -24,18 +24,7 @@ type LocalGame={set:GravitySet;terms:GravityTerm[]};
 const examples=[['2 + 3','5'],['10 − 4','6'],['3 × 3','9'],['8 + 4','12'],['6 × 2','12'],['20 ÷ 4','5'],['7 + 8','15'],['9 − 6','3'],['4 × 4','16'],['18 ÷ 3','6']];
 const example:LocalGame={set:{id:'local-example',title:'Quick maths',wordLang:'en',defLang:'en'},terms:importedCardsToTerms(examples.map(([term,definition])=>({term,definition})))!};
 
-function ExampleExit(){
- const [top,setTop]=useState<number|null>(null);
- useEffect(()=>{
-  const measure=()=>{const bottom=Math.max(0,...['.community-nav','.GravitySiteHeader'].map(s=>document.querySelector(s)?.getBoundingClientRect().bottom??0));setTop(Math.max(12,bottom+12));};
-  measure();const observer=new ResizeObserver(measure);observer.observe(document.body);
-  for(const selector of ['.community-nav','.GravitySiteHeader']){const el=document.querySelector(selector);if(el)observer.observe(el);}
-  window.addEventListener('resize',measure);window.addEventListener('scroll',measure,{passive:true});
-  return()=>{observer.disconnect();window.removeEventListener('resize',measure);window.removeEventListener('scroll',measure);};
- },[]);
- return top===null?null:createPortal(<Link href="/" className="d-example-exit" style={{top}}>Exit</Link>,document.body);
-}
-export function ExampleGame(){return <><ExampleExit/><GravityApp localGame={example} autoPlay/></>;}
+export function ExampleGame(){return <GravityApp localGame={example} autoPlay exitHref="/"/>;}
 export function DiscoveryLanding(){
  const [tutorialEnabled,setTutorialEnabled]=useState(false),[tutorialOpen,setTutorialOpen]=useState(false);
  const {data:session}=authClient.useSession();

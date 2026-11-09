@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Poppins } from "next/font/google";
 import "./globals.css";
@@ -10,6 +10,8 @@ import { GAME_FEATURES } from "./seo-content";
    YOUR SITE URL — see explanation in the previous version.
    Pick Option A (Vercel env var) or Option B (hard-code below).
 ---------------------------------------------------------------------------- */
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
+
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.quizletgravity.com";
 

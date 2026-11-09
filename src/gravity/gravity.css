@@ -2662,3 +2662,11 @@
 .GravityTypingPrompt { table-layout: fixed; }
 .GravityTypingPrompt-inputWrapper { width: min(26.25rem, 100%); box-sizing: border-box; }
 .GravityTypingPrompt-input { box-sizing: border-box; }
+
+/* Example Exit is part of the controls, including during answer correction. */
+.GravitySiteHeader-exit { width:auto; min-width:2.75rem; padding:0 .4rem; font-size:.875rem; font-weight:600; text-decoration:none; }
+@media(max-width:380px) {
+ .GravitySiteHeader:has(.GravitySiteHeader-exit) { padding-inline:.5rem; }
+ .GravitySiteHeader:has(.GravitySiteHeader-exit) .GravitySiteHeader-mobileControls { gap:.375rem; }
+ .GravitySiteHeader:has(.GravitySiteHeader-exit) .GravitySiteHeader-stat { gap:.2rem; }
+}

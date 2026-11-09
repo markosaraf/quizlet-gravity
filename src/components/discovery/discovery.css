@@ -22,9 +22,8 @@
 
 .d-landing h1{font-size:31px}
 .d-example{font-size:21px;min-height:56px;padding:15px 24px}
-.d-example-exit{position:fixed;right:18px;top:calc(var(--community-nav-height,72px) + 12px);z-index:100;display:flex;align-items:center;gap:10px;padding:15px 24px;border:2px solid #d5af34;border-radius:12px;background:#d5af34;color:#171717;font-size:21px;font-weight:700;text-decoration:none;box-shadow:0 5px 20px #0004}
-.d-example-exit:focus-visible{outline:3px solid white;outline-offset:3px}
-@media(max-width:760px){.d-landing h1{font-size:24px}.d-example{font-size:18px;padding:14px 16px}.d-example-exit{top:116px;right:12px;padding:12px 18px;font-size:18px}}
+
+@media(max-width:760px){.d-landing h1{font-size:24px}.d-example{font-size:18px;padding:14px 16px}}
 .d-example{white-space:nowrap;flex-shrink:0}
 @media(max-width:760px){.d-try>span{min-width:0;flex:1}}
 
@@ -33,10 +32,9 @@
 .d-alternatives>div{margin-left:auto}
 @media(max-width:760px){.d-landing .d-alternatives>div{margin-left:0;width:100%}}
 
-.d-example-exit{z-index:20000;width:212px;height:66px;padding:0;justify-content:center;font-size:28px;line-height:1;cursor:pointer}
 .d-theme-tools{display:flex;align-items:center;gap:14px;flex-shrink:0}
 .d-theme-tools .d-tutorial{font-size:13px;font-weight:600;line-height:20px;min-height:32px;padding:5px 10px;border-radius:6px;margin-bottom:12px}
-@media(max-width:760px){.d-example-exit{width:190px;height:56px;font-size:26px}.d-theme-tools{margin-left:auto;gap:10px}.d-theme-tools .community-theme{margin-left:0}}
+@media(max-width:760px){.d-theme-tools{margin-left:auto;gap:10px}.d-theme-tools .community-theme{margin-left:0}}
 .local-tour-layer{z-index:21000}
 
 .d-shell .d-search input:focus-visible{outline:none;box-shadow:none}
@@ -55,4 +53,12 @@
 /* iOS supplies its actual home-indicator inset when CSS env() is unavailable. */
 @media(max-width:760px){
  .d-landing .d-alternatives{padding-bottom:calc(12px + max(env(safe-area-inset-bottom,0px), var(--gravity-native-bottom-inset,0px)))}
+}
+
+/* Extend the landing action surface beneath the browser's home indicator.
+   :has() also keeps this surface when the account dialog or FAQ is open,
+   and removes it on create/import, game details and gameplay routes. */
+@media (hover:none) and (pointer:coarse), (max-width:760px) {
+ html:has(.d-landing), body:has(.d-landing) { background-color:#f8f9fc; }
+ html[data-theme="dark"]:has(.d-landing), [data-theme="dark"] body:has(.d-landing) { background-color:#293246; }
 }

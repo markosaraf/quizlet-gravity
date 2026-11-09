@@ -13,7 +13,7 @@ import { StartView, GameOverView } from './StartScreens';
 import { ImportScreen } from './ImportScreen';
 import { setGameStarted } from './LandingSections';
 
-export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean}) {
+export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
   const runRef=useRef<string|null>(null);
   const finishedRun=useRef<string|null>(null);
   const [scoreMessage,setScoreMessage]=useState('');
@@ -117,6 +117,7 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
         onResume={() => gravityStore.resumeGame()}
         onRestart={() => void beginGame(true)}
         onNewSet={handleNewSet}
+        exitHref={exitHref}
       />
       <div className="GravityModeLayout">
         <div className="GravityModeLayout-body">
@@ -129,6 +130,7 @@ export function GravityApp({shared,localGame,autoPlay=false}:{shared?:{set:Gravi
             onResume={() => gravityStore.resumeGame()}
             onRestart={() => void beginGame(true)}
             onNewSet={handleNewSet}
+            exitHref={exitHref}
           />
           <div
             className="GravityModeLayout-main"

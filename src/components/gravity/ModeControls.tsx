@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import Link from 'next/link';
 import { GAME_STATES } from '@/lib/gravity/constants';
 import { STRINGS, format } from '@/lib/gravity/strings';
 import { formatNumber } from '@/lib/gravity/formatNumber';
@@ -14,6 +15,7 @@ interface ControlsProps {
   onResume: () => void;
   onRestart: () => void;
   onNewSet: () => void;
+  exitHref?: string;
 }
 
 function ModeControlsBase({
@@ -25,6 +27,7 @@ function ModeControlsBase({
   onResume,
   onRestart,
   onNewSet,
+  exitHref,
 }: ControlsProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
   const pauseDisabled = gameState !== GAME_STATES.FREE_FALL && !isPaused;
@@ -71,6 +74,7 @@ function ModeControlsBase({
               {STRINGS.sidebar.restart_button}
             </button>
           </div>
+          {exitHref && <Link href={exitHref} className="UIButton UIButton--hero">Exit</Link>}
           <div className="GravityModeControls-newSetButton">
             <button className="UILink UILink--white" onClick={onNewSet}>
               {STRINGS.game_over.new_set_button}
@@ -100,6 +104,7 @@ interface SiteHeaderProps {
   onResume?: () => void;
   onRestart?: () => void;
   onNewSet?: () => void;
+  exitHref?: string;
 }
 
 /* Inline SVG icons for the header buttons. Replaces the old text glyphs
@@ -138,6 +143,7 @@ export function SiteHeader({
   onResume,
   onRestart,
   onNewSet,
+  exitHref,
 }: SiteHeaderProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
   const pauseDisabled = gameState !== GAME_STATES.FREE_FALL && !isPaused;
@@ -194,6 +200,7 @@ export function SiteHeader({
             >
               <HeaderIcon name="newSet" />
             </button>
+            {exitHref && <Link href={exitHref} className="GravitySiteHeader-iconButton GravitySiteHeader-exit">Exit</Link>}
           </div>
         </div>
       ) : null}

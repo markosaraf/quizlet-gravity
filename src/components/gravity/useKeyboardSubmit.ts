@@ -17,17 +17,17 @@ export function useKeyboardSubmit(
       e.preventDefault();
       if (input.value.trim()) submitRef.current();
     };
-    const dismissed = () => {
+    const nativeSubmit = () => {
       if (input.inputMode !== 'decimal' && input.inputMode !== 'numeric') return;
       if (input.dataset.keyboardSwitching === 'true') return;
       if (input.value.trim()) submitRef.current();
       input.focus({ preventScroll: true });
     };
     input.addEventListener('beforeinput', submit);
-    input.addEventListener('gravity-keyboard-dismiss', dismissed);
+    input.addEventListener('gravity-keyboard-submit', nativeSubmit);
     return () => {
       input.removeEventListener('beforeinput', submit);
-      input.removeEventListener('gravity-keyboard-dismiss', dismissed);
+      input.removeEventListener('gravity-keyboard-submit', nativeSubmit);
     };
   }, [inputRef, active]);
 }

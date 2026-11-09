@@ -27,6 +27,11 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.view.HapticFeedbackConstants;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+import java.util.HashSet;
+import java.util.Arrays;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -227,6 +232,16 @@ public final class MainActivity extends ComponentActivity {
         webView = new WebView(this);
         webView.setBackgroundColor(getColor(R.color.navy));
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(webView, "GravityHaptics",
+                new HashSet<>(Arrays.asList("https://www.quizletgravity.com", "https://quizletgravity.com")),
+                (view, message, sourceOrigin, isMainFrame, replyProxy) -> {
+                    if (isMainFrame && "key-tap".equals(message.getData()) &&
+                        NavigationPolicy.isInternal(sourceOrigin.toString()) && foreground) {
+                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                    }
+                });
+        }
         WebSettings settings = webView.getSettings();
         settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp");
         // The first-party site needs JS and DOM storage for its game and remembered sets.

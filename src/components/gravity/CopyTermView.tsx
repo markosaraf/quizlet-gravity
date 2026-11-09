@@ -1,3 +1,5 @@
+import { GlassKeyboard } from './GlassKeyboard';
+import { useGameKeyboard } from './useGameKeyboard';
 import { memo, useEffect, useRef, useState } from 'react';
 import { COPY_SUBMIT_DEBOUNCE, COPY_SUBMIT_INITIAL_DELAY, COPY_FOCUS_DELAY } from '@/lib/gravity/constants';
 import { answerInputMode } from '@/lib/gravity/answer-keyboard';
@@ -29,6 +31,7 @@ function CopyTermViewBase({
   onSubmit,
   liveTermId,
 }: Props) {
+  const customKeyboard = useGameKeyboard();
   const promptImage = showingSide === 'word' ? term._wordImageUrl : term._imageUrl;
   const answerImage = showingSide === 'word' ? term._imageUrl : term._wordImageUrl;
   const answerText = showingSide === 'word' ? term.definition : term.word;
@@ -128,6 +131,7 @@ function CopyTermViewBase({
 
   return (
     <div className="GravityCopyTermView">
+      {customKeyboard && !imageOnlyAnswer && <GlassKeyboard inputRef={inputRef} mode={answerInputMode(answerText)} onChange={v => { setInputValue(v); scheduleSubmit(v); }} onSubmit={submitNow} />}
       <div className="GravityCopyTermView-inner">
         <div className="GravityCopyTermView-heading">
           {STRINGS.copy_answer_modal.prompt}
@@ -161,7 +165,7 @@ function CopyTermViewBase({
             autoCorrect="off"
             className="GravityCopyTermView-input"
             rows={1}
-            inputMode={answerInputMode(answerText)}
+            inputMode={customKeyboard ? 'none' : answerInputMode(answerText)}
             enterKeyHint="send"
             spellCheck={false}
             value={imageOnlyAnswer ? "" : inputValue}

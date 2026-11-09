@@ -21,6 +21,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     private weak var numericDoneItem: UIBarButtonItem?
     private weak var originalDoneTarget: AnyObject?
     private var originalDoneAction: Selector?
+    private let keyFeedback = UISelectionFeedbackGenerator()
     private let pageBackground = UIColor(red: 11/255, green: 16/255, blue: 51/255, alpha: 1)
 
     override func viewDidLoad() {
@@ -42,6 +43,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
             WeakScriptMessageHandler(self), contentWorld: .defaultClient,
             name: "gravityGameInputReady"
         )
+        configuration.userContentController.add(WeakScriptMessageHandler(self), name: "gravityHaptics")
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -273,6 +275,15 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
 
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage) {
+        if message.name == "gravityHaptics" {
+            guard message.body as? String == "key-tap", message.frameInfo.isMainFrame,
+                  let frameURL = message.frameInfo.request.url, isInternal(frameURL),
+                  let url = webView.url, isInternal(url), view.window != nil,
+                  UIApplication.shared.applicationState == .active else { return }
+            keyFeedback.selectionChanged()
+            keyFeedback.prepare()
+            return
+        }
         guard message.name == "gravityGameInputReady", message.body as? String == "ready",
               message.frameInfo.isMainFrame, let frameURL = message.frameInfo.request.url,
               isInternal(frameURL), let url = webView.url, isInternal(url),
@@ -292,7 +303,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
                 getComputedStyle(input).visibility !== 'visible') return;
             const start = input.selectionStart, end = input.selectionEnd;
             // React may already have focused it without opening the keyboard.
-            if (document.activeElement === input) input.blur();
+            if (document.activeElement === input && input.inputMode !== 'none') input.blur();
             input.focus({preventScroll: true});
             input.setSelectionRange(start, end);
         })();

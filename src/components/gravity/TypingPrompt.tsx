@@ -1,3 +1,5 @@
+import { GlassKeyboard } from './GlassKeyboard';
+import { useGameKeyboard } from './useGameKeyboard';
 import { memo, useEffect, useLayoutEffect, useRef } from 'react';
 import { answerInputMode } from '@/lib/gravity/answer-keyboard';
 import { GAME_STATES } from '@/lib/gravity/constants';
@@ -39,6 +41,7 @@ function TypingPromptBase({
   onChange,
   onSubmit,
 }: Props) {
+  const customKeyboard = useGameKeyboard();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // Keep the last keyboard during the brief gaps between asteroids.
   const lastAnswerRef = useRef(expectedAnswer);
@@ -70,7 +73,7 @@ function TypingPromptBase({
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     // WebKit may retain the old keyboard for an already-focused textarea.
     // Reacquire focus only when its keyboard type actually changes.
-    if (changed && isIOS && input && document.activeElement === input && isFreeFall) {
+    if (!customKeyboard && changed && isIOS && input && document.activeElement === input && isFreeFall) {
       const start = input.selectionStart;
       const end = input.selectionEnd;
       input.dataset.keyboardSwitching = 'true';
@@ -79,7 +82,7 @@ function TypingPromptBase({
       input.setSelectionRange(start, end);
       setTimeout(() => { delete input.dataset.keyboardSwitching; }, 400);
     }
-  }, [inputMode, isFreeFall]);
+  }, [inputMode, isFreeFall, customKeyboard]);
 
   // keep the input focused during gameplay (original behavior).
   // focus({ preventScroll: true }) stops mobile browsers from auto-scrolling
@@ -147,6 +150,7 @@ function TypingPromptBase({
         barShown ? ' is-showingBar' : ''
       }${isCopyState ? ' is-copyState' : ''}`}
     >
+      {customKeyboard && inputShown && <GlassKeyboard inputRef={inputRef} mode={inputMode} onChange={onChange} onSubmit={() => { if (isFreeFall && inputRef.current?.value.trim()) onSubmit(); }} />}
       <div className="GravityTypingPrompt-inner">
         <div className="GravityTypingPrompt-inputWrapper">
           {/* Special characters that exist in the current set — click to
@@ -154,7 +158,7 @@ function TypingPromptBase({
               in this exact spot even while the copy-the-answer view is
               open (the input below hides but keeps occupying its space,
               so nothing here ever moves). */}
-          <SpecialCharBar chars={specialChars} onInsert={onInsertChar} />
+          {!customKeyboard && <SpecialCharBar chars={specialChars} onInsert={onInsertChar} />}
           {/* no autoFocus: it calls focus() without preventScroll, which
               auto-scrolls to the field on mobile. The effect above focuses
               the input (without scrolling) once it is mounted. */}
@@ -165,7 +169,7 @@ function TypingPromptBase({
             autoCorrect="off"
             className="GravityTypingPrompt-input"
             rows={1}
-            inputMode={inputMode}
+            inputMode={customKeyboard ? 'none' : inputMode}
             enterKeyHint="send"
             spellCheck={false}
             value={textValue}

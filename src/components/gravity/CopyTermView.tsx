@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { COPY_SUBMIT_DEBOUNCE, COPY_SUBMIT_INITIAL_DELAY, COPY_FOCUS_DELAY } from '@/lib/gravity/constants';
 import { answerInputMode } from '@/lib/gravity/answer-keyboard';
+import { useKeyboardSubmit } from './useKeyboardSubmit';
 import { STRINGS } from '@/lib/gravity/strings';
 import type { GravityTerm } from '@/lib/gravity/types';
 
@@ -37,6 +38,12 @@ function CopyTermViewBase({
   const submitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // caret to restore after a special-char button insertion
   const pendingCaretRef = useRef<number | null>(null);
+
+  const submitNow = () => {
+    if (submitTimer.current) clearTimeout(submitTimer.current);
+    onSubmit(liveTermId, inputRef.current?.value ?? inputValue);
+  };
+  useKeyboardSubmit(inputRef, !imageOnlyAnswer, submitNow);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -155,6 +162,7 @@ function CopyTermViewBase({
             className="GravityCopyTermView-input"
             rows={1}
             inputMode={answerInputMode(answerText)}
+            enterKeyHint="send"
             spellCheck={false}
             value={imageOnlyAnswer ? "" : inputValue}
             readOnly={imageOnlyAnswer}
@@ -166,7 +174,10 @@ function CopyTermViewBase({
               scheduleSubmit(v);
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') e.preventDefault();
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                if (!imageOnlyAnswer) submitNow();
+              }
             }}
           />
           {imageOnlyAnswer && <button className="UIButton UIButton--hero" onClick={()=>onSubmit(liveTermId,"",true)}>Continue</button>}

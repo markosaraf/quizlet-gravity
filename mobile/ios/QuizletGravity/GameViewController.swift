@@ -18,6 +18,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     private var presentationTimer: Timer?
     private let bottomSurface = UIView()
     private var keyboardOverlap: CGFloat = 0
+    private var suppressKeyboardDismissUntil = Date.distantPast
     private let pageBackground = UIColor(red: 11/255, green: 16/255, blue: 51/255, alpha: 1)
 
     override func viewDidLoad() {
@@ -93,11 +94,39 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         let local = view.convert(frame, from: nil)
         let hidden = notification.name == UIResponder.keyboardWillHideNotification
         let overlap = hidden ? 0 : max(0, view.bounds.maxY - local.minY)
+        if hidden && keyboardOverlap > 0 && Date() > suppressKeyboardDismissUntil &&
+            UIApplication.shared.applicationState == .active {
+            submitDismissedNumericKeyboard()
+        }
         keyboardOverlap = overlap
         updateKeyboardInset()
         let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
         UIView.animate(withDuration: duration) { self.view.layoutIfNeeded() }
         #endif
+    }
+
+    // The existing WebKit accessory Done control dismisses the number pad.
+    // Route that action to the active game's answer handler, without adding UI.
+    private func submitDismissedNumericKeyboard() {
+        guard let url = webView.url, isInternal(url) else { return }
+        webView.evaluateJavaScript("""
+        (() => {
+            const game = document.querySelector('.GravityGameplayView:not(.has-splash):not(.is-gameOver)');
+            const input = game?.querySelector('textarea.GravityCopyTermView-input') ||
+                game?.querySelector('.GravityTypingPrompt.is-showingInput:not(.is-copyState) textarea');
+            if (!input || input.readOnly || input.disabled || input.dataset.keyboardSwitching === 'true' ||
+                !['decimal', 'numeric'].includes(input.inputMode)) return false;
+            const active = document.activeElement;
+            if (active && active !== input && active !== document.body) return false;
+            input.dispatchEvent(new Event('gravity-keyboard-dismiss'));
+            return true;
+        })()
+        """, in: nil, in: .page) { [weak self] result in
+            guard let self, case .success(let handled) = result, handled as? Bool == true else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.focusGameInput()
+            }
+        }
     }
 
     private func refreshMobilePresentation() {
@@ -220,6 +249,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
 
     private func focusGameInput() {
         guard let url = webView.url, isInternal(url), view.window != nil else { return }
+        suppressKeyboardDismissUntil = Date().addingTimeInterval(0.5)
         webView.becomeFirstResponder()
         webView.evaluateJavaScript("""
         (() => {

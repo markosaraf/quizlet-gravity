@@ -2,6 +2,7 @@ import { memo, useEffect, useLayoutEffect, useRef } from 'react';
 import { answerInputMode } from '@/lib/gravity/answer-keyboard';
 import { GAME_STATES } from '@/lib/gravity/constants';
 import { useDelayedUnmount } from './useDelayedUnmount';
+import { useKeyboardSubmit } from './useKeyboardSubmit';
 import { SpecialCharBar } from './SpecialCharBar';
 
 /**
@@ -59,6 +60,8 @@ function TypingPromptBase({
   const barShown = inputShown || isCopyState;
   const mounted = useDelayedUnmount(barShown, 400);
 
+  useKeyboardSubmit(inputRef, mounted && isFreeFall, onSubmit);
+
   useLayoutEffect(() => {
     const input = inputRef.current;
     const changed = focusedModeRef.current !== inputMode;
@@ -70,9 +73,11 @@ function TypingPromptBase({
     if (changed && isIOS && input && document.activeElement === input && isFreeFall) {
       const start = input.selectionStart;
       const end = input.selectionEnd;
+      input.dataset.keyboardSwitching = 'true';
       input.blur();
       input.focus({ preventScroll: true });
       input.setSelectionRange(start, end);
+      setTimeout(() => { delete input.dataset.keyboardSwitching; }, 400);
     }
   }, [inputMode, isFreeFall]);
 
@@ -167,7 +172,7 @@ function TypingPromptBase({
             placeholder={placeholderText}
             onChange={(e) => onChange(e.currentTarget.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 if (textValue !== '' && isFreeFall) onSubmit();
               }

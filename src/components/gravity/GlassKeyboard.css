@@ -67,6 +67,8 @@
 .glass-keyboard,.glass-keyboard *{-webkit-tap-highlight-color:transparent}
 .glass-key:focus:not(:focus-visible){outline:none}
 .glass-key:focus-visible{outline:2px solid #ffcd1f;outline-offset:1px}
+/* Native tablets use touch controls even above the phone breakpoint. */
+html[data-gravity-input="touch"] .GravitySiteHeader{display:flex;align-items:center}
 html:has(.glass-keyboard) .GravityGameplayView-typingPrompt{position:fixed;bottom:calc(var(--keyboard-height,250px) + 8px);left:8px;right:8px;width:auto;z-index:1500}
 html:has(.glass-keyboard) .GravityTypingPrompt-inner{display:block;transition:none}
 html:has(.glass-keyboard) .GravityTypingPrompt-inputWrapper{width:100%;max-width:100%;margin:0}

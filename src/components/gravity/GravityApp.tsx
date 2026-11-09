@@ -8,12 +8,14 @@ import type { GameData, GravitySet, GravityTerm } from '@/lib/gravity/types';
 import { getStoredPartialAnswer } from '@/lib/gravity/parse';
 import { collectSpecialChars } from '@/lib/gravity/specialChars';
 import { GameplayView, useGameplaySize } from './GameplayView';
+import { useGameplayTextSize } from './GameplayTextToggle';
 import { ModeControls, SiteHeader } from './ModeControls';
 import { StartView, GameOverView } from './StartScreens';
 import { ImportScreen } from './ImportScreen';
 import { setGameStarted } from './LandingSections';
 
 export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
+  const textSize = useGameplayTextSize();
   const runRef=useRef<string|null>(null);
   const finishedRun=useRef<string|null>(null);
   const [scoreMessage,setScoreMessage]=useState('');
@@ -105,7 +107,7 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
   // No screen-size/device blockers — the game is playable everywhere
   // (mobile layout in the top bar handles narrow widths).
   return (
-    <div className="gravity-root" data-playing={[GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP, GAME_STATES.PAUSED].some(state => state === data.gameState) ? "true" : "false"}>
+    <div className="gravity-root" data-large-game-text={textSize.large} data-playing={[GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP, GAME_STATES.PAUSED].some(state => state === data.gameState) ? "true" : "false"}>
       {(scoreMessage||starting)&&<p className="community-message" role="status">{starting?"Starting ranked game…":scoreMessage}</p>}
       <SiteHeader
         title={data.set.title}
@@ -118,6 +120,8 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
         onRestart={() => void beginGame(true)}
         onNewSet={handleNewSet}
         exitHref={exitHref}
+        largeGameText={textSize.large}
+        onToggleGameText={textSize.toggle}
       />
       <div className="GravityModeLayout">
         <div className="GravityModeLayout-body">
@@ -131,6 +135,8 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
             onRestart={() => void beginGame(true)}
             onNewSet={handleNewSet}
             exitHref={exitHref}
+        largeGameText={textSize.large}
+        onToggleGameText={textSize.toggle}
           />
           <div
             className="GravityModeLayout-main"

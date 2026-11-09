@@ -1,3 +1,4 @@
+import { GameplayTextToggle } from './GameplayTextToggle';
 import { memo } from 'react';
 import Link from 'next/link';
 import { GAME_STATES } from '@/lib/gravity/constants';
@@ -16,6 +17,8 @@ interface ControlsProps {
   onRestart: () => void;
   onNewSet: () => void;
   exitHref?: string;
+  largeGameText?: boolean;
+  onToggleGameText?: () => void;
 }
 
 function ModeControlsBase({
@@ -28,6 +31,8 @@ function ModeControlsBase({
   onRestart,
   onNewSet,
   exitHref,
+  largeGameText = false,
+  onToggleGameText,
 }: ControlsProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
   const pauseDisabled = gameState !== GAME_STATES.FREE_FALL && !isPaused;
@@ -60,6 +65,8 @@ function ModeControlsBase({
         </div>
 
         <div style={{ marginTop: '2rem', display: 'grid', gap: '1rem' }}>
+          <div className="GravityModeControls-pauseRow">
+          {onToggleGameText && <GameplayTextToggle large={largeGameText} onToggle={onToggleGameText}/>}
           <button
             className="UIButton UIButton--hero UIButton--fill"
             disabled={pauseDisabled}
@@ -69,6 +76,7 @@ function ModeControlsBase({
               ? STRINGS.sidebar.resume_button
               : STRINGS.sidebar.pause_button}
           </button>
+          </div>
           <div className="GravityModeControls-restartButton">
             <button className="UILink" onClick={onRestart}>
               {STRINGS.sidebar.restart_button}
@@ -105,6 +113,8 @@ interface SiteHeaderProps {
   onRestart?: () => void;
   onNewSet?: () => void;
   exitHref?: string;
+  largeGameText?: boolean;
+  onToggleGameText?: () => void;
 }
 
 /* Inline SVG icons for the header buttons. Replaces the old text glyphs
@@ -144,6 +154,8 @@ export function SiteHeader({
   onRestart,
   onNewSet,
   exitHref,
+  largeGameText = false,
+  onToggleGameText,
 }: SiteHeaderProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
   const pauseDisabled = gameState !== GAME_STATES.FREE_FALL && !isPaused;
@@ -170,6 +182,7 @@ export function SiteHeader({
             <span className="GravitySiteHeader-statValue">{level}</span>
           </div>
           <div className="GravitySiteHeader-actions">
+            {onToggleGameText && <GameplayTextToggle className="GravitySiteHeader-iconButton" large={largeGameText} onToggle={onToggleGameText}/>}
             <button
               type="button"
               className="GravitySiteHeader-iconButton"

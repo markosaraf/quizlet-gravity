@@ -24,6 +24,9 @@ export function collectSpecialChars(terms: GravityTerm[], answerSide: 'word' | '
     }
   }
   return Array.from(seen).sort((a, b) => {
+    // Keep accented/non-ASCII letters ahead of punctuation and symbols.
+    const byKind = Number(/\p{L}/u.test(b)) - Number(/\p{L}/u.test(a));
+    if (byKind !== 0) return byKind;
     const byBase = baseLetter(a).localeCompare(baseLetter(b));
     if (byBase !== 0) return byBase;
     // same base letter (e.g. é vs è vs ê): keep a stable, predictable order

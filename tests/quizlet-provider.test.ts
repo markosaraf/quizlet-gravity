@@ -109,7 +109,6 @@ test('provider HTTP errors are bounded and do not expose upstream messages', asy
 test('upstream status and metadata must confirm a successful page', async () => {
   for (const body of [
     { ...payload(), success: false },
-    { success: true, data: { ...payload().data, metadata: { statusCode: 403 } } },
     { success: true, data: { ...payload().data, metadata: { statusCode: 200, error: 'private upstream detail' } } },
     { success: true, data: { markdown: 'Plausible generated cards', metadata: { statusCode: 200 } } },
   ]) {
@@ -237,3 +236,7 @@ test('rejects truncated, stale, foreign, repeated or conflicting card batches', 
     assert.ok(calls <= 3);
   }
 });
+
+ test('upstream access denial pauses batch imports instead of retrying more sets', async()=>{
+ for(const statusCode of [401,403,429]) await assert.rejects(fetchQuizletSet(SET_URL,{apiKey:'test',fetchImpl:async()=>Response.json({success:true,data:{metadata:{statusCode},rawHtml:''}})}),isImportError('upstream_access_limited',429));
+ });

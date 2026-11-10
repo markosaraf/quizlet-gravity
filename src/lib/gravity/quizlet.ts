@@ -75,6 +75,10 @@ export async function fetchQuizletSet(rawUrl: string, options: FetchOptions = {}
         throw new QuizletImportError(`provider_http_${response.status}`, 502, UNAVAILABLE);
       }
       const payload = JSON.parse(await readResponse(response));
+      if ([401,403,429].includes(payload?.data?.metadata?.statusCode)) {
+        throw new QuizletImportError('upstream_access_limited', 429,
+          'Quizlet is limiting access. Imports are paused. Please try again later.');
+      }
       if (payload?.success !== true || payload?.data?.metadata?.statusCode !== 200 ||
           payload?.data?.metadata?.error || typeof payload?.data?.rawHtml !== 'string') {
         throw new QuizletImportError('upstream_page_unavailable', 502, UNAVAILABLE);

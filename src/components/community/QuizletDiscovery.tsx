@@ -3,14 +3,16 @@ import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import type {DiscoveredQuizletSet} from '@/lib/gravity/quizlet-map';
 import type {QuizletCreator} from '@/lib/gravity/quizlet-creator';
+import type {QuizletClass} from '@/lib/gravity/quizlet-class';
 import './quizlet-discovery.css';
 
 type Result=DiscoveredQuizletSet&{sharePath:string|null};
 type Progress={message:string;failed?:boolean};
-const PAGE_SIZE=20,MAX_BATCH=10;
+const PAGE_SIZE=20,MAX_BATCH=20;
 export function QuizletDiscovery({onImported}:{onImported:()=>void}){
- const [mode,setMode]=useState<'topic'|'creator'>('topic');
+ const [mode,setMode]=useState<'topic'|'creator'|'class'>('topic');
  const [username,setUsername]=useState(''),[creator,setCreator]=useState<QuizletCreator|null>(null),[showCreatorSets,setShowCreatorSets]=useState(false);
+ const [className,setClassName]=useState(''),[classes,setClasses]=useState<QuizletClass[]>([]),[classroom,setClassroom]=useState<QuizletClass|null>(null),[notice,setNotice]=useState('');
  const [topic,setTopic]=useState(''),[limit,setLimit]=useState(100);
  const [results,setResults]=useState<Result[]>([]),[scanned,setScanned]=useState<number|null>(null);
  const [selected,setSelected]=useState<string[]>([]),[progress,setProgress]=useState<Record<string,Progress>>({});
@@ -20,13 +22,13 @@ export function QuizletDiscovery({onImported}:{onImported:()=>void}){
  useEffect(()=>()=>{stop.current=true;},[]);
  const pages=Math.max(1,Math.ceil(results.length/PAGE_SIZE));
  const visible=results.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
- async function discover(event:React.FormEvent){
-  event.preventDefault();if(busy)return;
-  setBusy('discover');setError('');setCreator(null);setScanned(null);
+ async function discover(event?:React.FormEvent,classId?:string){
+  event?.preventDefault();if(busy)return;
+  setBusy('discover');setError('');setCreator(null);setScanned(null);setNotice('');setClassroom(null);setClasses([]);
   try{
-   const response=await fetch('/api/admin/discover-quizlet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(mode==='creator'?{mode,username}:{topic,limit})});
+   const response=await fetch('/api/admin/discover-quizlet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(mode==='class'?{mode,query:className,...(classId?{classId}:{})}:mode==='creator'?{mode,username}:{topic,limit})});
    const data=await response.json();if(!response.ok)throw Error(data.error||'Discovery failed.');
-   setCreator(data.creator??null);setShowCreatorSets(false);setResults(data.sets);setScanned(data.linksScanned);setSelected([]);setProgress({});setPage(0);
+   setCreator(data.creator??null);setShowCreatorSets(false);setResults(data.sets??[]);setScanned(data.linksScanned??null);setClasses(data.classes??[]);setClassroom(data.classroom??null);setNotice(data.notice??(data.classes?.length===0?'No indexed classes found. Try the exact name or paste the class URL.':''));setSelected([]);setProgress({});setPage(0);
   }catch(e){setError(e instanceof Error?e.message:'Discovery failed. Please retry.');}finally{setBusy(null);}
  }
  function select(id:string){setSelected(previous=>previous.includes(id)?previous.filter(s=>s!==id):previous.length<MAX_BATCH?[...previous,id]:previous);}
@@ -64,16 +66,20 @@ export function QuizletDiscovery({onImported}:{onImported:()=>void}){
   <h2 id="discovery-title">Discover Quizlet games</h2>
   <p>Find public Quizlet sets, then select which ones to add to the games catalogue.</p>
   <div className="community-actions" role="group" aria-label="Discovery search type">
-   <button disabled={!!busy} aria-pressed={mode==='topic'} onClick={()=>{setMode('topic');setScanned(null);setCreator(null);setError('');}}>By topic</button>
-   <button disabled={!!busy} aria-pressed={mode==='creator'} onClick={()=>{setMode('creator');setScanned(null);setCreator(null);setError('');}}>By username</button>
+   <button disabled={!!busy} aria-pressed={mode==='topic'} onClick={()=>{setMode('topic');setScanned(null);setCreator(null);setClasses([]);setClassroom(null);setNotice('');setError('');}}>By topic</button>
+   <button disabled={!!busy} aria-pressed={mode==='creator'} onClick={()=>{setMode('creator');setScanned(null);setCreator(null);setClasses([]);setClassroom(null);setNotice('');setError('');}}>By username</button>
+   <button disabled={!!busy} aria-pressed={mode==='class'} onClick={()=>{setMode('class');setScanned(null);setCreator(null);setClasses([]);setClassroom(null);setNotice('');setError('');}}>By class</button>
   </div>
-  <form onSubmit={discover}>
-   {mode==='creator'?<label>Quizlet username<input value={username} onChange={e=>setUsername(e.target.value)} required maxLength={50} placeholder="e.g. emilia_duerig" disabled={!!busy} autoCapitalize="none" spellCheck={false}/></label>:<>
+  <form onSubmit={e=>void discover(e)}>
+   {mode==='class'?<label>Quizlet class name or URL<input value={className} onChange={e=>setClassName(e.target.value)} required maxLength={160} placeholder="e.g. French 1" disabled={!!busy}/></label>:mode==='creator'?<label>Quizlet username<input value={username} onChange={e=>setUsername(e.target.value)} required maxLength={50} placeholder="e.g. emilia_duerig" disabled={!!busy} autoCapitalize="none" spellCheck={false}/></label>:<>
    <label>Topic (optional)<input value={topic} onChange={e=>setTopic(e.target.value)} maxLength={120} placeholder="e.g. French vocabulary or Einmaleins" disabled={!!busy}/></label>
    <label>Links to check<select value={limit} onChange={e=>setLimit(Number(e.target.value))} disabled={!!busy}><option value={100}>100</option><option value={500}>500</option><option value={1000}>1,000</option></select></label>
-   </>}<button type="submit" disabled={!!busy}>{busy==='discover'?'Searching…':mode==='creator'?'Find creator':'Find games'}</button>
+   </>}<button type="submit" disabled={!!busy}>{busy==='discover'?'Searching…':mode==='class'?'Find classes':mode==='creator'?'Find creator':'Find games'}</button>
   </form>
-  {mode==='creator'?<p className="discovery-note">Enter an exact Quizlet username, then select the creator to see their public sets.</p>:<p className="discovery-note">A topic ranks relevant links first. Leave it empty for broader discovery. Results are not a complete list of Quizlet sets and may include unrelated or unavailable sets.</p>}
+  {mode==='class'?<p className="discovery-note">Search public classes by name, then choose a class. Only public materials can be read. Class search is not exhaustive.</p>:mode==='creator'?<p className="discovery-note">Enter an exact Quizlet username, then select the creator to see their public sets.</p>:<p className="discovery-note">A topic ranks relevant links first. Leave it empty for broader discovery. Results are not a complete list of Quizlet sets and may include unrelated or unavailable sets.</p>}
+  {mode==='class'&&classes.length>0&&<ul className="discovery-results">{classes.map(c=><li key={c.id}><div><button disabled={!!busy} onClick={()=>void discover(undefined,c.id)}>{c.title}</button><p>{c.description}</p></div></li>)}</ul>}
+  {mode==='class'&&classroom&&<a href={classroom.url} target="_blank" rel="noopener noreferrer">Open {classroom.title} on Quizlet</a>}
+  {mode==='class'&&notice&&<p role="status">{notice}</p>}
   {error&&<p role="alert">{error}</p>}
   {creator&&!showCreatorSets&&<div className="discovery-creator">
    <button disabled={!!busy} onClick={()=>setShowCreatorSets(true)}>{creator.username} — View created sets ({results.length}{creator.complete?'':'+'})</button>
@@ -82,14 +88,14 @@ export function QuizletDiscovery({onImported}:{onImported:()=>void}){
    {creator&&<><div className="community-actions"><button disabled={!!busy} onClick={()=>setShowCreatorSets(false)}>Back to creator</button><a href={creator.url} target="_blank" rel="noopener noreferrer">Quizlet profile: {creator.username}</a></div>
     {!creator.complete&&<p className="discovery-note">This list may be incomplete. Retry to load more public sets, or check the creator’s Quizlet profile.</p>}</>}
    <p role="status">{creator?`${results.length} public sets created by ${creator.username}.`:`${results.length} unique set links found from ${scanned} discovered links.`}</p>
-   {!results.length?<p>{creator?'No public created sets were returned for this creator.':'Try another topic or increase the number of links.'}</p>:<>
+   {!results.length?<p>{creator?'No public created sets were returned for this creator.':mode==='class'?'You can still import individual public set links.':'Try another topic or increase the number of links.'}</p>:<>
     <div className="community-actions">
-     <button disabled={!!busy||!visible.some(s=>!s.sharePath)} onClick={()=>setSelected(visible.filter(s=>!s.sharePath).slice(0,MAX_BATCH).map(s=>s.setId))}>Select up to 10 on this page</button>
+     <button disabled={!!busy||!visible.some(s=>!s.sharePath)} onClick={()=>setSelected(visible.filter(s=>!s.sharePath).slice(0,MAX_BATCH).map(s=>s.setId))}>Select up to 20 on this page</button>
      <button disabled={!!busy||!selected.length} onClick={()=>setSelected([])}>Clear selection</button>
      <button disabled={!!busy||!selected.length} onClick={()=>void importSelected()}>Import selected ({selected.length})</button>
      {busy==='import'&&<button disabled={stopping} onClick={()=>{stop.current=true;setStopping(true);}}>{stopping?'Stopping after current import…':'Stop after current import'}</button>}
     </div>
-    <p className="discovery-note">Choose up to 10 games at a time. Existing games reuse their link and leaderboard. New imports appear publicly and keep the original Quizlet creator credit.</p>
+    <p className="discovery-note">Choose up to 20 games at a time. Existing games reuse their link and leaderboard. New imports appear publicly and keep the original Quizlet creator credit.</p>
     <ul className="discovery-results">{visible.map(item=><li key={item.setId}>
      <input type="checkbox" aria-label={'Select '+item.title} checked={selected.includes(item.setId)} disabled={!!busy||!!item.sharePath||(!selected.includes(item.setId)&&selected.length>=MAX_BATCH)} onChange={()=>select(item.setId)}/>
      <div><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a>{item.description&&<p>{item.description}</p>}

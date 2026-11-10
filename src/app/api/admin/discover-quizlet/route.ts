@@ -7,6 +7,7 @@ import {sharedSetPath} from '@/lib/community/set-links';
 import {ImportGuard} from '@/lib/gravity/quizlet-import-guard';
 import {discoverQuizletSets,mapOptions,QuizletMapError} from '@/lib/gravity/quizlet-map';
 import {creatorUsername,discoverQuizletCreator} from '@/lib/gravity/quizlet-creator';
+import {classQuery,searchQuizletClasses,discoverQuizletClass} from '@/lib/gravity/quizlet-class';
 export const runtime='nodejs';
 export const maxDuration=60;
 const guard=new ImportGuard();
@@ -21,10 +22,25 @@ export async function POST(request:NextRequest){
   let text='',bytes=0;const decoder=new TextDecoder();
   try{while(true){const {done,value}=await reader.read();if(done)break;bytes+=value.byteLength;if(bytes>2048){await reader.cancel();return json({error:'Request too large.'},413);}text+=decoder.decode(value,{stream:true});}}finally{reader.releaseLock();}
   let input:unknown;try{input=JSON.parse(text+decoder.decode());}catch{return json({error:'Send valid JSON.'},400);}
+  const value=input&&typeof input==='object'?input as Record<string,unknown>:{};
+  const classMode=value.mode==='class';
+  const query=classMode?classQuery(value.query):null;
+  const classId=classMode&&value.classId!==undefined?value.classId:null;
   const creatorMode=!!input&&typeof input==='object'&&'mode' in input&&input.mode==='creator';
   const username=creatorMode?creatorUsername((input as Record<string,unknown>).username):null;
-  const options=creatorMode?null:mapOptions(input);
+  const options=creatorMode||classMode?null:mapOptions(input);
   if(!guard.allow(session.user.id))return json({error:'Please wait a minute before discovering more games.'},429);
+  if(classMode){
+   const task=guard.run<Awaited<ReturnType<typeof discoverQuizletClass>>|Awaited<ReturnType<typeof searchQuizletClasses>>>(JSON.stringify({query,classId}),()=>classId!==null
+    ?unstable_cache(()=>discoverQuizletClass(classId),['quizlet-class-v1',String(classId)],{revalidate:300})()
+    :unstable_cache(()=>searchQuizletClasses(query),['quizlet-class-search-v1',query!],{revalidate:300})());
+   if(!task)return json({error:'Discovery is busy. Please retry in a moment.'},429);
+   const result=await task;
+   if('classes' in result)return json(result);
+   const {rows}=result.sets.length?await db.query('SELECT quizlet_id,public_id,title,source_url FROM shared_sets WHERE quizlet_id=ANY($1::text[])',[result.sets.map(s=>s.setId)]):{rows:[]};
+   const existing=new Map(rows.map(s=>[s.quizlet_id,sharedSetPath(s)] as const));
+   return json({...result,sets:result.sets.map(s=>({...s,sharePath:existing.get(s.setId)??null}))});
+  }
   const task=guard.run(JSON.stringify({username,options}),()=>username
    ?unstable_cache(()=>discoverQuizletCreator(username),['quizlet-creator-v2',username.toLowerCase()],{revalidate:300})()
    :unstable_cache(()=>discoverQuizletSets(options!),['quizlet-map-v1',options!.topic,String(options!.limit)],{revalidate:300})());

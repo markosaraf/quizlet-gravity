@@ -6,3 +6,6 @@
 .quizlet-discovery [aria-pressed="false"]{background:var(--community-field);color:var(--community-text);border:1px solid var(--community-border)}
 .quizlet-discovery [aria-pressed="true"]{background:#d4af37;color:#111;border:1px solid #d4af37}
 .discovery-creator{margin-top:16px}.discovery-creator button{max-width:100%;overflow-wrap:anywhere;text-align:left}
+
+.discovery-connection{border:1px solid var(--community-border,#b9becd);border-radius:12px;padding:16px;margin:16px 0;}
+.discovery-connection .community-actions{flex-wrap:wrap;}

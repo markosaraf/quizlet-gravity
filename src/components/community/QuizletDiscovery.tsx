@@ -3,55 +3,42 @@ import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import type {DiscoveredQuizletSet} from '@/lib/gravity/quizlet-map';
 import type {QuizletCreator} from '@/lib/gravity/quizlet-creator';
-import type {QuizletClass} from '@/lib/gravity/quizlet-class';
+import {parseQuizletBulkLinks} from '@/lib/gravity/quizlet-bulk-links';
 import './quizlet-discovery.css';
 
 type Result=DiscoveredQuizletSet&{sharePath:string|null};
-type Connection={connected:boolean;username:string|null;liveUrl:string|null;expiresAt:number|null};
-const EMPTY_CONNECTION:Connection={connected:false,username:null,liveUrl:null,expiresAt:null};
 type Progress={message:string;failed?:boolean};
 const PAGE_SIZE=20,MAX_BATCH=20;
 export function QuizletDiscovery({onImported}:{onImported:()=>void}){
  const [mode,setMode]=useState<'topic'|'creator'|'class'>('topic');
  const [username,setUsername]=useState(''),[creator,setCreator]=useState<QuizletCreator|null>(null),[showCreatorSets,setShowCreatorSets]=useState(false);
- const [className,setClassName]=useState(''),[classes,setClasses]=useState<QuizletClass[]>([]),[classroom,setClassroom]=useState<QuizletClass|null>(null),[notice,setNotice]=useState('');
+ const [pastedLinks,setPastedLinks]=useState(''),[notice,setNotice]=useState('');
  const [topic,setTopic]=useState(''),[limit,setLimit]=useState(100);
  const [results,setResults]=useState<Result[]>([]),[scanned,setScanned]=useState<number|null>(null);
  const [selected,setSelected]=useState<string[]>([]),[progress,setProgress]=useState<Record<string,Progress>>({});
  const [page,setPage]=useState(0),[busy,setBusy]=useState<'discover'|'import'|null>(null),[error,setError]=useState('');
  const [stopping,setStopping]=useState(false);
- const [connection,setConnection]=useState<Connection>(EMPTY_CONNECTION),[connecting,setConnecting]=useState(false),[connectionError,setConnectionError]=useState('');
  const stop=useRef(false);
- useEffect(()=>{
-  if(mode!=='class')return;
-  const controller=new AbortController();
-  fetch('/api/admin/quizlet-connection',{signal:controller.signal,cache:'no-store'}).then(async r=>{if(!r.ok)throw Error('Could not check Quizlet connection.');return r.json();}).then(setConnection).catch(e=>{if(e.name!=='AbortError')setConnectionError(e.message);});
-  return ()=>controller.abort();
- },[mode]);
- useEffect(()=>{if(!connection.expiresAt)return;const timer=setTimeout(()=>setConnection(EMPTY_CONNECTION),Math.max(0,connection.expiresAt-Date.now()));return()=>clearTimeout(timer);},[connection.expiresAt]);
- async function quizletConnection(action:'start'|'verify'|'end'){
-  if(connecting)return;
-  // Open synchronously so Safari does not block the manual sign-in window.
-  const popup=action==='start'?window.open('about:blank','_blank'):null;
-  if(popup){popup.opener=null;popup.document.title='Quizlet sign-in';popup.document.body.textContent='Opening Quizlet sign-in…';}
-  setConnecting(true);setConnectionError('');
-  try{
-   const r=await fetch('/api/admin/quizlet-connection?action='+action,{method:'POST'});const data=await r.json();
-   if(!r.ok){if(action==='verify')setConnection(c=>({...c,connected:false,username:null}));throw Error(data.error||'Could not connect to Quizlet.');}
-   setConnection(data);
-   if(popup&&data.liveUrl)popup.location.replace(data.liveUrl);else popup?.close();
-  }catch(e){popup?.close();setConnectionError(e instanceof Error?e.message:'Could not connect to Quizlet.');}finally{setConnecting(false);}
- }
  useEffect(()=>()=>{stop.current=true;},[]);
  const pages=Math.max(1,Math.ceil(results.length/PAGE_SIZE));
  const visible=results.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE);
- async function discover(event?:React.FormEvent,classId?:string){
-  event?.preventDefault();if(busy||mode==='class'&&!connection.connected)return;
-  setBusy('discover');setError('');setCreator(null);setScanned(null);setNotice('');setClassroom(null);setClasses([]);
+ async function discover(event?:React.FormEvent){
+  event?.preventDefault();if(busy)return;
+  if(mode==='class'){
+   setError('');
+   try{
+    const parsed=parseQuizletBulkLinks(pastedLinks);
+    setResults(parsed.sets.map(s=>({...s,title:`Quizlet set ${s.setId}`,description:'',sharePath:null})));
+    setSelected(parsed.sets.slice(0,MAX_BATCH).map(s=>s.setId));setProgress({});setPage(0);setScanned(parsed.sets.length);
+    setNotice(parsed.duplicates?`${parsed.duplicates} duplicate link(s) removed.`:'');
+   }catch(e){setError(e instanceof Error?e.message:'Check the pasted links.');setResults([]);setSelected([]);setScanned(null);setNotice('');}
+   return;
+  }
+  setBusy('discover');setError('');setCreator(null);setScanned(null);setNotice('');
   try{
-   const response=await fetch('/api/admin/discover-quizlet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(mode==='class'?{mode,query:className,...(classId?{classId}:{})}:mode==='creator'?{mode,username}:{topic,limit})});
-   const data=await response.json();if(data.requiresQuizletLogin)setConnection(c=>({...c,connected:false,username:null}));if(!response.ok)throw Error(data.error||'Discovery failed.');
-   setCreator(data.creator??null);setShowCreatorSets(false);setResults(data.sets??[]);setScanned(data.linksScanned??null);setClasses(data.classes??[]);setClassroom(data.classroom??null);setNotice(data.notice??(data.classes?.length===0?'No indexed classes found. Try the exact name or paste the class URL.':''));setSelected([]);setProgress({});setPage(0);
+   const response=await fetch('/api/admin/discover-quizlet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(mode==='creator'?{mode,username}:{topic,limit})});
+   const data=await response.json();if(!response.ok)throw Error(data.error||'Discovery failed.');
+   setCreator(data.creator??null);setShowCreatorSets(false);setResults(data.sets??[]);setScanned(data.linksScanned??null);setSelected([]);setProgress({});setPage(0);
   }catch(e){setError(e instanceof Error?e.message:'Discovery failed. Please retry.');}finally{setBusy(null);}
  }
  function select(id:string){setSelected(previous=>previous.includes(id)?previous.filter(s=>s!==id):previous.length<MAX_BATCH?[...previous,id]:previous);}
@@ -89,29 +76,17 @@ export function QuizletDiscovery({onImported}:{onImported:()=>void}){
   <h2 id="discovery-title">Discover Quizlet games</h2>
   <p>Find public Quizlet sets, then select which ones to add to the games catalogue.</p>
   <div className="community-actions" role="group" aria-label="Discovery search type">
-   <button disabled={!!busy} aria-pressed={mode==='topic'} onClick={()=>{setMode('topic');setScanned(null);setCreator(null);setClasses([]);setClassroom(null);setNotice('');setError('');}}>By topic</button>
-   <button disabled={!!busy} aria-pressed={mode==='creator'} onClick={()=>{setMode('creator');setScanned(null);setCreator(null);setClasses([]);setClassroom(null);setNotice('');setError('');}}>By username</button>
-   <button disabled={!!busy} aria-pressed={mode==='class'} onClick={()=>{setMode('class');setScanned(null);setCreator(null);setClasses([]);setClassroom(null);setNotice('');setError('');}}>By class</button>
+   <button disabled={!!busy} aria-pressed={mode==='topic'} onClick={()=>{setMode('topic');setScanned(null);setCreator(null);setResults([]);setSelected([]);setNotice('');setError('');}}>By topic</button>
+   <button disabled={!!busy} aria-pressed={mode==='creator'} onClick={()=>{setMode('creator');setScanned(null);setCreator(null);setResults([]);setSelected([]);setNotice('');setError('');}}>By username</button>
+   <button disabled={!!busy} aria-pressed={mode==='class'} onClick={()=>{setMode('class');setScanned(null);setCreator(null);setResults([]);setSelected([]);setNotice('');setError('');}}>By class</button>
   </div>
-  {mode==='class'&&<div className="discovery-connection" aria-label="Quizlet class search sign-in">
-   <p>{connection.connected?`Connected to Quizlet as ${connection.username}.`:'Sign in to Quizlet to search classes.'}</p>
-   <p className="discovery-note">Sign in manually in the browser opened below, then return here and check sign-in. Your password is entered on Quizlet. Set-name and username searches do not require this connection.</p>
-   <div className="community-actions">
-    <button disabled={connecting||!!busy} onClick={()=>void quizletConnection('start')}>{connecting?'Please wait…':connection.liveUrl?'Reopen Quizlet sign-in':'Sign in to Quizlet'}</button>
-    {connection.liveUrl&&<><a href={connection.liveUrl} target="_blank" rel="noopener noreferrer">Open sign-in window</a><button disabled={connecting||!!busy} onClick={()=>void quizletConnection('verify')}>Check sign-in</button><button disabled={connecting||!!busy} onClick={()=>void quizletConnection('end')}>End session</button></>}
-   </div>
-   {connection.connected&&<p className="discovery-note">This browser session lasts up to 15 minutes. Reopening sign-in reuses the saved Quizlet session when available.</p>}
-   {connectionError&&<p role="alert">{connectionError}</p>}
-  </div>}
   <form onSubmit={e=>void discover(e)}>
-   {mode==='class'?<label>Quizlet class name or URL<input value={className} onChange={e=>setClassName(e.target.value)} required maxLength={160} placeholder="e.g. French 1" disabled={!!busy}/></label>:mode==='creator'?<label>Quizlet username<input value={username} onChange={e=>setUsername(e.target.value)} required maxLength={50} placeholder="e.g. emilia_duerig" disabled={!!busy} autoCapitalize="none" spellCheck={false}/></label>:<>
+   {mode==='class'?<label>Quizlet set links<textarea value={pastedLinks} onChange={e=>setPastedLinks(e.target.value)} required maxLength={100000} rows={6} placeholder={'https://quizlet.com/123456/first-set-flash-cards/\nhttps://quizlet.com/789012/another-set-flash-cards/'} disabled={!!busy} autoCapitalize="none" spellCheck={false}/></label>:mode==='creator'?<label>Quizlet username<input value={username} onChange={e=>setUsername(e.target.value)} required maxLength={50} placeholder="e.g. emilia_duerig" disabled={!!busy} autoCapitalize="none" spellCheck={false}/></label>:<>
    <label>Topic (optional)<input value={topic} onChange={e=>setTopic(e.target.value)} maxLength={120} placeholder="e.g. French vocabulary or Einmaleins" disabled={!!busy}/></label>
    <label>Links to check<select value={limit} onChange={e=>setLimit(Number(e.target.value))} disabled={!!busy}><option value={100}>100</option><option value={500}>500</option><option value={1000}>1,000</option></select></label>
-   </>}<button type="submit" disabled={!!busy||mode==='class'&&(!connection.connected||connecting)}>{busy==='discover'?'Searching…':mode==='class'?'Find classes':mode==='creator'?'Find creator':'Find games'}</button>
+   </>}<button type="submit" disabled={!!busy}>{busy==='discover'?'Searching…':mode==='class'?'Review links':mode==='creator'?'Find creator':'Find games'}</button>
   </form>
-  {mode==='class'?<p className="discovery-note">Search public classes by name, then choose a class. Your connected Quizlet browser reads the class. Only public sets are offered for import. Class search is not exhaustive.</p>:mode==='creator'?<p className="discovery-note">Enter an exact Quizlet username, then select the creator to see their public sets.</p>:<p className="discovery-note">A topic ranks relevant links first. Leave it empty for broader discovery. Results are not a complete list of Quizlet sets and may include unrelated or unavailable sets.</p>}
-  {mode==='class'&&classes.length>0&&<ul className="discovery-results">{classes.map(c=><li key={c.id}><div><button disabled={!!busy} onClick={()=>void discover(undefined,c.id)}>{c.title}</button><p>{c.description}</p></div></li>)}</ul>}
-  {mode==='class'&&classroom&&<a href={classroom.url} target="_blank" rel="noopener noreferrer">Open {classroom.title} on Quizlet</a>}
+  {mode==='class'?<p className="discovery-note">Open your class on Quizlet and copy its public set links here, one per line or separated by spaces. Review the list, then import up to 20 at a time. No Quizlet sign-in is required here.</p>:mode==='creator'?<p className="discovery-note">Enter an exact Quizlet username, then select the creator to see their public sets.</p>:<p className="discovery-note">A topic ranks relevant links first. Leave it empty for broader discovery. Results are not a complete list of Quizlet sets and may include unrelated or unavailable sets.</p>}
   {mode==='class'&&notice&&<p role="status">{notice}</p>}
   {error&&<p role="alert">{error}</p>}
   {creator&&!showCreatorSets&&<div className="discovery-creator">
@@ -120,7 +95,7 @@ export function QuizletDiscovery({onImported}:{onImported:()=>void}){
   {scanned!==null&&(!creator||showCreatorSets)&&<>
    {creator&&<><div className="community-actions"><button disabled={!!busy} onClick={()=>setShowCreatorSets(false)}>Back to creator</button><a href={creator.url} target="_blank" rel="noopener noreferrer">Quizlet profile: {creator.username}</a></div>
     {!creator.complete&&<p className="discovery-note">This list may be incomplete. Retry to load more public sets, or check the creator’s Quizlet profile.</p>}</>}
-   <p role="status">{creator?`${results.length} public sets created by ${creator.username}.`:`${results.length} unique set links found from ${scanned} discovered links.`}</p>
+   <p role="status">{creator?`${results.length} public sets created by ${creator.username}.`:mode==='class'?`${results.length} unique set links ready to import.`:`${results.length} unique set links found from ${scanned} discovered links.`}</p>
    {!results.length?<p>{creator?'No public created sets were returned for this creator.':mode==='class'?'You can still import individual public set links.':'Try another topic or increase the number of links.'}</p>:<>
     <div className="community-actions">
      <button disabled={!!busy||!visible.some(s=>!s.sharePath)} onClick={()=>setSelected(visible.filter(s=>!s.sharePath).slice(0,MAX_BATCH).map(s=>s.setId))}>Select up to 20 on this page</button>

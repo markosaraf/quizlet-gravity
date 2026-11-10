@@ -80,7 +80,7 @@ export function QuizletDiscovery({onImported}:{onImported:()=>void}){
   </div>}
   {scanned!==null&&(!creator||showCreatorSets)&&<>
    {creator&&<><div className="community-actions"><button disabled={!!busy} onClick={()=>setShowCreatorSets(false)}>Back to creator</button><a href={creator.url} target="_blank" rel="noopener noreferrer">Quizlet profile: {creator.username}</a></div>
-    {!creator.complete&&<p className="discovery-note">Quizlet returned only part of this creator’s public sets. Open their profile for the full list.</p>}</>}
+    {!creator.complete&&<p className="discovery-note">This list may be incomplete. Retry to load more public sets, or check the creator’s Quizlet profile.</p>}</>}
    <p role="status">{creator?`${results.length} public sets created by ${creator.username}.`:`${results.length} unique set links found from ${scanned} discovered links.`}</p>
    {!results.length?<p>{creator?'No public created sets were returned for this creator.':'Try another topic or increase the number of links.'}</p>:<>
     <div className="community-actions">

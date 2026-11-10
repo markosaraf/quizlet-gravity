@@ -26,7 +26,7 @@ export async function POST(request:NextRequest){
   const options=creatorMode?null:mapOptions(input);
   if(!guard.allow(session.user.id))return json({error:'Please wait a minute before discovering more games.'},429);
   const task=guard.run(JSON.stringify({username,options}),()=>username
-   ?unstable_cache(()=>discoverQuizletCreator(username),['quizlet-creator-v1',username.toLowerCase()],{revalidate:300})()
+   ?unstable_cache(()=>discoverQuizletCreator(username),['quizlet-creator-v2',username.toLowerCase()],{revalidate:300})()
    :unstable_cache(()=>discoverQuizletSets(options!),['quizlet-map-v1',options!.topic,String(options!.limit)],{revalidate:300})());
   if(!task)return json({error:'Discovery is busy. Please retry in a moment.'},429);
   const result=await task;

@@ -6,6 +6,7 @@ import {db} from '@/lib/community/db';
 import {sharedSetPath} from '@/lib/community/set-links';
 import {ImportGuard} from '@/lib/gravity/quizlet-import-guard';
 import {discoverQuizletSets,mapOptions,QuizletMapError} from '@/lib/gravity/quizlet-map';
+import {creatorUsername,discoverQuizletCreator} from '@/lib/gravity/quizlet-creator';
 export const runtime='nodejs';
 export const maxDuration=60;
 const guard=new ImportGuard();
@@ -20,9 +21,13 @@ export async function POST(request:NextRequest){
   let text='',bytes=0;const decoder=new TextDecoder();
   try{while(true){const {done,value}=await reader.read();if(done)break;bytes+=value.byteLength;if(bytes>2048){await reader.cancel();return json({error:'Request too large.'},413);}text+=decoder.decode(value,{stream:true});}}finally{reader.releaseLock();}
   let input:unknown;try{input=JSON.parse(text+decoder.decode());}catch{return json({error:'Send valid JSON.'},400);}
-  const options=mapOptions(input);
+  const creatorMode=!!input&&typeof input==='object'&&'mode' in input&&input.mode==='creator';
+  const username=creatorMode?creatorUsername((input as Record<string,unknown>).username):null;
+  const options=creatorMode?null:mapOptions(input);
   if(!guard.allow(session.user.id))return json({error:'Please wait a minute before discovering more games.'},429);
-  const task=guard.run(JSON.stringify(options),()=>unstable_cache(()=>discoverQuizletSets(options),['quizlet-map-v1',options.topic,String(options.limit)],{revalidate:300})());
+  const task=guard.run(JSON.stringify({username,options}),()=>username
+   ?unstable_cache(()=>discoverQuizletCreator(username),['quizlet-creator-v1',username.toLowerCase()],{revalidate:300})()
+   :unstable_cache(()=>discoverQuizletSets(options!),['quizlet-map-v1',options!.topic,String(options!.limit)],{revalidate:300})());
   if(!task)return json({error:'Discovery is busy. Please retry in a moment.'},429);
   const result=await task;
   const {rows}=result.sets.length?await db.query('SELECT quizlet_id,public_id,title,source_url FROM shared_sets WHERE quizlet_id=ANY($1::text[])',[result.sets.map(s=>s.setId)]):{rows:[]};

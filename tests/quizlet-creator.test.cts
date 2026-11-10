@@ -65,3 +65,21 @@ test('creator pages reject mismatched ownership, duplicates and inconsistent pag
  assert.equal(parseQuizletCreatorPage(batch([{...set,accessType:0}]),42,1).sets.length,0);
  assert.equal(parseQuizletCreatorPage(batch([]),42,1).total,0);
 });
+
+test('deleted records count for pagination without discarding public sets (marko1804 regression)',async()=>{
+ const records=[{...set,id:1055070420,title:'fälle (fragen)'},{id:227795077,isDeleted:true,lastModified:1506444443},{...set,id:116299179,accessType:0,passwordUse:true},{...set,id:871187579,title:'Voci-english-maja-1'}];
+ const result=await discoverQuizletCreator('Teacher_One',{apiKey:'test',fetchImpl:async(_url,init)=>{
+  const url=JSON.parse(String(init?.body)).url;
+  return Response.json({success:true,data:{metadata:{statusCode:200},rawHtml:url.includes('/webapi/')?batch(records):html({...page,createdSets:[records[2]]})}});
+ }});
+ assert.deepEqual(result.sets.map(s=>s.setId),['1055070420','871187579']);
+ assert.equal(result.creator.complete,true);assert.equal(result.linksScanned,4);
+ // An unexplained missing creator is still rejected, not assumed to be deleted.
+ assert.throws(()=>parseQuizletCreatorPage(batch([{id:227795077}]),42,1));
+});
+test('unavailable full listing is an error when the profile contains no public sets',async()=>{
+ await assert.rejects(discoverQuizletCreator('Teacher_One',{apiKey:'test',fetchImpl:async(_url,init)=>{
+  if(JSON.parse(String(init?.body)).url.includes('/webapi/'))return new Response('',{status:503});
+  return Response.json({success:true,data:{metadata:{statusCode:200},rawHtml:html({...page,createdSets:[]})}});
+ }}),QuizletMapError);
+});

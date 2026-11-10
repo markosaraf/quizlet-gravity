@@ -40,8 +40,12 @@ export function parseQuizletCreatorPage(raw:string,creatorId:number,page:number,
  const ids=new Set<string>();
  const links:{url:string;title:string;description:string}[]=[];
  for(const set of items){
-  if(!set||set.creatorId!==creatorId||!Number.isSafeInteger(set.id)||set.id<1||typeof set.title!=='string'||ids.has(String(set.id)))throw new QuizletMapError('Quizlet returned inconsistent creator-list data.');
+  if(!set||!Number.isSafeInteger(set.id)||set.id<1||ids.has(String(set.id)))throw new QuizletMapError('Quizlet returned inconsistent creator-list data.');
   ids.add(String(set.id));
+  // Deleted records count towards paging.total but contain no title or creator.
+  // Do not let one tombstone discard the creator's remaining public sets.
+  if(set.isDeleted===true)continue;
+  if(set.creatorId!==creatorId||typeof set.title!=='string')throw new QuizletMapError('Quizlet returned inconsistent creator-list data.');
   if(set.accessType===2&&!set.passwordUse)links.push({url:`https://quizlet.com/${set.id}/`,title:set.title,description:typeof set.numTerms==='number'?`${set.numTerms} terms`:''});
  }
  const more=page*PAGE_SIZE<paging.total;
@@ -85,7 +89,8 @@ export async function discoverQuizletCreator(rawUsername:unknown,deps:{fetchImpl
     total=batch.total;token=batch.nextToken;
     if(!token){complete=seen.size===total&&profile.sets.every(set=>seen.has(set.setId));break;}
    }
-  }catch{
+  }catch(error){
+   if(!sets.size)throw error;
    // Keep verified results if a later page fails, but never label them complete.
    complete=false;
   }

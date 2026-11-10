@@ -45,7 +45,7 @@ export async function POST(request:NextRequest){
    return json({...result,sets:result.sets.map(s=>({...s,sharePath:existing.get(s.setId)??null}))});
   }
   const task=guard.run(JSON.stringify({username,options}),()=>username
-   ?unstable_cache(()=>discoverQuizletCreator(username),['quizlet-creator-v2',username.toLowerCase()],{revalidate:300})()
+   ?unstable_cache(()=>discoverQuizletCreator(username),['quizlet-creator-v3',username.toLowerCase()],{revalidate:300})()
    :unstable_cache(()=>discoverQuizletSets(options!),['quizlet-map-v1',options!.topic,String(options!.limit)],{revalidate:300})());
   if(!task)return json({error:'Discovery is busy. Please retry in a moment.'},429);
   const result=await task;

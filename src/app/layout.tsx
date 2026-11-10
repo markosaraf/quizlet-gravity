@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Poppins } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { CommunityNav } from "@/components/community/Community";
 import { Toaster } from "@/components/ui/toaster";
@@ -379,8 +380,7 @@ export default async function RootLayout({
         />
         {children}
         <Toaster />
-
-
+        <Analytics />
       </body>
     </html>
   );

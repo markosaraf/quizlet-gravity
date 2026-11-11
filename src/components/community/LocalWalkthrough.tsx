@@ -1,10 +1,12 @@
 'use client';
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {usePathname} from 'next/navigation';
 import './local-walkthrough.css';
 
 function targetFor(selector:string){return document.querySelector<HTMLElement>(selector)||(selector==='.d-gallery .d-game'?document.querySelector<HTMLElement>('[data-tour="games"]'):null);}
 type Box={x:number;y:number;width:number;height:number};
+type TargetBox=Box&{behindDock:boolean;clickHeight:number};
 const VERSION:number=2;
 const steps=[
  {title:'Learn from existing games',targets:['.d-gallery .d-game','[data-tour="games"]']},
@@ -16,7 +18,7 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
  const [debug,setDebug]=useState(false),[showTargets,setShowTargets]=useState(false),[showHeads,setShowHeads]=useState(false);
  useEffect(()=>{setDebug(new URLSearchParams(window.location.search).has('arrowDebug'));},[]);
  const [step,setStep]=useState(0),[done,setDone]=useState(false),[ready,setReady]=useState(false);
- const [geometry,setGeometry]=useState<{key:string;targets:Box[];panel:Box}>({key:"",targets:[],panel:{x:0,y:0,width:360,height:180}});
+ const [geometry,setGeometry]=useState<{key:string;targets:TargetBox[];panel:Box}>({key:"",targets:[],panel:{x:0,y:0,width:360,height:180}});
  const panelRef=useRef<HTMLDivElement>(null),okRef=useRef<HTMLButtonElement>(null),targetRef=useRef<HTMLButtonElement>(null);
  const directory=path==='/'||path==='/sets';
  const usernameStep=VERSION===1||step===3;
@@ -40,7 +42,16 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
  useLayoutEffect(()=>{
   if(!active||!ready)return;
   function measure(){
-   const targets=selectors.map(s=>targetFor(s)?.getBoundingClientRect()).filter((b):b is DOMRect=>!!b).map(b=>({x:b.x,y:b.y,width:b.width,height:Math.min(b.height,220)}));
+   const dock=document.querySelector<HTMLElement>('.d-landing .d-alternatives');
+   const fixedDock=dock&&getComputedStyle(dock).position==='fixed'?dock.getBoundingClientRect():null;
+   const targets=selectors.flatMap(selector=>{
+    const element=targetFor(selector),b=element?.getBoundingClientRect();
+    if(!b)return [];
+    const height=Math.min(b.height,220);
+    const behindDock=!!fixedDock&&!!element?.matches('.d-game');
+    return [{x:b.x,y:b.y,width:b.width,height,behindDock,
+     clickHeight:behindDock?Math.max(0,Math.min(height,fixedDock!.top-b.y)):height}];
+   });
    const nav=document.querySelector('.community-nav')?.getBoundingClientRect();
    const width=Math.min(390,window.innerWidth-32),height=panelRef.current?.offsetHeight||180;
    const x=usernameStep?Math.max(16,window.innerWidth-width-24):(window.innerWidth-width)/2;
@@ -50,6 +61,7 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
   }
   measure();window.addEventListener('resize',measure);window.addEventListener('scroll',measure,{passive:true});
   const observer=new ResizeObserver(measure);if(panelRef.current)observer.observe(panelRef.current);
+  const dock=document.querySelector('.d-landing .d-alternatives');if(dock)observer.observe(dock);
   return()=>{observer.disconnect();window.removeEventListener('resize',measure);window.removeEventListener('scroll',measure);};
  },[active,ready,key,title,geometry.key]);
  useEffect(()=>{
@@ -92,6 +104,10 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
    <label><input type="checkbox" checked={showHeads} onChange={e=>setShowHeads(e.target.checked)}/> Show arrowheads</label>
    <div>Gold dot = curve endpoint · Arrowhead extends beyond it</div>
   </div>}
+  {targets.some(t=>t.behindDock)&&createPortal(
+   <svg className="local-tour-game-outline" width="100%" height="100%" aria-hidden="true">
+    {targets.filter(t=>t.behindDock).map((t,i)=><rect key={i} x={t.x-5} y={t.y-5} width={t.width+10} height={t.height+10} rx="9" fill="none" stroke="#d4af37" strokeWidth="2"/>)}
+   </svg>,document.body)}
   <svg className="local-tour-arrows" width="100%" height="100%" aria-hidden="true">
    {targets.map((t,i)=>{
     const above=t.y+t.height<panel.y;
@@ -115,14 +131,14 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
     const baseX=endX-ux*8,baseY=endY-uy*8,headWidth=9;
     const head=`${tipX},${tipY} ${baseX-uy*headWidth},${baseY+ux*headWidth} ${baseX+uy*headWidth},${baseY-ux*headWidth}`;
     return <g key={i}>
-     <rect x={t.x-5} y={t.y-5} width={t.width+10} height={t.height+10} rx="9" fill="none" stroke="#d4af37" strokeWidth="2"/>
+     {!t.behindDock&&<rect x={t.x-5} y={t.y-5} width={t.width+10} height={t.height+10} rx="9" fill="none" stroke="#d4af37" strokeWidth="2"/>}
      <path data-arrow-shaft d={`M${startX},${startY} C${control1X},${control1Y} ${control2X},${control2Y} ${endX},${endY}`} stroke="#d4af37" strokeWidth="4" strokeLinecap="butt" fill="none"/>
      {(!debug||showHeads)&&<polygon data-arrow-head points={head} fill="#d4af37"/>}
      {debug&&!showHeads&&<circle cx={endX} cy={endY} r="3" fill="#d4af37"/>}
     </g>;
    })}
   </svg>
-  {targets.map((target,index)=><button key={selectors[index]} ref={index===0?targetRef:undefined} className="local-tour-target-button" aria-label={usernameStep?'Log in':selectors[index].includes('d-gallery')?'Open highlighted game':selectors[index].includes('games')?'Games':selectors[index].includes('create')?'Create game':'Enter Quizlet game link'} onClick={()=>activateTarget(index)} style={{left:target.x,top:target.y,width:target.width,height:target.height}}/>)}
+  {targets.map((target,index)=><button key={selectors[index]} ref={index===0?targetRef:undefined} className="local-tour-target-button" aria-label={usernameStep?'Log in':selectors[index].includes('d-gallery')?'Open highlighted game':selectors[index].includes('games')?'Games':selectors[index].includes('create')?'Create game':'Enter Quizlet game link'} onClick={()=>activateTarget(index)} style={{left:target.x,top:target.y,width:target.width,height:target.clickHeight}}/>)}
   <div ref={panelRef} className="local-tour-card" role="dialog" aria-modal="true" aria-labelledby="local-tour-heading" style={{left:panel.x,top:panel.y,width:panel.width}}>
    {VERSION===2&&<div className="local-tour-progress" aria-label={`Step ${step+1} of ${stepCount}`}>{Array.from({length:stepCount},(_,i)=><span key={i} className={i===step?'current':''}/>)}</div>}
    <h2 id="local-tour-heading">{title}</h2>

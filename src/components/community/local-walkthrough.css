@@ -16,3 +16,7 @@
 
 .local-tour-target-button{position:absolute;border:0;background:transparent;padding:0;cursor:pointer;border-radius:6px}
 .local-tour-target-button:focus-visible{outline:3px solid #d4af37;outline-offset:4px}
+
+/* Game highlights belong below the fixed creation tray (z-index:60),
+   independently of the dialog/arrows above it. */
+.local-tour-game-outline{position:fixed;inset:0;z-index:59;pointer-events:none;overflow:visible}

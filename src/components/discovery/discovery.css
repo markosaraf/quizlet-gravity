@@ -62,3 +62,13 @@
  html:has(.d-landing), body:has(.d-landing) { background-color:#f8f9fc; }
  html[data-theme="dark"]:has(.d-landing), [data-theme="dark"] body:has(.d-landing) { background-color:#293246; }
 }
+
+/* Frost the overlapping tray during the tour, including the game outline.
+   Keep its buttons opaque and the non-tutorial bottom surface unchanged. */
+.local-tour-active .d-landing .d-alternatives{
+ background:rgba(248,249,252,.88);
+ -webkit-backdrop-filter:blur(12px);
+ backdrop-filter:blur(12px);
+}
+[data-theme="dark"] .local-tour-active .d-landing .d-alternatives,
+.local-tour-active [data-theme="dark"] .d-landing .d-alternatives{background:rgba(41,50,70,.88)}

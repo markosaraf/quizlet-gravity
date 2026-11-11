@@ -10,3 +10,26 @@ test('canonical names preserve accents and unify case, spacing and composed spel
  assert.equal(normalizePlayerName('EMILIA DÜRIG'),'emilia dürig');
  assert.equal(displayPlayerName(' Emilia  Du\u0308rig '),'Emilia Dürig');
 });
+
+test('blank and invisible names cannot be saved or used to complete registration',async()=>{
+ const {validNameForSaving,requiresPlayerName,invalidNameWrite}=await import('../src/lib/community/usernames.ts');
+ for(const name of [undefined,null,'','   ','\t\n','\u200b\u200b\u200b','\u3164\u3164\u3164','\u115f\u1160','\u0301\u0301\u0301','...','___']) {
+  assert(!validNameForSaving(name),JSON.stringify(name));
+  assert(invalidNameWrite('/sign-up/email',{username:name}));
+  assert(invalidNameWrite('/update-user',{username:name}));
+  assert(invalidNameWrite('/update-user',{displayUsername:name}));
+ }
+ assert(invalidNameWrite('/sign-up/email',{}));
+ assert(!invalidNameWrite('/update-user',{image:'https://example.com/photo.png'}));
+ assert(!invalidNameWrite('/callback/google',{}));
+ assert(!invalidNameWrite('/sign-up/email',{username:' Emilia Dürig '}));
+ assert(!validNameForSaving('a'));
+ assert(!validNameForSaving('a'.repeat(25)));
+ assert(requiresPlayerName({username:null}));
+ assert(requiresPlayerName({username:'\u3164\u3164\u3164'}));
+ assert(requiresPlayerName({username:'Marko',displayUsername:'   '}));
+ assert(!requiresPlayerName({username:'Marko',displayUsername:'Marko'}));
+ assert(!requiresPlayerName({username:'Marko',displayUsername:null}));
+ assert(!requiresPlayerName({isAnonymous:true,username:null}));
+ assert(!requiresPlayerName(null));
+});

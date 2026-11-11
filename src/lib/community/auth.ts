@@ -1,15 +1,18 @@
 import { betterAuth } from 'better-auth';
-import { createEmailVerificationToken } from 'better-auth/api';
+import { APIError, createAuthMiddleware, createEmailVerificationToken } from 'better-auth/api';
 import { username, anonymous, oneTimeToken } from 'better-auth/plugins';
 import { db } from './db';
 import { appleConfigured, appleClientSecret } from './apple';
-import {displayPlayerName,normalizePlayerName,validPlayerName} from './usernames';
+import {displayPlayerName,normalizePlayerName,validPlayerName,invalidNameWrite} from './usernames';
 import { sendRecovery, sendConfirmation } from './recovery';
 export const auth = betterAuth({
   database: db,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3035',
   secret: process.env.BETTER_AUTH_SECRET,
   appName: 'Quizlet Gravity',
+  hooks: {before:createAuthMiddleware(async ctx=>{
+    if(invalidNameWrite(ctx.path,ctx.body)) throw new APIError('BAD_REQUEST',{code:'INVALID_USERNAME',message:'Choose a name with 3–24 characters, including a letter or number.'});
+  })},
   emailAndPassword: { enabled: true, requireEmailVerification: true, autoSignIn: false, minPasswordLength: 8, maxPasswordLength: 128, resetPasswordTokenExpiresIn: 1800, revokeSessionsOnPasswordReset: true,
     onExistingUserSignUp: async ({user}) => {
       if (user.emailVerified) return;
@@ -37,7 +40,7 @@ export const auth = betterAuth({
   },
   rateLimit: { enabled: true, storage: 'database', window: 60, max: 30, customRules: { '/send-verification-email': {window:60,max:3}, '/sign-up/email': {window:60,max:5}, '/sign-in/username': {window:60,max:5} } },
   session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 86400 },
-  plugins: [oneTimeToken({expiresIn:2,storeToken:"hashed",disableClientRequest:true}),username({ minUsernameLength: 3, maxUsernameLength: 24, usernameValidator: validPlayerName, usernameNormalization: normalizePlayerName, displayUsernameNormalization: displayPlayerName, validationOrder: {username:'post-normalization',displayUsername:'post-normalization'} }), anonymous({
+  plugins: [oneTimeToken({expiresIn:2,storeToken:"hashed",disableClientRequest:true}),username({ minUsernameLength: 3, maxUsernameLength: 24, usernameValidator: validPlayerName, displayUsernameValidator: validPlayerName, usernameNormalization: normalizePlayerName, displayUsernameNormalization: displayPlayerName, validationOrder: {username:'post-normalization',displayUsername:'post-normalization'} }), anonymous({
     onLinkAccount: async ({ anonymousUser, newUser }) => {
       await db.query(`INSERT INTO high_scores(set_id,user_id,score,level,mode,achieved_at)
         SELECT set_id,$1,score,level,mode,achieved_at FROM high_scores WHERE user_id=$2

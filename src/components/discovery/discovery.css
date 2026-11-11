@@ -64,11 +64,16 @@
 }
 
 /* Frost the overlapping tray during the tour, including the game outline.
-   Keep its buttons opaque and the non-tutorial bottom surface unchanged. */
+   Use translucent buttons as well so the softened outline remains visible.
+   The non-tutorial bottom surface stays unchanged. */
 .local-tour-active .d-landing .d-alternatives{
- background:rgba(248,249,252,.88);
- -webkit-backdrop-filter:blur(12px);
- backdrop-filter:blur(12px);
+ background:rgba(248,249,252,.32);
+ -webkit-backdrop-filter:blur(2px);
+ backdrop-filter:blur(2px);
 }
 [data-theme="dark"] .local-tour-active .d-landing .d-alternatives,
-.local-tour-active [data-theme="dark"] .d-landing .d-alternatives{background:rgba(41,50,70,.88)}
+.local-tour-active [data-theme="dark"] .d-landing .d-alternatives{background:rgba(41,50,70,.32)}
+
+.local-tour-active .d-landing .d-alternatives .d-button{background:rgba(248,249,252,.22)}
+[data-theme="dark"] .local-tour-active .d-landing .d-alternatives .d-button,
+.local-tour-active [data-theme="dark"] .d-landing .d-alternatives .d-button{background:rgba(41,50,70,.22)}

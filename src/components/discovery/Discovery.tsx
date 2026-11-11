@@ -19,6 +19,7 @@ import {importedCardsToTerms} from '@/lib/gravity/import-cards';
 import type {GravitySet, GravityTerm} from '@/lib/gravity/types';
 import '@/gravity/gravity.css';
 import './discovery.css';
+import {animateGamePage} from './game-page-motion';
 
 type LocalGame={set:GravitySet;terms:GravityTerm[]};
 const examples=[['2 + 3','5'],['10 − 4','6'],['3 × 3','9'],['8 + 4','12'],['6 × 2','12'],['20 ÷ 4','5'],['7 + 8','15'],['9 − 6','3'],['4 × 4','16'],['18 ÷ 3','6']];
@@ -30,20 +31,48 @@ export function DiscoveryLanding(){
  const {data:session}=authClient.useSession();
  useEffect(()=>{api('config').then(r=>setTutorialEnabled(r.tutorialEnabled===true)).catch(()=>{});},[]);
  const [query,setQuery]=useState('');const [page,setPage]=useState(0);const gallery=useRef<HTMLDivElement>(null);
+ const search=useRef<HTMLLabelElement>(null);
+ const cancelMotion=useRef<(()=>void)|null>(null);
+ const targetPage=useRef<number|null>(null);
+ const pendingPage=useRef<number|null>(null);
+ const [requestVersion,setRequestVersion]=useState(0);
  const [games,setGames]=useState<SetRecord[]>([]),[offset,setOffset]=useState(0),[more,setMore]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState('');
- useEffect(()=>{let active=true;const controller=new AbortController();const timer=setTimeout(async()=>{setLoading(true);try{const response=await fetch('/api/community/sets?q='+encodeURIComponent(query)+'&offset='+offset+'&sort=popular',{signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error);if(active){setGames(previous=>offset?[...previous,...result.sets]:result.sets);setMore(result.hasMore);setError('');}}catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load games.');}finally{if(active)setLoading(false);}},200);return()=>{active=false;clearTimeout(timer);controller.abort();};},[query,offset,session?.user.id]);
+ useEffect(()=>{let active=true;const controller=new AbortController();const timer=setTimeout(async()=>{setLoading(true);try{const response=await fetch('/api/community/sets?q='+encodeURIComponent(query)+'&offset='+offset+'&sort=popular',{signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error);if(active){setGames(previous=>offset?[...previous,...result.sets]:result.sets);setMore(result.hasMore);setError('');}}catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load games.');}finally{if(active)setLoading(false);}},200);return()=>{active=false;clearTimeout(timer);controller.abort();};},[query,offset,requestVersion,session?.user.id]);
  const groups=Array.from({length:Math.ceil(games.length/6)},(_,i)=>games.slice(i*6,i*6+6));
- function move(direction:number){const el=gallery.current;if(el)el.scrollBy({left:direction*el.clientWidth,behavior:'smooth'});}
+ function stopMotion(){cancelMotion.current?.();cancelMotion.current=null;targetPage.current=null;}
+ function goToPage(index:number){
+  const el=gallery.current;if(!el||!search.current)return;
+  stopMotion();targetPage.current=index;
+  cancelMotion.current=animateGamePage(el,search.current,index,()=>{targetPage.current=null;});
+ }
+ function move(direction:number){
+  const el=gallery.current;if(!el)return;
+  const current=targetPage.current??Math.round(el.scrollLeft/el.clientWidth);
+  const next=current+direction;
+  if(next<0)return;
+  if(next<groups.length){goToPage(next);return;}
+  if(more&&!loading&&pendingPage.current===null){
+   pendingPage.current=next;setLoading(true);setOffset(games.length);setRequestVersion(n=>n+1);
+  }
+ }
+ useEffect(()=>{
+  const next=pendingPage.current;
+  if(next===null||loading)return;
+  pendingPage.current=null;
+  if(next<groups.length)goToPage(next);
+ // A queued page only starts after its fetched cards have been laid out.
+ },[games,loading]);
+ useEffect(()=>()=>cancelMotion.current?.(),[]);
  return <main className="d-shell d-landing">
   <div className="d-topline"><div className="d-try"><Link className="d-button d-primary d-example" href="/example"><Play size={21} fill="currentColor"/>Try Example Game</Link><span>Jump straight in. No account needed.</span></div><div className="d-theme-tools">{tutorialEnabled&&<button className="d-button d-secondary d-tutorial" onClick={()=>setTutorialOpen(true)}>Tutorial</button>}<ThemeToggle/></div></div>
   <section className="d-discover" aria-labelledby="d-heading">
    <h1 id="d-heading">Search and/or choose a game.</h1>
-   <label className="d-search"><Search size={24}/><span className="d-sr">Search games</span><input type="search" placeholder="Search games by title or creator" value={query} onChange={e=>{setQuery(e.target.value);setGames([]);setOffset(0);setPage(0);gallery.current?.scrollTo({left:0});}}/></label>
-   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{groups.length>1&&<><span>{page+1} / {groups.length}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
-   <div className="d-gallery" ref={gallery} onScroll={e=>{const el=e.currentTarget;setPage(Math.round(el.scrollLeft/el.clientWidth));}} aria-label="Swipe through games">
+   <label className="d-search" ref={search}><Search size={24}/><span className="d-sr">Search games</span><input type="search" placeholder="Search games by title or creator" value={query} onChange={e=>{stopMotion();pendingPage.current=null;setLoading(true);setQuery(e.target.value);setGames([]);setOffset(0);setPage(0);gallery.current?.scrollTo({left:0});}}/></label>
+   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{(groups.length>1||more)&&<><span>{page+1} / {groups.length}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1&&(!more||loading)} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
+   <div className="d-gallery" ref={gallery} onTouchStart={stopMotion} onPointerDown={stopMotion} onWheel={stopMotion} onScroll={e=>{const el=e.currentTarget;setPage(Math.round(el.scrollLeft/el.clientWidth));}} aria-label="Swipe through games">
     {groups.map((group,index)=><div className="d-game-page" key={index}>{group.map((s)=><Link className="d-game" href={sharedSetPath(s)} key={s.id}><small>{s.term_count.toLocaleString()} terms</small><h2>{s.title}</h2><p>{s.creator_name?<>Original Quizlet set creator:<br/><strong>{s.creator_name}</strong>{!s.quizlet_id&&<><br/>Quizlet Gravity game creator: {s.added_by}</>}</>:<>Quizlet Gravity game creator:<br/><strong>{s.added_by}</strong></>}</p><span className="d-play"><Play size={15} fill="currentColor"/>Play game</span></Link>)}</div>)}
    </div>
-   {loading&&<p role="status">Loading games…</p>}{error&&<p role="alert">{error}</p>}{more&&<button className="d-button d-secondary" disabled={loading} onClick={()=>setOffset(n=>n+24)}>More games</button>}
+   {loading&&<p role="status">Loading games…</p>}{error&&<p role="alert">{error}</p>}{(page<groups.length-1||more)&&<button className="d-button d-secondary d-more-games" disabled={loading} onClick={()=>move(1)}>More games</button>}
    {!loading&&!error&&!games.length&&<p className="d-empty">No matching games. Try another title or import a Quizlet set below.</p>}
   </section>
   <div className="d-alternatives"><div><Link href="/create-set" data-tour="create-game-bottom" className="d-button d-secondary"><Plus size={21}/>Create your own game</Link><Link href="/import-game" data-tour="import-game" className="d-button d-secondary"><Link2 size={21}/>Import game from Quizlet</Link></div></div>

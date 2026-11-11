@@ -28,8 +28,9 @@ const example:LocalGame={set:{id:'local-example',title:'Quick maths',wordLang:'e
 export function ExampleGame(){return <GravityApp localGame={example} autoPlay exitHref="/"/>;}
 export function DiscoveryLanding(){
  const [tutorialEnabled,setTutorialEnabled]=useState(false),[tutorialOpen,setTutorialOpen]=useState(false);
+ const [showPageTotal,setShowPageTotal]=useState(true);
  const {data:session}=authClient.useSession();
- useEffect(()=>{api('config').then(r=>setTutorialEnabled(r.tutorialEnabled===true)).catch(()=>{});},[]);
+ useEffect(()=>{let active=true;api('config').then(r=>{if(active){setTutorialEnabled(r.tutorialEnabled===true);setShowPageTotal(r.gamePageTotalEnabled!==false);}}).catch(()=>{});return()=>{active=false;};},[]);
  const [query,setQuery]=useState('');const [page,setPage]=useState(0);const gallery=useRef<HTMLDivElement>(null);
  const search=useRef<HTMLLabelElement>(null);
  const cancelMotion=useRef<(()=>void)|null>(null);
@@ -77,7 +78,7 @@ export function DiscoveryLanding(){
   <section className="d-discover" aria-labelledby="d-heading">
    <h1 id="d-heading">Search and/or choose a game.</h1>
    <label className="d-search" ref={search}><Search size={24}/><span className="d-sr">Search games</span><input type="search" placeholder="Search games by title or creator" value={query} onChange={e=>{stopMotion();pendingPage.current=null;setLoading(true);setQuery(e.target.value);prefetchedAt.current=-1;setTotal(0);setGames([]);setOffset(0);setPage(0);gallery.current?.scrollTo({left:0});}}/></label>
-   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{(groups.length>1||more)&&<><span>{page+1} / {Math.max(groups.length,Math.ceil(total/6))}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1&&(!more||loading)} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
+   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{(groups.length>1||more)&&<><span aria-label={`Page ${page+1}${showPageTotal?` of ${Math.max(groups.length,Math.ceil(total/6))}`:''}`}>{page+1}{showPageTotal&&<> / {Math.max(groups.length,Math.ceil(total/6))}</>}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1&&(!more||loading)} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
    <div className="d-gallery" ref={gallery} onTouchStart={stopMotion} onPointerDown={stopMotion} onWheel={stopMotion} onScroll={e=>{const el=e.currentTarget;setPage(Math.round(el.scrollLeft/el.clientWidth));}} aria-label="Swipe through games">
     {groups.map((group,index)=><div className="d-game-page" key={index}>{group.map((s)=><Link className="d-game" href={sharedSetPath(s)} key={s.id}><small>{s.term_count.toLocaleString()} terms</small><h2>{s.title}</h2><p>{s.creator_name?<>Original Quizlet set creator:<br/><strong>{s.creator_name}</strong>{!s.quizlet_id&&<><br/>Quizlet Gravity game creator: {s.added_by}</>}</>:<>Quizlet Gravity game creator:<br/><strong>{s.added_by}</strong></>}</p><span className="d-play"><Play size={15} fill="currentColor"/>Play game</span></Link>)}</div>)}
    </div>

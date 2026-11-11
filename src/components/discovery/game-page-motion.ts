@@ -11,10 +11,11 @@ export function animateGamePage(
   const startX = gallery.scrollLeft;
   const endX = Math.min(page * gallery.clientWidth, gallery.scrollWidth - gallery.clientWidth);
   const startY = window.scrollY;
-  const endY = Math.max(0, Math.min(
+  const mobile = window.matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse)').matches;
+  const endY = mobile ? Math.max(0, Math.min(
     startY + search.getBoundingClientRect().top - 12,
     document.documentElement.scrollHeight - window.innerHeight,
-  ));
+  )) : 0;
   const snap = gallery.style.scrollSnapType;
   gallery.style.scrollSnapType = 'none';
   let frame = 0;

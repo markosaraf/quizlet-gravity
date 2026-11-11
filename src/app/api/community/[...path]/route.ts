@@ -22,7 +22,7 @@ async function limit(request:NextRequest, scope:string, max:number){
  const {rows}=await db.query(`INSERT INTO api_limits(key,count,expires_at) VALUES($1,1,now()+interval '1 minute') ON CONFLICT(key) DO UPDATE SET count=CASE WHEN api_limits.expires_at<now() THEN 1 ELSE api_limits.count+1 END,expires_at=CASE WHEN api_limits.expires_at<now() THEN now()+interval '1 minute' ELSE api_limits.expires_at END RETURNING count`,[key]);
  if(rows[0].count>max) throw new Error('RATE');
 }
-function page(request:NextRequest){return Math.max(0,Math.min(100000,Math.floor(Number(request.nextUrl.searchParams.get('offset'))||0)));}
+function page(request:NextRequest,max=100000){return Math.max(0,Math.min(max,Math.floor(Number(request.nextUrl.searchParams.get('offset'))||0)));}
 async function body(request:NextRequest){
  if(!request.headers.get('content-type')?.includes('application/json'))throw Error('JSON required');
  const reader=request.body?.getReader();if(!reader)throw Error('Body required');let size=0,text='';const decoder=new TextDecoder();
@@ -34,12 +34,12 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{path:str
  if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN,...await communitySettings()});
  const viewer=(await auth.api.getSession({headers:request.headers}))?.user.id||null;
  if(path[0]==='sets'&&path.length===1){
- const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request);
- const {rows}=await db.query(`SELECT s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by
+ const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request,Number.MAX_SAFE_INTEGER);
+ const {rows}=await db.query(`SELECT count(*) OVER() AS catalogue_total,s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by
  FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by
  WHERE ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(coalesce(s.creator_name,'')||' '||coalesce(u."displayUsername",u.username,u.name,'')) LIKE $2 OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
  ORDER BY (SELECT count(*) FROM high_scores h WHERE h.set_id=s.id) DESC,s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer]);
- return json({sets:rows.slice(0,24),hasMore:rows.length>24,nextOffset:offset+24});
+ return json({sets:rows.slice(0,24).map(({catalogue_total,...set})=>set),total:Number(rows[0]?.catalogue_total||0),hasMore:rows.length>24,nextOffset:offset+24});
  }
  if(path[0]==='sets'&&uuid.safeParse(path[1]).success){
  if(path[2]==='leaderboard'){

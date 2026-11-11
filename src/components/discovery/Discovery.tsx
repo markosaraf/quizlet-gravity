@@ -36,9 +36,18 @@ export function DiscoveryLanding(){
  const targetPage=useRef<number|null>(null);
  const pendingPage=useRef<number|null>(null);
  const [requestVersion,setRequestVersion]=useState(0);
+ const [total,setTotal]=useState(0);
+ const prefetchedAt=useRef(-1);
  const [games,setGames]=useState<SetRecord[]>([]),[offset,setOffset]=useState(0),[more,setMore]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState('');
- useEffect(()=>{let active=true;const controller=new AbortController();const timer=setTimeout(async()=>{setLoading(true);try{const response=await fetch('/api/community/sets?q='+encodeURIComponent(query)+'&offset='+offset+'&sort=popular',{signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error);if(active){setGames(previous=>offset?[...previous,...result.sets]:result.sets);setMore(result.hasMore);setError('');}}catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load games.');}finally{if(active)setLoading(false);}},200);return()=>{active=false;clearTimeout(timer);controller.abort();};},[query,offset,requestVersion,session?.user.id]);
+ useEffect(()=>{let active=true;const controller=new AbortController();const timer=setTimeout(async()=>{setLoading(true);try{const response=await fetch('/api/community/sets?q='+encodeURIComponent(query)+'&offset='+offset+'&sort=popular',{signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error);if(active){setGames(previous=>offset?[...previous,...result.sets]:result.sets);setMore(result.hasMore);setTotal(result.total??(offset+result.sets.length));setError('');}}catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load games.');}finally{if(active)setLoading(false);}},200);return()=>{active=false;clearTimeout(timer);controller.abort();};},[query,offset,requestVersion,session?.user.id]);
  const groups=Array.from({length:Math.ceil(games.length/6)},(_,i)=>games.slice(i*6,i*6+6));
+ // Fetch the next batch before reaching the last loaded slide, including swipes.
+ // Remember failed attempts so an unavailable endpoint cannot cause a retry loop.
+ useEffect(()=>{
+  if(more&&!loading&&!error&&page>=groups.length-2&&prefetchedAt.current!==games.length){
+   prefetchedAt.current=games.length;setLoading(true);setOffset(games.length);setRequestVersion(n=>n+1);
+  }
+ },[page,groups.length,games.length,more,loading,error]);
  function stopMotion(){cancelMotion.current?.();cancelMotion.current=null;targetPage.current=null;}
  function goToPage(index:number){
   const el=gallery.current;if(!el||!search.current)return;
@@ -67,8 +76,8 @@ export function DiscoveryLanding(){
   <div className="d-topline"><div className="d-try"><Link className="d-button d-primary d-example" href="/example"><Play size={21} fill="currentColor"/>Try Example Game</Link><span>Jump straight in. No account needed.</span></div><div className="d-theme-tools">{tutorialEnabled&&<button className="d-button d-secondary d-tutorial" onClick={()=>setTutorialOpen(true)}>Tutorial</button>}<ThemeToggle/></div></div>
   <section className="d-discover" aria-labelledby="d-heading">
    <h1 id="d-heading">Search and/or choose a game.</h1>
-   <label className="d-search" ref={search}><Search size={24}/><span className="d-sr">Search games</span><input type="search" placeholder="Search games by title or creator" value={query} onChange={e=>{stopMotion();pendingPage.current=null;setLoading(true);setQuery(e.target.value);setGames([]);setOffset(0);setPage(0);gallery.current?.scrollTo({left:0});}}/></label>
-   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{(groups.length>1||more)&&<><span>{page+1} / {groups.length}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1&&(!more||loading)} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
+   <label className="d-search" ref={search}><Search size={24}/><span className="d-sr">Search games</span><input type="search" placeholder="Search games by title or creator" value={query} onChange={e=>{stopMotion();pendingPage.current=null;setLoading(true);setQuery(e.target.value);prefetchedAt.current=-1;setTotal(0);setGames([]);setOffset(0);setPage(0);gallery.current?.scrollTo({left:0});}}/></label>
+   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{(groups.length>1||more)&&<><span>{page+1} / {Math.max(groups.length,Math.ceil(total/6))}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1&&(!more||loading)} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
    <div className="d-gallery" ref={gallery} onTouchStart={stopMotion} onPointerDown={stopMotion} onWheel={stopMotion} onScroll={e=>{const el=e.currentTarget;setPage(Math.round(el.scrollLeft/el.clientWidth));}} aria-label="Swipe through games">
     {groups.map((group,index)=><div className="d-game-page" key={index}>{group.map((s)=><Link className="d-game" href={sharedSetPath(s)} key={s.id}><small>{s.term_count.toLocaleString()} terms</small><h2>{s.title}</h2><p>{s.creator_name?<>Original Quizlet set creator:<br/><strong>{s.creator_name}</strong>{!s.quizlet_id&&<><br/>Quizlet Gravity game creator: {s.added_by}</>}</>:<>Quizlet Gravity game creator:<br/><strong>{s.added_by}</strong></>}</p><span className="d-play"><Play size={15} fill="currentColor"/>Play game</span></Link>)}</div>)}
    </div>

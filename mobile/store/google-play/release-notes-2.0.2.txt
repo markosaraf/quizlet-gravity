@@ -1,0 +1,87 @@
+<en-US>
+Updated the app icon with a glossy blue-and-gold finish.
+</en-US>
+<ar>
+تحديث أيقونة التطبيق بلمسة لامعة باللونين الأزرق والذهبي.
+</ar>
+<cs-CZ>
+Ikona aplikace má nový lesklý modrozlatý vzhled.
+</cs-CZ>
+<da-DK>
+Appikonet har fået et blankt blåt og gyldent design.
+</da-DK>
+<de-DE>
+Das App-Symbol hat jetzt ein glänzendes blau-goldenes Design.
+</de-DE>
+<es-419>
+El ícono de la app tiene un nuevo acabado brillante azul y dorado.
+</es-419>
+<es-ES>
+El icono de la app tiene un nuevo acabado brillante azul y dorado.
+</es-ES>
+<fi-FI>
+Sovelluskuvakkeessa on nyt kiiltävä sinikultainen ilme.
+</fi-FI>
+<fr-FR>
+L’icône de l’application adopte une finition brillante bleue et dorée.
+</fr-FR>
+<hi-IN>
+ऐप आइकन को चमकदार नीले और सुनहरे रंग में अपडेट किया गया है।
+</hi-IN>
+<hu-HU>
+Az alkalmazás ikonja fényes kék-arany megjelenést kapott.
+</hu-HU>
+<id>
+Ikon aplikasi diperbarui dengan tampilan biru dan emas mengilap.
+</id>
+<it-IT>
+L’icona dell’app ha una nuova finitura lucida blu e oro.
+</it-IT>
+<iw-IL>
+סמל האפליקציה עודכן עם גימור מבריק בכחול וזהב.
+</iw-IL>
+<ja-JP>
+アプリアイコンを光沢のあるブルーとゴールドのデザインに更新しました。
+</ja-JP>
+<ko-KR>
+앱 아이콘을 광택 있는 파란색과 금색 디자인으로 업데이트했습니다.
+</ko-KR>
+<nl-NL>
+Het appicoon heeft nu een glanzende blauwe en gouden afwerking.
+</nl-NL>
+<no-NO>
+Appikonet har fått et blankt blått og gyllent design.
+</no-NO>
+<pl-PL>
+Ikona aplikacji ma teraz błyszczące niebiesko-złote wykończenie.
+</pl-PL>
+<pt-BR>
+O ícone do app tem um novo acabamento brilhante azul e dourado.
+</pt-BR>
+<ro>
+Pictograma aplicației are acum un finisaj lucios albastru și auriu.
+</ro>
+<ru-RU>
+Значок приложения получил глянцевое оформление в синих и золотых тонах.
+</ru-RU>
+<sk>
+Ikona aplikácie má nový lesklý modro-zlatý vzhľad.
+</sk>
+<sv-SE>
+Appikonen har fått en blank blå och gyllene design.
+</sv-SE>
+<th>
+อัปเดตไอคอนแอปเป็นดีไซน์สีน้ำเงินและสีทองแบบมันวาว
+</th>
+<tr-TR>
+Uygulama simgesi parlak mavi ve altın renkli bir tasarımla güncellendi.
+</tr-TR>
+<uk>
+Значок застосунку отримав глянцеве оформлення в синіх і золотих тонах.
+</uk>
+<vi>
+Biểu tượng ứng dụng được cập nhật với thiết kế xanh lam và vàng bóng.
+</vi>
+<zh-CN>
+应用图标已更新为亮泽的蓝金配色。
+</zh-CN>

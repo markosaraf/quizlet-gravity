@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
@@ -30,6 +31,7 @@ final class LogoCarouselView extends View {
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path q;
+    private final Drawable goldLogo;
     private final ArgbEvaluator colors = new ArgbEvaluator();
     private ValueAnimator motion;
     private Phase phase = Phase.FINAL;
@@ -42,6 +44,7 @@ final class LogoCarouselView extends View {
     LogoCarouselView(Context context) {
         super(context);
         q = PathParser.createPathFromPathData(getResources().getString(R.string.logo_q_path));
+        goldLogo = context.getDrawable(R.drawable.logo_gold_3d).mutate();
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
@@ -164,7 +167,7 @@ final class LogoCarouselView extends View {
         float cx = getWidth() / 2f;
         float cy = getHeight() / 2f;
         if (phase == Phase.STARTING || phase == Phase.FINAL) {
-            drawChip(canvas, cx, cy, size, INDIGO, GOLD, 1f);
+            drawGoldLogo(canvas, cx, cy, size, 1f);
             return;
         }
         List<Integer> cards = new ArrayList<>(5);
@@ -187,9 +190,21 @@ final class LogoCarouselView extends View {
                     x = cx + distance * spacing * (1f - morph * 0.6f);
                 }
             }
-            if (opacity > 0) drawChip(canvas, x, cy, size * scale,
-                    BACKGROUNDS[palette], foreground, opacity);
+            if (opacity > 0) {
+                boolean finalCard = phase == Phase.MORPH && index == nearest;
+                drawChip(canvas, x, cy, size * scale, BACKGROUNDS[palette], foreground,
+                        opacity * (finalCard ? 1f - morph : 1f));
+                if (finalCard) drawGoldLogo(canvas, x, cy, size * scale, opacity * morph);
+            }
         }
+    }
+
+    private void drawGoldLogo(Canvas canvas, float cx, float cy, float size, float opacity) {
+        int left = Math.round(cx - size / 2f);
+        int top = Math.round(cy - size / 2f);
+        goldLogo.setBounds(left, top, left + Math.round(size), top + Math.round(size));
+        goldLogo.setAlpha(Math.round(opacity * 255));
+        goldLogo.draw(canvas);
     }
 
     private void drawChip(Canvas canvas, float cx, float cy, float size,

@@ -27,7 +27,7 @@ Android 8.0 or newer and a current Android System WebView are required. Internet
 
 The app does not contain the Firecrawl API key or the website backend. Set imports use the existing website backend. Website analytics and its privacy terms still apply. Android WebView storage is separate from Chrome/Safari storage.
 
-Current versions: **Android 2.0.0 (build 9)** and **iOS 2.0.0 (build 13)**. See [iOS setup and build instructions](ios/README.md).
+Current versions: **Android 2.0.6 (build 17)** and **iOS/macOS 2.0.2 (build 21)**. See [iOS setup and build instructions](ios/README.md).
 
 ## Source and builds
 

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SVG = '{http://www.w3.org/2000/svg}'
 ANDROID = '{http://schemas.android.com/apk/res/android}'
 E.register_namespace('android', ANDROID[1:-1])
-source = E.parse(ROOT / 'artwork/brand-q-extra-golden-thick-transparent.svg').getroot()
+source = E.parse(ROOT / 'artwork/brand-q-original-gold-thick-transparent.svg').getroot()
 
 def translated(parent, transform):
     values = re.fullmatch(r'translate\(([-\d.]+)[, ]+([-\d.]+)\)', transform)
@@ -39,5 +39,5 @@ output.write_text(output.read_text().replace('><', '>\n<'))
 shadows = copy.deepcopy(source)
 shadows.remove(shadows.find(f'{SVG}g'))
 E.register_namespace('', SVG[1:-1])
-E.ElementTree(shadows).write(ROOT / 'artwork/brand-q-extra-golden-thick-shadows.svg', encoding='utf-8', xml_declaration=True)
+E.ElementTree(shadows).write(ROOT / 'artwork/brand-q-original-gold-thick-shadows.svg', encoding='utf-8', xml_declaration=True)
 print('Generated transparent gold vector and shadow-only SVG')

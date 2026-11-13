@@ -211,9 +211,10 @@ private final class LogoCarouselView: UIView {
             guard opacity > 0 else { continue }
             let frame = cardRect(x: x, size: size * scale)
             let palette = (index % 3 + 3) % 3
-            originals[palette].draw(in: frame, blendMode: .normal, alpha: opacity)
+            let finalCard = isMorphing && index == nearest
+            originals[palette].draw(in: frame, blendMode: .normal, alpha: opacity * (finalCard ? 1 - morph : 1))
             if isMorphing && index == nearest {
-                // The white and gold artwork share the same indigo square and path.
+                // Crossfade into the transparent thick gold mark without leaving the white Q underneath.
                 gold.draw(in: frame, blendMode: .normal, alpha: morph)
             }
         }

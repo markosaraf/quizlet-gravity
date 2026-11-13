@@ -187,10 +187,10 @@ export async function generateMetadata(): Promise<Metadata> {
       // a competing PNG for the tab. Google also accepts apple-touch-icon for
       // Search, so the gold-on-blue raster remains available through that link.
       icon: [
-        { url: "/tab-gold-thick-fit.svg", sizes: "any", type: "image/svg+xml" },
+        { url: "/tab-original-gold-thick.svg", sizes: "any", type: "image/svg+xml" },
       ],
       apple: [
-        { url: "/apple-icon.png?v=20261113-thick", sizes: "180x180", type: "image/png" },
+        { url: "/apple-icon.png?v=20261113-original-thick", sizes: "180x180", type: "image/png" },
       ],
     },
   };

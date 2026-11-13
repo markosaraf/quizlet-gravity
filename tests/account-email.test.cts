@@ -6,7 +6,7 @@ test('account email keeps a readable plaintext alternative and safely escapes HT
  const {text,html}=renderAccountEmail(mail);
  assert.ok(text.includes(mail.url));assert.ok(text.includes(mail.username));
  assert.ok(html.includes('Emilia &lt;img src=x&gt;'));assert.ok(!html.includes('<img src=x>'));
- assert.ok(html.includes('intro-bg@2x.jpg'));assert.ok(html.includes('brand-q-extra-golden-thick-transparent.png'));
+ assert.ok(html.includes('intro-bg@2x.jpg'));assert.ok(html.includes('brand-q-original-gold-thick-transparent.png'));
  assert.ok(html.includes('bgcolor="#d4af37"'));assert.ok(html.includes('background-color:#f7f7fa'));
  assert.ok(html.includes('token=example&amp;callbackURL='));
 });

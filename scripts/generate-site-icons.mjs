@@ -4,14 +4,14 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// Extra-golden, thick 3D Q. Tabs use the transparent SVG; search/touch icons
+// Original-gold, thick 3D Q. Tabs use the transparent SVG; search/touch icons
 // use the corresponding gold-on-blue PNG.
 const svg = await fs.readFile(path.join(root, 'assets/branding/app-icon.svg'));
 const tabSvg = await fs.readFile(path.join(root, 'assets/branding/tab-icon.svg'));
 const appPng = await fs.readFile(path.join(root, 'assets/branding/app-icon.png'));
 await fs.writeFile(path.join(root, 'public/logo.svg'), svg);
 // Browser tabs use the transparent gold mark. Keep the former URL working too.
-for (const name of ['public/tab-gold-thick-fit.svg', 'public/tab-gold.svg', 'public/icon.svg']) {
+for (const name of ['public/tab-original-gold-thick.svg', 'public/tab-gold-thick-fit.svg', 'public/tab-gold.svg', 'public/icon.svg']) {
   await fs.writeFile(path.join(root, name), tabSvg);
 }
 for (const [name, size] of [

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// Original-gold, thin 3D Q. Tabs use the transparent SVG; search/touch icons
+// Extra-golden, thick 3D Q. Tabs use the transparent SVG; search/touch icons
 // use the corresponding gold-on-blue PNG.
 const svg = await fs.readFile(path.join(root, 'assets/branding/app-icon.svg'));
 const tabSvg = await fs.readFile(path.join(root, 'assets/branding/tab-icon.svg'));

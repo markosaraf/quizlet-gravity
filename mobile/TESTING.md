@@ -15,3 +15,12 @@ Please check:
 9. Leave the app during the carousel or final hold and return. The animation should resume. Retry after a failed load should restart the carousel. With Android animations disabled, the final logo should display without a repeating animation.
 
 Do not expect data to be shared with the phone's separate browser or offline imports to work.
+
+## Opening sequence regression checks
+
+- Cold launch: the initial flat Q stays flat until the carousel begins; no early 3D flash.
+- Carousel includes the gold square/negative Q, black Q, white Q and flat gold Q.
+- With the page ready, the flat gold Q merges with the adjacent gold square. The complete gold square is briefly visible before the transparent thick 3D Q appears.
+- Slow loading completes additional four-card passes; the merge always starts from the flat gold Q.
+- Background/resume during carousel and merge continues smoothly. Retry starts on the flat Q.
+- Reduced motion skips movement and does not delay access to the ready page.

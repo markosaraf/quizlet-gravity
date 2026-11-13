@@ -12,7 +12,7 @@ final class IntroView: UIView {
     private var elapsed: TimeInterval = 0
     private var phase = Phase.starting
     private var passStart: CGFloat = 0
-    private var passSteps: CGFloat = 2
+    private var passSteps: CGFloat = 3
     private var ready = false
     private var failed = false
     private var started = false
@@ -89,7 +89,7 @@ final class IntroView: UIView {
         case .starting:
             if elapsed >= 0.67 {
                 advance(to: .carousel)
-                carousel.showOriginal = false
+                carousel.isStarting = false
             }
         case .carousel:
             let raw = passStart + min(passSteps, CGFloat(elapsed / 0.8))
@@ -102,14 +102,14 @@ final class IntroView: UIView {
                     advance(to: .morph)
                     carousel.isMorphing = true
                 } else {
-                    // First pass ends on white after two slides; repeat all three if needed.
+                    // Finish on the flat gold Q, then repeat all four cards if needed.
                     passStart = carousel.position
-                    passSteps = 3
+                    passSteps = 4
                     elapsed = 0
                 }
             }
         case .morph:
-            let progress = min(1, elapsed / 0.55)
+            let progress = min(1, elapsed / 1.2)
             carousel.morph = CGFloat((1 - cos(.pi * progress)) / 2)
             if progress >= 1 {
                 carousel.showOriginal = true
@@ -170,9 +170,10 @@ private final class DisplayLinkTarget: NSObject {
 }
 
 private final class LogoCarouselView: UIView {
-    private let originals = ["LogoGoldBackground", "LogoBlack", "LogoWhite"].map { UIImage(named: $0)! }
+    private let originals = ["LogoGoldBackground", "LogoBlack", "LogoWhite", "LogoFlatGold"].map { UIImage(named: $0)! }
     private let gold = UIImage(named: "LogoGold")!
-    var showOriginal = true
+    var showOriginal = false
+    var isStarting = true
     var position: CGFloat = 0
     var isMorphing = false
     var morph: CGFloat = 0
@@ -195,6 +196,10 @@ private final class LogoCarouselView: UIView {
             gold.draw(in: cardRect(x: bounds.midX, size: size))
             return
         }
+        if isStarting {
+            originals[3].draw(in: cardRect(x: bounds.midX, size: size))
+            return
+        }
         let nearest = Int(position.rounded())
         let cards = Array((nearest - 2)...(nearest + 2)).sorted {
             abs(CGFloat($0) - position) > abs(CGFloat($1) - position)
@@ -204,18 +209,29 @@ private final class LogoCarouselView: UIView {
             var opacity = max(0, 1 - abs(distance) * 0.62)
             let scale = max(0.56, 1 - abs(distance) * 0.30)
             var x = bounds.midX + distance * spacing
-            if isMorphing && index != nearest {
-                opacity *= 1 - morph
-                x = bounds.midX + distance * spacing * (1 - morph * 0.6)
+            if isMorphing {
+                let merge = min(1, morph / 0.4)
+                if index == nearest || index == nearest + 1 { continue }
+                opacity *= 1 - merge
+                x = bounds.midX + distance * spacing * (1 - merge)
             }
             guard opacity > 0 else { continue }
             let frame = cardRect(x: x, size: size * scale)
-            let palette = (index % 3 + 3) % 3
-            let finalCard = isMorphing && index == nearest
-            originals[palette].draw(in: frame, blendMode: .normal, alpha: opacity * (finalCard ? 1 - morph : 1))
-            if isMorphing && index == nearest {
-                // Crossfade into the transparent thick gold mark without leaving the white Q underneath.
-                gold.draw(in: frame, blendMode: .normal, alpha: morph)
+            let palette = (index % originals.count + originals.count) % originals.count
+            originals[palette].draw(in: frame, blendMode: .normal, alpha: opacity)
+        }
+        if isMorphing {
+            let merge = min(1, morph / 0.4)
+            let reveal = max(0, (morph - 0.52) / 0.48)
+            originals[3].draw(in: cardRect(x: bounds.midX, size: size),
+                              blendMode: .normal, alpha: 1 - merge)
+            // Merge the adjacent gold square / negative Q, hold, then reveal 3D.
+            originals[0].draw(in: cardRect(x: bounds.midX + spacing * (1 - merge),
+                                          size: size * (0.7 + 0.3 * merge)),
+                              blendMode: .normal, alpha: (0.38 + 0.62 * merge) * (1 - reveal))
+            if reveal > 0 {
+                gold.draw(in: cardRect(x: bounds.midX, size: size),
+                          blendMode: .normal, alpha: reveal)
             }
         }
     }

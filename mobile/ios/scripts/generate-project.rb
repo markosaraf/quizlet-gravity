@@ -17,7 +17,7 @@ target.build_configurations.each do |config|
     'PRODUCT_BUNDLE_IDENTIFIER' => 'com.quizletgravity.ios',
     'PRODUCT_NAME' => 'QuizletGravity',
     'MARKETING_VERSION' => '2.0.2',
-    'CURRENT_PROJECT_VERSION' => '21',
+    'CURRENT_PROJECT_VERSION' => '22',
     'INFOPLIST_FILE' => 'QuizletGravity/Info.plist',
     'SWIFT_VERSION' => '5.0',
     'TARGETED_DEVICE_FAMILY' => '1,2,6',

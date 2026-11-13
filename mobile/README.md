@@ -23,11 +23,11 @@ Android 8.0 or newer and a current Android System WebView are required. Internet
 - The existing game’s Pause control is invoked when leaving the app, followed by WebView timer suspension.
 - An offline/error screen with retry, rather than a blank browser error page.
 - External links open in the browser. Only the exact HTTPS website domains open inside the app.
-- Adaptive and monochrome launcher icons, plus an opening carousel of the supplied square colour variants and “Quizlet Gravity”. Once the website is drawable, the carousel morphs to gold-on-indigo, holds for one second and fades into the site. No loading message or spinner.
+- Adaptive and monochrome launcher icons, plus an opening carousel of the supplied square colour variants and “Quizlet Gravity”. Once the website is drawable, the flat gold Q merges with the gold square / negative Q, then reveals the thick 3D Q, holds for one second and fades into the site. No loading message or spinner.
 
 The app does not contain the Firecrawl API key or the website backend. Set imports use the existing website backend. Website analytics and its privacy terms still apply. Android WebView storage is separate from Chrome/Safari storage.
 
-Current versions: **Android 2.0.6 (build 17)** and **iOS/macOS 2.0.2 (build 21)**. See [iOS setup and build instructions](ios/README.md).
+Current versions: **Android 2.0.7 (build 18)** and **iOS/macOS 2.0.2 (build 22)**. See [iOS setup and build instructions](ios/README.md).
 
 ## Source and builds
 
@@ -36,7 +36,7 @@ Current versions: **Android 2.0.6 (build 17)** and **iOS/macOS 2.0.2 (build 21)*
 - Building/signing: [BUILDING.md](BUILDING.md).
 - Phone checks: [TESTING.md](TESTING.md).
 
-The launcher artwork on Android and iPhone/iPad is `quizlet-q-chip-large-gold-on-indigo-3.svg`, supplied by the site owner. Its unrounded background is separated from the gold Q so Android can apply its own launcher shape. The SVG is mapped to the visible 72-point area of Android's adaptive icon, with the surrounding system movement padding retained. iOS uses the uniformly size-adjusted derivative `artwork/app-icon-ios.svg` and applies its own corners. The carousel keeps the original smaller logo variants.
+Launcher and store artwork uses `artwork/app-icon-original-gold-thick.png`. The final opening mark uses the matching transparent vector artwork with shadows. The initial system/intro screens and carousel retain the flat SVG Q; the 3D mark appears only after the merge (or when animations are disabled).
 
 On both Android and iOS, the opening screen first shows only the original gold-on-indigo logo and “Quizlet Gravity” for 0.67 seconds. The carousel cards appear and start moving afterwards. It uses the full, unmodified square proportions from `quizlet-q-chip-indigo-on-gold-3.svg`, `quizlet-q-chip-black-on-indigo3.svg`, `quizlet-q-chip-white-on-indigo-3.svg` and finally `quizlet-q-chip-gold-on-indigo-3.svg`. The source SVGs are in `artwork/`. Android draws their shared vector path directly. If the page is slow, the alternatives continue cycling without another start delay. Errors stop the carousel and show retry. Android's disabled-animation setting is respected.
 

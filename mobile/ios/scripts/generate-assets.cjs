@@ -9,8 +9,8 @@ const json = (p,v) => fs.writeFileSync(p, JSON.stringify(v,null,2)+'\n');
 (async () => {
   const iosIconSource = path.join(root, 'artwork/app-icon-original-gold-thick.png');
   json(path.join(assets,'Contents.json'), {info});
-  // Keep the alternative carousel cards; the starting/final mark is vector PDF.
-  for (const [name, source] of Object.entries({LogoGoldBackground:'quizlet-q-chip-indigo-on-gold-3.svg',LogoBlack:'quizlet-q-chip-black-on-indigo3.svg',LogoWhite:'quizlet-q-chip-white-on-indigo-3.svg'})) {
+  // Flat launch/carousel cards precede the final vector 3D mark.
+  for (const [name, source] of Object.entries({LogoFlatGold:'quizlet-q-chip-gold-on-indigo-3.svg',LogoGoldBackground:'quizlet-q-chip-indigo-on-gold-3.svg',LogoBlack:'quizlet-q-chip-black-on-indigo3.svg',LogoWhite:'quizlet-q-chip-white-on-indigo-3.svg'})) {
     const dir=path.join(assets,name+'.imageset');fs.mkdirSync(dir,{recursive:true});
     const images=[];
     for(const scale of [1,2,3]) {

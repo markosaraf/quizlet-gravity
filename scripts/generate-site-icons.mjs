@@ -11,7 +11,7 @@ const tabSvg = await fs.readFile(path.join(root, 'assets/branding/tab-icon.svg')
 const appPng = await fs.readFile(path.join(root, 'assets/branding/app-icon.png'));
 await fs.writeFile(path.join(root, 'public/logo.svg'), svg);
 // Browser tabs use the transparent gold mark. Keep the former URL working too.
-for (const name of ['public/tab-gold.svg', 'public/icon.svg']) {
+for (const name of ['public/tab-gold-thick-fit.svg', 'public/tab-gold.svg', 'public/icon.svg']) {
   await fs.writeFile(path.join(root, name), tabSvg);
 }
 for (const [name, size] of [
@@ -24,7 +24,7 @@ for (const [name, size] of [
 }
 // ICO directory with lossless PNG frames at the advertised favicon sizes.
 const sizes = [16, 32, 48];
-const frames = await Promise.all(sizes.map(size => sharp(appPng).resize(size, size).png().toBuffer()));
+const frames = await Promise.all(sizes.map(size => sharp(tabSvg).resize(size, size).png().toBuffer()));
 const directory = Buffer.alloc(6 + 16 * frames.length);
 directory.writeUInt16LE(1, 2);
 directory.writeUInt16LE(frames.length, 4);

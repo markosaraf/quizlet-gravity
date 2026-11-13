@@ -78,3 +78,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 @media (max-width: 1024px), (pointer: coarse) {
   body:has(.gravity-root[data-playing="true"]) .community-nav { display: none; }
 }
+
+/* Preserve the original visible Q size while allowing transparent shadow margins. */
+.community-brand-mark{position:relative;display:block;width:30px;height:30px;flex-shrink:0}
+.community-brand .community-brand-mark img{position:absolute;width:129.3%;height:129.3%;max-width:none;left:50%;top:50%;transform:translate(-50%,-50%)}
+@media(max-width:600px){.community-brand-mark{width:26px;height:26px}}

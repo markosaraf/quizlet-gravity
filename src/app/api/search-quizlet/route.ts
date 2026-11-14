@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {unstable_cache} from 'next/cache';
+import {communitySettings} from '@/lib/community/settings';
 import {auth} from '@/lib/community/auth';
 import {ImportGuard} from '@/lib/gravity/quizlet-import-guard';
 import {discoverQuizletSets, QuizletMapError} from '@/lib/gravity/quizlet-map';
@@ -15,6 +16,7 @@ const json = (data: unknown, status = 200) => NextResponse.json(data, {status, h
 export async function POST(request: NextRequest) {
   if (request.headers.get('sec-fetch-site') === 'cross-site' || request.headers.get('origin') !== request.nextUrl.origin)
     return json({error: 'Open this search on Quizlet Gravity.'}, 403);
+  if (!(await communitySettings()).quizletSearchEnabled) return json({error: 'Quizlet search is currently disabled. Paste a set link to import it.'}, 403);
   const session = await auth.api.getSession({headers: request.headers});
   if (!session) return json({error: 'Choose a guest name or sign in to search Quizlet.'}, 401);
   if (!session.user.isAnonymous && !session.user.emailVerified) return json({error: 'Confirm your email before searching.'}, 403);

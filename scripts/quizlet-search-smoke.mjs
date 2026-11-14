@@ -7,7 +7,7 @@ for(const engine of [chromium, webkit]) {
   const user={id:'preview-test',username:'markosaraf',displayUsername:'Marko Sarafijanovic',name:'Marko Sarafijanovic',isAnonymous:false,emailVerified:true};
   await page.route('**/api/auth/get-session*',r=>r.fulfill({json:{user,session:{id:'test',userId:user.id,expiresAt:new Date(Date.now()+86400000).toISOString()}}}));
   await page.route('**/api/admin/**',r=>r.fulfill({json:{admin:false}}));
-  await page.route('**/api/community/**',r=>r.fulfill({json:{sets:[],hasMore:false,tutorialEnabled:false}}));
+  await page.route('**/api/community/**',r=>r.fulfill({json:{sets:[],hasMore:false,tutorialEnabled:false,quizletSearchEnabled:true}}));
   const searches=[],imports=[];
   await page.route('**/api/search-quizlet',r=>{
    searches.push(r.request().postDataJSON());
@@ -37,7 +37,12 @@ for(const engine of [chromium, webkit]) {
   await page.route('**/api/search-quizlet',r=>r.fulfill({status:429,json:{error:'Please wait a minute before searching again.'}}));
   await page.getByRole('searchbox').fill('French');await page.getByRole('button',{name:'Search Quizlet',exact:true}).click();
   await expect(page.locator('.quizlet-search [role=alert]')).toHaveText('Please wait a minute before searching again.');
+  await page.route('**/api/community/config',r=>r.fulfill({json:{quizletSearchEnabled:false}}));
+  await page.goto('http://localhost:3104/import-game');
+  await expect(page.getByRole('heading',{name:'Paste a Quizlet link',exact:true})).toBeVisible();
+  await expect(page.getByRole('searchbox')).toHaveCount(0);
+  await expect(page.getByLabel('Quizlet set link',{exact:true})).toBeVisible();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-  console.log('PASS '+engine.name()+': title/creator search, preview before import, paste link, rate-limit feedback, phone layout');
+  console.log('PASS '+engine.name()+': title/creator search, preview before import, paste link, admin search-off state, rate-limit feedback, phone layout');
  } finally {await browser.close();}
 }

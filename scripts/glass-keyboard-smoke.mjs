@@ -15,6 +15,7 @@ await build({
     import {createRoot} from 'react-dom/client';
     import {flushSync} from 'react-dom';
     import {GlassKeyboard} from './src/components/gravity/GlassKeyboard';
+    import './src/gravity/gravity.css';
     function Fixture() {
       const inputRef=useRef(null);
       const [value,setValue]=useState(''),[mode,setMode]=useState('text');
@@ -23,17 +24,19 @@ await build({
         flushSync(()=>{setValue(text);setMode(mode);setSubmitted('');setGeneration(n=>n+1);});
         inputRef.current.focus();inputRef.current.setSelectionRange(text.length,text.length);
       }};},[]);
-      return <><textarea aria-label="Answer" ref={inputRef} value={value} inputMode="none" onChange={e=>setValue(e.target.value)}/>
+      return <><div className="GravityGameplayView-typingPrompt"><div className="GravityTypingPrompt"><div className="GravityTypingPrompt-inner"><div className="GravityTypingPrompt-inputWrapper"><textarea className="GravityTypingPrompt-input" aria-label="Answer" ref={inputRef} value={value} inputMode="none" onChange={e=>setValue(e.target.value)}/></div></div></div></div>
         <output data-testid="submitted">{submitted}</output>
         <GlassKeyboard key={generation} inputRef={inputRef} mode={mode} specialChars={['ä','é','ñ']} onChange={setValue}
           onSubmit={()=>{setSubmitted(inputRef.current.value);setValue('');}}/></>;
     }
     createRoot(document.getElementById('root')).render(<Fixture/>);
   `, loader: 'jsx', resolveDir: process.cwd() },
-  bundle: true, outfile: join(directory, 'fixture.js'), jsx: 'automatic',
+  external: ['/assets/*', '/*.svg'], bundle: true, outfile: join(directory, 'fixture.js'), jsx: 'automatic',
 });
 const server = createServer(async (req, res) => {
-  if (req.url === '/fixture.js' || req.url === '/fixture.css') {
+  if (req.url?.startsWith('/assets/') && !req.url.includes('..')) {
+    try { res.end(await readFile(join(process.cwd(), 'public', req.url))); } catch { res.statusCode=404;res.end(); }
+  } else if (req.url === '/fixture.js' || req.url === '/fixture.css') {
     res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript' : 'text/css');
     res.end(await readFile(join(directory, req.url.slice(1))));
   } else {
@@ -108,8 +111,70 @@ try {
       await page.waitForTimeout(600);await page.mouse.up();
       const remaining=await answer.inputValue();assert.ok(remaining.length<9,`${name}: held delete repeats`);
       await page.waitForTimeout(150);assert.equal(await answer.inputValue(),remaining,`${name}: delete stops on release`);
+      await reset('1111111111');
+      const initial = await answer.boundingBox();
+      // Measure a character using the browser font, then tap between digits 2 and 3.
+      const tap = await answer.evaluate(el => {
+        const style=getComputedStyle(el),canvas=document.createElement('canvas'),context=canvas.getContext('2d');
+        context.font=style.font;
+        const box=el.getBoundingClientRect();
+        return {x:box.x+parseFloat(style.borderLeftWidth)+parseFloat(style.paddingLeft)+context.measureText('11').width,
+          y:box.y+parseFloat(style.borderTopWidth)+parseFloat(style.paddingTop)+parseFloat(style.lineHeight)/2};
+      });
+      await page.touchscreen.tap(tap.x,tap.y);await page.waitForTimeout(40);
+      assert.equal(await answer.evaluate(el=>el.selectionStart),2,`${name}: touch places caret between digits`);
+      await key('x').tap();assert.equal(await answer.inputValue(),'11x11111111');
+      await reset('1111111111'.repeat(5));
+      const grown=await answer.boundingBox(), keyboard=await page.locator('.glass-keyboard').boundingBox();
+      assert.ok(grown.height>initial.height,`${name}: wrapped answer grows`);
+      assert.ok(Math.abs(grown.y+grown.height-initial.y-initial.height)<2,`${name}: answer grows upward`);
+      assert.ok(grown.y+grown.height<keyboard.y,`${name}: answer stays above keyboard`);
+      assert.equal(await answer.evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,`${name}: wrapped lines visible`);
+      const special=await page.locator('.glass-special-characters').boundingBox();
+      assert.ok(special.y+special.height<grown.y,`${name}: special characters move above growing answer`);
+      await reset('11111\n11111');
+      const rowPoint=await answer.evaluate(el=>{
+        const s=getComputedStyle(el),ctx=document.createElement('canvas').getContext('2d');ctx.font=s.font;
+        const r=el.getBoundingClientRect();return {x:r.x+parseFloat(s.borderLeftWidth)+parseFloat(s.paddingLeft)+ctx.measureText('11').width,
+          y:r.y+parseFloat(s.borderTopWidth)+parseFloat(s.paddingTop)+parseFloat(s.lineHeight)*1.5};
+      });
+      await page.touchscreen.tap(rowPoint.x,rowPoint.y);await page.waitForTimeout(40);
+      assert.equal(await answer.evaluate(el=>el.selectionStart),8,`${name}: tapping the second line positions the caret`);
+      await reset('abc');assert.equal((await answer.boundingBox()).height,initial.height,`${name}: deletion shrinks field`);
+      await key('space').tap();assert.equal(await answer.inputValue(),'abc ',`${name}: tap space inserts once`);
+      await reset('abcdef');
+      const space=await key('space').boundingBox(), sx=space.x+space.width/2,sy=space.y+space.height/2;
+      async function slideSpace(moves, hold=350, cancel=false) {
+        if(cdp) {
+          const pt=x=>({id:10,x,y:sy});
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[pt(sx)]});
+          await page.waitForTimeout(hold);
+          for(const delta of moves) await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[pt(sx+delta)]});
+          await cdp.send('Input.dispatchTouchEvent',{type:cancel?'touchCancel':'touchEnd',touchPoints:[]});
+        } else {
+          await page.mouse.move(sx,sy);await page.mouse.down();await page.waitForTimeout(hold);
+          for(const delta of moves) await page.mouse.move(sx+delta,sy);
+          if(cancel) await key('space').dispatchEvent('pointercancel',{pointerId:1});
+          await page.mouse.up();
+        }
+      }
+      await slideSpace([-36]);
+      assert.equal(await answer.inputValue(),'abcdef',`${name}: held space never inserts a space`);
+      assert.equal(await answer.evaluate(el=>el.selectionStart),3,`${name}: slide left moves caret`);
+      await key('x').tap();assert.equal(await answer.inputValue(),'abcxdef',`${name}: insert at dragged caret`);
+      await slideSpace([24]);assert.equal(await answer.evaluate(el=>el.selectionStart),6,`${name}: slide right moves caret`);
+      await reset('A👨‍👩‍👧‍👦éB');
+      await slideSpace([-24]);assert.equal(await answer.evaluate(el=>el.selectionStart),12,`${name}: caret respects grapheme boundaries`);
+      await reset('abc');await slideSpace([],50,true);
+      assert.equal(await answer.inputValue(),'abc',`${name}: cancelled space does not insert`);
+      await reset('a');await overlap('space','b');
+      assert.equal(await answer.inputValue(),'a b',`${name}: overlapping space and letter preserve order`);
+      await reset('1'.repeat(300));
+      const capped=await answer.boundingBox();
+      assert.ok(capped.height<220,`${name}: long answers leave room for the game`);
+      assert.ok(await answer.evaluate(el=>el.scrollHeight>el.clientHeight),`${name}: long answers scroll`);
       assert.deepEqual(errors,[],`${name}: browser errors`);
-      console.log(`PASS ${name}: overlapping taps, sustained typing, numbers, deletion, submit, shift, accents, accessible activation and selection.`);
+      console.log(`PASS ${name}: overlapping taps, sustained typing, numbers, deletion, submit, shift, accents, accessible activation, touch caret, upward resizing and spacebar cursor gestures.`);
     } finally { await browser.close(); }
   }
 } finally { await new Promise(resolve=>server.close(resolve)); await rm(directory,{recursive:true,force:true}); }

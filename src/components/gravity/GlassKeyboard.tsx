@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import './GlassKeyboard.css';
 import { SpecialCharBar } from './SpecialCharBar';
 import { keyboardTap } from './keyboardHaptics';
+import { caretAtPoint, moveAnswerCaret, showAnswerCaret } from './answerCaret';
 
 type Props = {
   inputRef: { current: HTMLTextAreaElement | null };
@@ -28,17 +29,75 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
   const delay = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deletePointer = useRef<number | null>(null);
   const caretFrame = useRef<number | null>(null);
+  const spaceGesture = useRef<{ id: number; x: number; active: boolean; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const [movingCaret, setMovingCaret] = useState(false);
   const latestChange = useRef(onChange);
   latestChange.current = onChange;
   useEffect(() => { setLayout(mode); }, [mode]);
+  function resizeAnswer() {
+    const input = inputRef.current;
+    if (!input) return;
+    const style = getComputedStyle(input);
+    const minimum = parseFloat(style.minHeight);
+    const borders = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+    const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    const available = window.innerHeight - (panelRef.current?.offsetHeight ?? 250) - 100 - (specialChars.length ? 50 : 0);
+    const maximum = Math.max(minimum, Math.min(5 * parseFloat(style.lineHeight) + padding + borders, available));
+    const scroll = input.scrollTop;
+    input.style.height = '0px';
+    input.style.height = `${Math.max(minimum, Math.min(input.scrollHeight + borders, maximum))}px`;
+    input.scrollTop = scroll;
+    document.documentElement.style.setProperty('--answer-height', `${input.offsetHeight}px`);
+  }
+  useLayoutEffect(() => { resizeAnswer(); });
   useEffect(() => {
     const panel = panelRef.current;
     if (!panel) return;
-    const measure = () => document.documentElement.style.setProperty('--keyboard-height', `${panel.offsetHeight}px`);
+    const measure = () => {
+      document.documentElement.style.setProperty('--keyboard-height', `${panel.offsetHeight}px`);
+      resizeAnswer();
+    };
     const observer = new ResizeObserver(measure);
     observer.observe(panel); measure();
-    return () => observer.disconnect();
-  }, []);
+    window.addEventListener('resize', measure);
+    return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
+  }, [specialChars.length]);
+
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    let touch: { id: number; x: number; y: number; time: number } | null = null;
+    const down = (event: globalThis.PointerEvent) => {
+      if (event.pointerType === 'mouse') return;
+      if (caretFrame.current !== null) { cancelAnimationFrame(caretFrame.current); caretFrame.current = null; }
+      touch = { id: event.pointerId, x: event.clientX, y: event.clientY, time: Date.now() };
+    };
+    const up = (event: globalThis.PointerEvent) => {
+      const start = touch; touch = null;
+      if (!start || start.id !== event.pointerId || Date.now() - start.time > 500 || Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) return;
+      const position = caretAtPoint(input, event.clientX, event.clientY);
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(position, position);
+      // Apply after the browser's native tap selection, which may otherwise
+      // move inputMode=none fields to the end on mobile.
+      caretFrame.current = requestAnimationFrame(() => {
+        caretFrame.current = null;
+        input.focus({ preventScroll: true });
+        input.setSelectionRange(position, position);
+        showAnswerCaret(input);
+      });
+    };
+    const cancel = () => { touch = null; };
+    input.addEventListener('pointerdown', down);
+    input.addEventListener('pointerup', up);
+    input.addEventListener('pointercancel', cancel);
+    return () => {
+      input.style.removeProperty('height');
+      input.removeEventListener('pointerdown', down);
+      input.removeEventListener('pointerup', up);
+      input.removeEventListener('pointercancel', cancel);
+    };
+  }, [inputRef]);
 
   const stopRepeat = () => {
     if (repeat.current) clearInterval(repeat.current);
@@ -48,6 +107,7 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
   };
   useEffect(() => () => {
     stopRepeat();
+    if (spaceGesture.current) clearTimeout(spaceGesture.current.timer);
     if (caretFrame.current !== null) cancelAnimationFrame(caretFrame.current);
   }, []);
 
@@ -71,6 +131,13 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
   }
 
   function edit(text: string, remove = false) {
+    // A second thumb may land on a letter before space is released. Commit
+    // that pending tap first so quick typing preserves character order.
+    const space = spaceGesture.current;
+    if (space) {
+      clearTimeout(space.timer); spaceGesture.current = null; setMovingCaret(false);
+      if (!space.active) edit(' ');
+    }
     const input = inputRef.current;
     if (!input) return;
     let start = input.selectionStart ?? input.value.length;
@@ -85,15 +152,52 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
     latestChange.current(next);
     input.focus({ preventScroll: true });
     input.setSelectionRange(start + text.length, start + text.length);
+    resizeAnswer();
+    showAnswerCaret(input);
     if (caretFrame.current !== null) cancelAnimationFrame(caretFrame.current);
     caretFrame.current = requestAnimationFrame(() => {
       caretFrame.current = null;
       if (inputRef.current === input && input.value === next) {
         input.setSelectionRange(start + text.length, start + text.length);
+        showAnswerCaret(input);
       }
     });
     if (!caps) setShift(false);
   }
+  function endSpace(event: PointerEvent<HTMLButtonElement>, cancelled = false) {
+    const gesture = spaceGesture.current;
+    if (!gesture || event.pointerId !== gesture.id) return;
+    clearTimeout(gesture.timer);
+    spaceGesture.current = null;
+    setMovingCaret(false);
+    if (!cancelled && !gesture.active) edit(' ');
+  }
+  const spacebar = <button type="button" className={`glass-key space label${movingCaret ? ' selected' : ''}`} aria-label="space"
+    title="Hold and slide to move the cursor"
+    onPointerDown={event => {
+      if (event.button !== 0 || spaceGesture.current) return;
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      if (caretFrame.current !== null) { cancelAnimationFrame(caretFrame.current); caretFrame.current = null; }
+      spaceGesture.current = { id: event.pointerId, x: event.clientX, active: false, timer: setTimeout(() => {
+        if (spaceGesture.current) { spaceGesture.current.active = true; setMovingCaret(true); keyboardTap(); }
+      }, 300) };
+    }}
+    onPointerMove={event => {
+      const gesture = spaceGesture.current;
+      if (!gesture || event.pointerId !== gesture.id) return;
+      const steps = Math.trunc((event.clientX - gesture.x) / 12);
+      if (!steps) return;
+      // Sliding can engage immediately; a stationary long press arms it too.
+      gesture.active = true; clearTimeout(gesture.timer); setMovingCaret(true);
+      gesture.x += steps * 12;
+      if (inputRef.current) moveAnswerCaret(inputRef.current, steps);
+    }}
+    onPointerUp={event => endSpace(event)} onPointerCancel={event => endSpace(event, true)}
+    onLostPointerCapture={event => endSpace(event, true)}
+    onClick={event => { if (event.detail === 0) edit(' '); }}>
+    {movingCaret ? '← cursor →' : 'space'}
+  </button>;
   function key(value: string, label = value, cls = '') {
     return <button type="button" className={`glass-key ${cls}`} key={value} aria-label={label}
       {...press(() => edit(shift || caps ? value.toUpperCase() : value))}>
@@ -145,7 +249,7 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
         {switcher('decimal', '123')}
         {switcher(layout === 'symbols' ? 'text' : 'symbols', layout === 'symbols' ? 'ABC' : '#+=', 'symbol-switch')}
         {switcher(layout === 'accents' ? 'text' : 'accents', layout === 'accents' ? 'ABC' : 'é', 'accent-switch')}
-        {key(' ', 'space', 'space label')}{submit()}
+        {spacebar}{submit()}
       </div>
     </div>}
 

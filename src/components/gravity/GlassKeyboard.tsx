@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import './GlassKeyboard.css';
 import { SpecialCharBar } from './SpecialCharBar';
@@ -26,6 +26,8 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
   const panelRef = useRef<HTMLDivElement>(null);
   const repeat = useRef<ReturnType<typeof setInterval> | null>(null);
   const delay = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deletePointer = useRef<number | null>(null);
+  const caretFrame = useRef<number | null>(null);
   const latestChange = useRef(onChange);
   latestChange.current = onChange;
   useEffect(() => { setLayout(mode); }, [mode]);
@@ -42,8 +44,31 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
     if (repeat.current) clearInterval(repeat.current);
     if (delay.current) clearTimeout(delay.current);
     repeat.current = null; delay.current = null;
+    deletePointer.current = null;
   };
-  useEffect(() => stopRepeat, []);
+  useEffect(() => () => {
+    stopRepeat();
+    if (caretFrame.current !== null) cancelAnimationFrame(caretFrame.current);
+  }, []);
+
+  // Overlapping fingers do not reliably generate clicks. Accept every pointer
+  // on contact, including non-primary touches, and ignore its later click.
+  // Zero-detail clicks retain keyboard and assistive-technology activation.
+  function press(action: () => void) {
+    return {
+      onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        action();
+      },
+      onClick: (event: MouseEvent<HTMLButtonElement>) => {
+        if (event.detail === 0) action();
+      },
+    };
+  }
+  function releaseDelete(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerId === deletePointer.current) stopRepeat();
+  }
 
   function edit(text: string, remove = false) {
     const input = inputRef.current;
@@ -60,31 +85,38 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
     latestChange.current(next);
     input.focus({ preventScroll: true });
     input.setSelectionRange(start + text.length, start + text.length);
-    requestAnimationFrame(() => {
-      if (inputRef.current === input) input.setSelectionRange(start + text.length, start + text.length);
+    if (caretFrame.current !== null) cancelAnimationFrame(caretFrame.current);
+    caretFrame.current = requestAnimationFrame(() => {
+      caretFrame.current = null;
+      if (inputRef.current === input && input.value === next) {
+        input.setSelectionRange(start + text.length, start + text.length);
+      }
     });
     if (!caps) setShift(false);
   }
   function key(value: string, label = value, cls = '') {
     return <button type="button" className={`glass-key ${cls}`} key={value} aria-label={label}
-      onPointerDown={e => e.preventDefault()} onClick={() => edit(shift || caps ? value.toUpperCase() : value)}>
+      {...press(() => edit(shift || caps ? value.toUpperCase() : value))}>
       {shift || caps ? label.toUpperCase() : label}
     </button>;
   }
   const backspace = (cls = '') => <button type="button" className={`glass-key action ${cls}`} aria-label="Delete"
     onPointerDown={e => {
+      if (e.button !== 0) return;
+      stopRepeat();
+      deletePointer.current = e.pointerId;
       e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); edit('', true);
       delay.current = setTimeout(() => { repeat.current = setInterval(() => edit('', true), 75); }, 400);
-    }} onPointerUp={stopRepeat} onPointerCancel={stopRepeat} onLostPointerCapture={stopRepeat}
+    }} onPointerUp={releaseDelete} onPointerCancel={releaseDelete} onLostPointerCapture={releaseDelete}
     onClick={e => { if (e.detail === 0) edit('', true); }}>
     <svg viewBox="0 0 28 22" aria-hidden="true"><path d="M10 2H24Q26 2 26 4V18Q26 20 24 20H10L2 11Z M13 7L21 15 M21 7L13 15"/></svg>
   </button>;
   const submit = (cls = '') => <button type="button" className={`glass-key submit ${cls}`} aria-label="Submit answer"
-    onPointerDown={e => e.preventDefault()} onClick={() => {
+    {...press(() => {
       onSubmit(); inputRef.current?.focus({ preventScroll: true });
-    }}><svg viewBox="0 0 28 22" aria-hidden="true"><path d="M24 3V10Q24 13 21 13H4 M10 7L4 13L10 19"/></svg><span>enter</span></button>;
+    })}><svg viewBox="0 0 28 22" aria-hidden="true"><path d="M24 3V10Q24 13 21 13H4 M10 7L4 13L10 19"/></svg><span>enter</span></button>;
   const switcher = (to: typeof layout, label: string, cls = '') => <button type="button" className={`glass-key action label ${cls}`}
-    onPointerDown={e => e.preventDefault()} onClick={() => setLayout(to)}>{label}</button>;
+    {...press(() => setLayout(to))}>{label}</button>;
 
   return createPortal(<div ref={panelRef} className={`glass-keyboard ${layout === 'decimal' ? 'numeric' : 'alphabetic'}`} role="group" aria-label="Transparent game keyboard"
     onPointerDownCapture={e => { if ((e.target as Element).closest('button')) keyboardTap(); }}
@@ -100,12 +132,12 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
       {(layout === 'text' ? letters : layout === 'symbols' ? ['1234567890', '-/:;()€&@"', '.,?!\''] : accents.map(row => row)).map((row, i) =>
         <div className={`key-row row-${i}`} key={i}>
           {layout === 'text' && i === 2 && <button type="button" className={`glass-key action shift ${shift || caps ? 'selected' : ''}`} aria-label={caps ? 'Caps lock on' : 'Shift'}
-            onPointerDown={e => e.preventDefault()} onClick={() => {
+            {...press(() => {
               const now = Date.now();
               if (now - lastShift.current < 350) { setCaps(true); setShift(true); }
               else { setCaps(false); setShift(s => !s); }
               lastShift.current = now;
-            }}>⇧</button>}
+            })}>⇧</button>}
           {[...row].map(char => key(char))}
           {((layout !== 'accents' && i === 2) || (layout === 'accents' && i === accents.length - 1)) && backspace()}
         </div>)}

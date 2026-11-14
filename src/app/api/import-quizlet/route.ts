@@ -25,7 +25,7 @@ function sameOrigin(request: NextRequest): boolean {
     (!origin || origin === new URL(request.url).origin);
 }
 
-async function importSet(request: NextRequest, raw: unknown) {
+async function importSet(request: NextRequest, raw: unknown, preview = false) {
   if (!sameOrigin(request)) return failure('Open this importer on Quizlet Gravity.', 403);
   let normalized: ReturnType<typeof normalizeQuizletUrl>;
   try {
@@ -54,6 +54,7 @@ async function importSet(request: NextRequest, raw: unknown) {
     )());
     if (!task) return failure('Other sets are importing. Please try again in a moment.', 429);
     const result = await task;
+    if (preview) return NextResponse.json(result, { headers: NO_STORE });
     const saved = await saveQuizletSet(result,session.user.id);
     return NextResponse.json({...result,sharedId:saved.id,sharePath:sharedSetPath(saved)}, { headers: NO_STORE });
   } catch (error) {
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
     text += decoder.decode();
     const body = JSON.parse(text);
-    return importSet(request, body?.url);
+    return importSet(request, body?.url, body?.preview === true);
   } catch {
     return failure('Send a JSON object containing a Quizlet URL.', 400);
   } finally {

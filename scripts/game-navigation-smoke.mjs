@@ -11,8 +11,8 @@ try {
   await page.route('**/api/admin/**',r=>r.fulfill({json:{admin:false}}));
   await page.route('**/api/community/**',r=>r.fulfill({json:{sets:[],hasMore:false,tutorialEnabled:false}}));
   await page.route('**/api/community/sets?*',r=>{
-   const u=new URL(r.request().url());if(u.searchParams.get('mine')==='1')mineRequests++;
-   return r.fulfill({json:{sets:u.searchParams.get('q')?[]:[{id:'test',public_id:'123456',title:'My French game',term_count:10,added_by:'Test Player'}],hasMore:false}});
+   const u=new URL(r.request().url());if(['created','played'].includes(u.searchParams.get('mine')))mineRequests++;
+   return r.fulfill({json:{sets:u.searchParams.get('q')?[]:[{id:'test',public_id:'123456',title:u.searchParams.get('mine')==='played'?'Played French game':'My French game',term_count:10,added_by:'Test Player'}],hasMore:false}});
   });
   await page.goto(base+'/my-games');
   await expect(page.getByRole('heading',{name:'My games',exact:true})).toBeVisible();
@@ -22,6 +22,9 @@ try {
   for(const name of ['FAQ','Create game','Games','My games'])await expect(nav.getByRole('link',{name,exact:true})).toBeVisible();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'navigation fits phone');
   signedIn=true;await page.reload();await expect(page.getByRole('heading',{name:'My French game'})).toBeVisible();assert.ok(mineRequests>0);
+  await expect(page.getByRole('button',{name:'Games you created',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('button',{name:'Games you played',exact:true}).click();await expect(page.getByRole('heading',{name:'Played French game'})).toBeVisible();
+  await page.getByRole('button',{name:'Games you created',exact:true}).click();await expect(page.getByRole('heading',{name:'My French game'})).toBeVisible();
   await page.getByRole('searchbox').fill('no-match');await expect(page.getByText('No matching games. Try another search.')).toBeVisible();
   await page.screenshot({path:`/tmp/gravity-my-games-${width}.png`});
   await page.goto(base+'/example');if(base.includes('localhost'))await page.addStyleTag({content:'nextjs-portal{display:none}'});

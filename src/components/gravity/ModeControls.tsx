@@ -68,7 +68,7 @@ function ModeControlsBase({
           <div className="GravityModeControls-pauseRow">
           {onToggleGameText && <GameplayTextToggle large={largeGameText} onToggle={onToggleGameText}/>}
           <button
-            className="UIButton UIButton--hero UIButton--fill"
+            className="UIButton UIButton--hero UIButton--fill GravityGame-pause"
             disabled={pauseDisabled}
             onClick={pauseHandler}
           >
@@ -82,7 +82,7 @@ function ModeControlsBase({
               {STRINGS.sidebar.restart_button}
             </button>
           </div>
-          {exitHref && <Link href={exitHref} className="UIButton UIButton--hero GravityExample-exit">Exit</Link>}
+          {exitHref && <Link href={exitHref} className="UIButton GravityGame-exit">Exit</Link>}
           <div className="GravityModeControls-newSetButton">
             <button className="UILink UILink--white" onClick={onNewSet}>
               {STRINGS.game_over.new_set_button}
@@ -185,7 +185,7 @@ export function SiteHeader({
             {onToggleGameText && <GameplayTextToggle className="GravitySiteHeader-iconButton" large={largeGameText} onToggle={onToggleGameText}/>}
             <button
               type="button"
-              className="GravitySiteHeader-iconButton"
+              className="GravitySiteHeader-iconButton GravityGame-pause"
               disabled={pauseDisabled || !onPause}
               onClick={pauseHandler}
               aria-label={isPaused ? STRINGS.sidebar.resume_button : STRINGS.sidebar.pause_button}
@@ -213,7 +213,7 @@ export function SiteHeader({
             >
               <HeaderIcon name="newSet" />
             </button>
-            {exitHref && <Link href={exitHref} className="GravitySiteHeader-iconButton GravitySiteHeader-exit GravityExample-exit">Exit</Link>}
+            {exitHref && <Link href={exitHref} className="GravitySiteHeader-iconButton GravitySiteHeader-exit GravityGame-exit">Exit</Link>}
           </div>
         </div>
       ) : null}

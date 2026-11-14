@@ -83,3 +83,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .community-brand-mark{position:relative;display:block;width:38px;height:38px;flex-shrink:0}
 .community-brand .community-brand-mark img{position:absolute;width:129.3%;height:129.3%;max-width:none;left:50%;top:50%;transform:translate(-50%,-50%)}
 @media(max-width:600px){.community-brand-mark{width:34px;height:34px}}
+
+/* Keep every navigation destination reachable on narrow phones. */
+.community-nav{flex-wrap:wrap}.community-nav>div{flex-wrap:wrap}
+@media(max-width:600px){.community-nav>div{justify-content:flex-start}.community-nav>div>a{display:inline-flex;align-items:center;min-height:44px}.community-nav button{margin-left:auto}}

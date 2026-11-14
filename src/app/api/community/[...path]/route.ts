@@ -34,11 +34,13 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{path:str
  if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN,...await communitySettings()});
  const viewer=(await auth.api.getSession({headers:request.headers}))?.user.id||null;
  if(path[0]==='sets'&&path.length===1){
+ const mine=request.nextUrl.searchParams.get('mine')==='1';
+ if(mine&&!viewer)return json({error:'Log in to see your games.'},401);
  const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request,Number.MAX_SAFE_INTEGER);
  const {rows}=await db.query(`SELECT count(*) OVER() AS catalogue_total,s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by
  FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by
- WHERE ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(coalesce(s.creator_name,'')||' '||coalesce(u."displayUsername",u.username,u.name,'')) LIKE $2 OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
- ORDER BY (SELECT count(*) FROM high_scores h WHERE h.set_id=s.id) DESC,s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer]);
+ WHERE (NOT $5::boolean OR s.created_by=$4 OR EXISTS(SELECT 1 FROM game_runs r WHERE r.set_id=s.id AND r.user_id=$4)) AND ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(coalesce(s.creator_name,'')||' '||coalesce(u."displayUsername",u.username,u.name,'')) LIKE $2 OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
+ ORDER BY CASE WHEN $5::boolean THEN s.created_at END DESC,(SELECT count(*) FROM high_scores h WHERE h.set_id=s.id) DESC,s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer,mine]);
  return json({sets:rows.slice(0,24).map(({catalogue_total,...set})=>set),total:Number(rows[0]?.catalogue_total||0),hasMore:rows.length>24,nextOffset:offset+24});
  }
  if(path[0]==='sets'&&uuid.safeParse(path[1]).success){

@@ -14,7 +14,7 @@ import { StartView, GameOverView } from './StartScreens';
 import { ImportScreen } from './ImportScreen';
 import { setGameStarted } from './LandingSections';
 
-export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
+export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
   const textSize = useGameplayTextSize();
   const [characterVisibility,setCharacterVisibility]=useState({specialLettersEnabled:true,specialCharactersEnabled:true});
   useEffect(()=>{

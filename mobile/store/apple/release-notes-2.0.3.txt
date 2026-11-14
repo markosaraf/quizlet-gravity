@@ -1,0 +1,7 @@
+Learning through play is now easier to explore and control:
+
+• Search public Quizlet sets by title or creator, preview their terms and definitions, and import the set you want. You can still paste a Quizlet link.
+• Find My games in your account panel, with separate views for games you created and games you played.
+• Edit answers more easily on touchscreens: tap to move the cursor, hold and slide the space bar to reposition it, and keep longer answers visible as the field expands upward.
+• Improved rapid typing on the transparent keyboard.
+• Clearer game controls, with a gold Pause button and an Exit button in every game.

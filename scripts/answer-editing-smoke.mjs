@@ -42,7 +42,7 @@ for (const [name, engine] of [['Chromium', chromium], ['WebKit', webkit]]) {
       assert.equal(await field.evaluate(el => el.selectionStart), 1, `${name}: space drag moves cursor left`);
       await page.getByRole('button', { name: 'x', exact: true }).tap();
       assert.equal(await field.inputValue(), '1x17' + '1'.repeat(98));
-      await field.fill('1'); await expect.poll(async () => (await field.boundingBox()).height).toBe(55);
+      await field.fill('z'); await expect(field).toHaveValue('z'); await expect.poll(async () => (await field.boundingBox()).height).toBe(55);
       await page.getByRole('button', { name: '123', exact: true }).tap();
       console.log(`PASS ${name} ${selector}: wrapping, touch placement, insertion and spacebar cursor`);
     }

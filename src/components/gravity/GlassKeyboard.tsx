@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import './GlassKeyboard.css';
 import { SpecialCharBar } from './SpecialCharBar';
 import { keyboardTap } from './keyboardHaptics';
@@ -147,9 +147,9 @@ export function GlassKeyboard({ inputRef, mode, specialChars, onChange, onSubmit
       start -= [...input.value.slice(0, start)].at(-1)?.length ?? 1;
     }
     const next = input.value.slice(0, start) + text + input.value.slice(end);
-    // Keep repeated keys accurate even before the next controlled render.
-    input.value = next;
-    latestChange.current(next);
+    // Commit the controlled value before another finger, paste, or selection
+    // event arrives. A deferred copy-answer render can restore stale text.
+    flushSync(() => latestChange.current(next));
     input.focus({ preventScroll: true });
     input.setSelectionRange(start + text.length, start + text.length);
     resizeAnswer();

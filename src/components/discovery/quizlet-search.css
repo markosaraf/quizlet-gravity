@@ -18,3 +18,7 @@
 
 .d-import-editor .d-back{margin-bottom:16px}
 .d-import-editor .quizlet-search{margin-top:0}
+
+.quizlet-result-actions{display:flex;flex-wrap:wrap;gap:8px;flex-shrink:0;max-width:100%}
+.quizlet-result-actions .d-button{font-size:16px;padding:10px 14px}
+.quizlet-preview-actions{margin-top:16px}

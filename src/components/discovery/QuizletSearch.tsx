@@ -61,17 +61,19 @@ export function QuizletSearch({onImport, importing, edit}: {onImport: (url: stri
       <button type="button" className="d-button d-secondary" disabled={importing} onClick={() => setPreview(null)}>Back to search results</button>
       <h3 ref={previewHeading} tabIndex={-1}>{preview.title}</h3>
       <p>{preview.cards.length} terms{preview.creatorName ? ` · By ${preview.creatorName}` : ''}</p>
+      <div className="quizlet-preview-actions">
+      <button type="button" className="d-button d-primary" disabled={importing} onClick={() => onImport(preview.url)}>{importing ? 'Importing…' : edit ? 'Import & edit this set' : 'Import & play this set'}</button>
+      </div>
       <div className="quizlet-preview-pairs" role="region" aria-label="Terms and definitions" tabIndex={0}>
         <table><thead><tr><th scope="col">Term</th><th scope="col">Definition</th></tr></thead><tbody>{preview.cards.map((card, index) => <tr key={index}>
           <td>{card.term}{card.termImage && <img src={card.termImage} alt="Term illustration" loading="lazy"/>}</td>
           <td>{card.definition}{card.definitionImage && <img src={card.definitionImage} alt="Definition illustration" loading="lazy"/>}</td>
         </tr>)}</tbody></table>
       </div>
-      <button type="button" className="d-button d-primary" disabled={importing} onClick={() => onImport(preview.url)}>{importing ? 'Importing…' : edit ? 'Import & edit this set' : 'Import & play this set'}</button>
     </div> : sets && <div className="quizlet-search-results">
       <p role="status">{sets.length ? `${sets.length} public ${sets.length === 1 ? 'set' : 'sets'} found` : 'No public sets found. Try another title or username, or paste a link below.'}</p>
       {partial && <p>Some of this creator’s public sets could not be loaded. You can also paste a specific set link below.</p>}
-      <ul>{sets.map(set => <li key={set.setId}><div><h3>{set.title}</h3>{set.description && <p>{set.description}</p>}</div><button type="button" className="d-button d-secondary" disabled={busy || importing} onClick={() => void run({kind: 'preview', url: set.url})}>View terms</button></li>)}</ul>
+      <ul>{sets.map(set => <li key={set.setId}><div><h3>{set.title}</h3>{set.description && <p>{set.description}</p>}</div><div className="quizlet-result-actions"><button type="button" className="d-button d-secondary" disabled={busy || importing} onClick={() => void run({kind: 'preview', url: set.url})}>View terms</button><button type="button" className="d-button d-primary" disabled={busy || importing} onClick={() => onImport(set.url)}>{edit ? 'Import & edit' : 'Import & play'}</button></div></li>)}</ul>
     </div>}
     <AccountDialog open={accountOpen} onOpenChange={setAccountOpen} onDone={() => {if (pending.current) void run(pending.current);}}/>
   </section>;

@@ -15,3 +15,6 @@
 .quizlet-preview th{font-weight:700}
 .quizlet-preview img{display:block;max-width:100%;max-height:150px;object-fit:contain;margin-top:8px}
 @media(max-width:480px){.quizlet-search-results li{align-items:flex-start;flex-direction:column;gap:10px}}
+
+.d-import-editor .d-back{margin-bottom:16px}
+.d-import-editor .quizlet-search{margin-top:0}

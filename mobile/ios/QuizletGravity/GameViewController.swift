@@ -215,9 +215,10 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
             injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
         return
         #else
-        // A keyboard changes input, not the space available on an iPhone screen.
-        // Keep compact controls on phones even when a hardware keyboard connects.
-        let mode = UIDevice.current.userInterfaceIdiom == .phone || GCKeyboard.coalesced == nil ? "touch" : "keyboard"
+        // Keep the transparent gameplay keyboard available on every iOS touch screen.
+        // A connected keyboard can still type into the web field; its presence must
+        // not replace the on-screen keys with the system keyboard on iPad.
+        let mode = "touch"
         // Native-to-page presentation only: no privileged message handler or JS bridge.
         let source = """
         if (location.protocol === 'https:' && ['www.quizletgravity.com', 'quizletgravity.com'].includes(location.hostname)) {

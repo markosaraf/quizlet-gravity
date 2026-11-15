@@ -10,7 +10,7 @@ type TargetBox=Box&{behindDock:boolean;clickHeight:number};
 const VERSION:number=2;
 const steps=[
  {title:'Learn from existing games',targets:['.d-gallery .d-game','[data-tour="games"]']},
- {title:'Learn by copying and pasting a game link from Quizlet.com.',targets:['[data-tour="import-game"]']},
+ {title:'Search Quizlet or paste a Quizlet link to turn a set into a game.',targets:['[data-tour="import-game"]']},
  {title:'Create your own game: Learn & play',targets:['[data-tour="create-game-bottom"]','[data-tour="create"]']},
 ];
 export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;openAccount:()=>void;onClose:()=>void}){
@@ -138,7 +138,7 @@ export function LocalWalkthrough({hasUser,openAccount,onClose}:{hasUser:boolean;
     </g>;
    })}
   </svg>
-  {targets.map((target,index)=><button key={selectors[index]} ref={index===0?targetRef:undefined} className="local-tour-target-button" aria-label={usernameStep?'Log in':selectors[index].includes('d-gallery')?'Open highlighted game':selectors[index].includes('games')?'Games':selectors[index].includes('create')?'Create game':'Enter Quizlet game link'} onClick={()=>activateTarget(index)} style={{left:target.x,top:target.y,width:target.width,height:target.clickHeight}}/>)}
+  {targets.map((target,index)=><button key={selectors[index]} ref={index===0?targetRef:undefined} className="local-tour-target-button" aria-label={usernameStep?'Log in':selectors[index].includes('d-gallery')?'Open highlighted game':selectors[index].includes('games')?'Games':selectors[index].includes('create')?'Create game':'Search Quizlet or paste a Quizlet link'} onClick={()=>activateTarget(index)} style={{left:target.x,top:target.y,width:target.width,height:target.clickHeight}}/>)}
   <div ref={panelRef} className="local-tour-card" role="dialog" aria-modal="true" aria-labelledby="local-tour-heading" style={{left:panel.x,top:panel.y,width:panel.width}}>
    {VERSION===2&&<div className="local-tour-progress" aria-label={`Step ${step+1} of ${stepCount}`}>{Array.from({length:stepCount},(_,i)=><span key={i} className={i===step?'current':''}/>)}</div>}
    <h2 id="local-tour-heading">{title}</h2>

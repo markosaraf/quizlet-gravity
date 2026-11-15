@@ -1,0 +1,5 @@
+• Added Search Quizlet.
+• Find My games in your account, with games you created and played.
+• Tap to move the answer cursor, or hold and slide the space bar. Longer answers expand upward.
+• Improved rapid typing on the transparent keyboard.
+• Gold Pause button and an Exit button in every game.

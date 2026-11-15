@@ -2696,3 +2696,8 @@
 }
 
 .gravity-root .GravityGame-exit{background:transparent;color:inherit;border:1px solid currentColor;text-decoration:none}
+
+.GravitySiteHeader-escape { font-size: .7rem; font-weight: 700; }
+/* Keep every control reachable even on the narrowest phones or with a long score. */
+.GravitySiteHeader-mobileControls { flex-wrap: wrap; }
+.GravitySiteHeader-actions { flex-wrap: wrap; }

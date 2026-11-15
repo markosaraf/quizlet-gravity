@@ -47,12 +47,11 @@ export function QuizletSearch({onImport, importing, edit}: {onImport: (url: stri
   function submit(event: FormEvent) { event.preventDefault(); void run({kind: 'search', mode, query: query.trim()}); }
   return <section className="quizlet-search" aria-labelledby="quizlet-search-title">
     <h2 id="quizlet-search-title">Search Quizlet</h2>
-    <p>Find a public set, check its terms and definitions, then import it.</p>
     <form onSubmit={submit}>
       <div className="quizlet-search-modes" role="group" aria-label="Search Quizlet by">
         {(['title', 'creator'] as const).map(value => <button type="button" className="d-button d-secondary" key={value} aria-pressed={mode === value} disabled={busy || importing} onClick={() => {setMode(value); setError('');}}>{value === 'title' ? 'Title' : 'Creator'}</button>)}
       </div>
-      <label className="d-label">{mode === 'title' ? 'Set title or topic' : 'Quizlet creator username'}<input type="search" value={query} onChange={e => setQuery(e.target.value)} maxLength={120} autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder={mode === 'title' ? 'e.g. French food vocabulary' : 'Exact Quizlet username'} required disabled={busy || importing}/></label>
+      <div className="d-label"><input aria-label={mode === 'title' ? 'Set title or topic' : 'Quizlet creator username'} type="search" value={query} onChange={e => setQuery(e.target.value)} maxLength={120} autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder={mode === 'title' ? 'e.g. French food vocabulary' : 'Exact Quizlet username'} required disabled={busy || importing}/></div>
       <button className="d-button d-primary" disabled={busy || importing || !query.trim()}>{busy ? 'Loading…' : 'Search Quizlet'}</button>
     </form>
     {busy && <p role="status">{pending.current?.kind === 'preview' ? 'Loading terms and definitions…' : 'Searching public Quizlet sets…'}</p>}

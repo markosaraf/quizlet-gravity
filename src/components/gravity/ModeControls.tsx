@@ -108,6 +108,7 @@ interface SiteHeaderProps {
   gameState?: string;
   /** Hide the controls row on the import screen. */
   showMobileControls?: boolean;
+  onSkip?: () => void;
   onPause?: () => void;
   onResume?: () => void;
   onRestart?: () => void;
@@ -149,6 +150,7 @@ export function SiteHeader({
   level = 1,
   gameState,
   showMobileControls = false,
+  onSkip,
   onPause,
   onResume,
   onRestart,
@@ -182,6 +184,14 @@ export function SiteHeader({
             <span className="GravitySiteHeader-statValue">{level}</span>
           </div>
           <div className="GravitySiteHeader-actions">
+            <button
+              type="button"
+              className="GravitySiteHeader-iconButton GravitySiteHeader-escape"
+              onClick={onSkip}
+              disabled={gameState !== GAME_STATES.FREE_FALL || !onSkip}
+              aria-label="ESC: skip this answer"
+              title="Skip this answer (ESC)"
+            >ESC</button>
             {onToggleGameText && <GameplayTextToggle className="GravitySiteHeader-iconButton" large={largeGameText} onToggle={onToggleGameText}/>}
             <button
               type="button"

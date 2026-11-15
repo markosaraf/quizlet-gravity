@@ -86,7 +86,7 @@ export function DiscoveryLanding(){
    {loading&&<p role="status">Loading games…</p>}{error&&<p role="alert">{error}</p>}{(page<groups.length-1||more)&&<button className="d-button d-secondary d-more-games" disabled={loading} onClick={()=>move(1)}>More games</button>}
    {!loading&&!error&&!games.length&&<p className="d-empty">No matching games. Try another title or import a Quizlet set below.</p>}
   </section>
-  <div className="d-alternatives"><div><Link href="/create-set" data-tour="create-game-bottom" className="d-button d-secondary"><Plus size={21}/>Create your own game</Link><Link href="/import-game" data-tour="import-game" className="d-button d-secondary"><Link2 size={21}/>Import game from Quizlet</Link></div></div>
+  <div className="d-alternatives"><div><Link href="/create-set" data-tour="create-game-bottom" className="d-button d-secondary"><Plus size={21}/>Create your own game</Link><Link href="/import-game" data-tour="import-game" className="d-button d-secondary"><Link2 size={21}/>Search Quizlet &amp; import</Link></div></div>
  {tutorialOpen&&createPortal(<LocalWalkthrough hasUser={!!session?.user} openAccount={()=>{setTutorialOpen(false);document.querySelector<HTMLButtonElement>('[data-tour="username"]')?.click();}} onClose={()=>setTutorialOpen(false)}/>,document.body)}
  </main>;
 }

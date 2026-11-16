@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { auth } from '@/lib/community/auth';
 import {appleConfigured} from '@/lib/community/apple';
@@ -10,6 +10,8 @@ import { fingerprint } from '@/lib/community/sets';
 import { correctPendingEmail } from '@/lib/community/pending-email';
 import { z } from 'zod';
 import { isCardImage } from '@/lib/gravity/card-images';
+import {enqueueOvertakenNotifications} from '@/lib/community/notification-events';
+import {publishLeaderboardNotifications} from '@/lib/community/notification-queue';
 export const runtime='nodejs';
 const noCache={'Cache-Control':'no-store'};
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:noCache});
@@ -96,12 +98,13 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{path:st
  const client=await db.connect();try{
  await client.query('BEGIN');const {rows}=await client.query(`SELECT *,extract(epoch FROM now()-started_at) AS elapsed FROM game_runs WHERE id=$1 AND user_id=$2 FOR UPDATE`,[path[1],session.user.id]);const run=rows[0];
  if(!run){await client.query('ROLLBACK');return json({error:'Run not found'},404);}
- if(run.finished_at){await client.query('ROLLBACK');return json({saved:true});}
+ if(run.finished_at){await client.query('ROLLBACK');after(()=>publishLeaderboardNotifications().then(()=>{}));return json({saved:true});}
  if(run.elapsed<2||run.elapsed>86400||v.level>Math.floor(run.elapsed/2)+2||v.score>run.elapsed*5000){await client.query('ROLLBACK');return json({error:'This run could not be validated.'},400);}
+ await enqueueOvertakenNotifications(client,run,v.score);
  await client.query('UPDATE game_runs SET finished_at=now(),score=$1,level=$2 WHERE id=$3',[v.score,v.level,run.id]);
  await client.query(`INSERT INTO high_scores(set_id,user_id,score,level,mode) VALUES($1,$2,$3,$4,$5)
  ON CONFLICT(set_id,user_id) DO UPDATE SET score=EXCLUDED.score,level=EXCLUDED.level,mode=EXCLUDED.mode,achieved_at=now() WHERE EXCLUDED.score>high_scores.score`,[run.set_id,session.user.id,v.score,v.level,run.mode]);
- await client.query('COMMIT');return json({saved:true});
+ await client.query('COMMIT');after(()=>publishLeaderboardNotifications().then(()=>{}));return json({saved:true});
  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
  }
  return json({error:'Not found'},404);

@@ -7,6 +7,7 @@ import {revokeAppleAccess} from '@/lib/community/apple';
 import {isAdmin} from '@/lib/community/admin';
 import {adminLeaderboardQuery,leaderboardPageSize} from '@/lib/community/leaderboard';
 import {adminGamesQuery} from '@/lib/community/admin-games';
+import {notificationSettings,notificationReadiness} from '@/lib/community/notification-settings';
 export const runtime='nodejs';
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
 type Context={params:Promise<{path:string[]}>};
@@ -17,6 +18,10 @@ export async function GET(request:NextRequest,{params}:Context){
   const {path}=await params;
   if(path.join('/')==='status')return json({admin});
   if(!admin)return json({error:'Administrator access required.'},403);
+  if(path.join('/')==='notifications'){
+   const {rows}=await db.query("SELECT status,count(*)::int AS count FROM leaderboard_notifications WHERE created_at>now()-interval '7 days' GROUP BY status");
+   return json({...await notificationSettings(),ready:notificationReadiness(),deliveries:Object.fromEntries(rows.map(r=>[r.status,r.count]))});
+  }
   if(path.join('/')==='settings')return json(await communitySettings());
   const offset=Math.max(0,Math.min(100000,Math.floor(Number(request.nextUrl.searchParams.get('offset'))||0)));
   const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);
@@ -83,6 +88,23 @@ export async function POST(request:NextRequest,{params}:Context){
  const session=await auth.api.getSession({headers:request.headers});
  if(!session||session.user.isAnonymous||!await isAdmin(session.user.id))return json({error:'Administrator access required.'},403);
  const {path}=await params;
+ if(path.join('/')==='notifications'){
+  try{
+   const input=await request.json();const fields={overtakenEmailEnabled:'overtaken_email',overtakenPushEnabled:'overtaken_push'} as const;
+   if(!input||typeof input!=='object'||Array.isArray(input)||!Object.keys(input).length||Object.entries(input).some(([k,v])=>!Object.hasOwn(fields,k)||typeof v!=='boolean'))return json({error:'Choose on or off.'},400);
+   const ready=notificationReadiness();
+   if(input.overtakenEmailEnabled&&!ready.email)return json({error:'Email delivery is not configured yet.'},409);
+   if(input.overtakenPushEnabled&&(!ready.android||!ready.apple))return json({error:'Finish Android and Apple push setup before enabling delivery.'},409);
+   const entries=Object.entries(input);
+   const client=await db.connect();try{await client.query('BEGIN');
+    await client.query('INSERT INTO community_settings(key,enabled) SELECT * FROM unnest($1::text[],$2::boolean[]) ON CONFLICT(key) DO UPDATE SET enabled=EXCLUDED.enabled,updated_at=now()',[entries.map(([k])=>fields[k as keyof typeof fields]),entries.map(([,v])=>v)]);
+    const off=entries.filter(([,v])=>!v).map(([k])=>k==='overtakenEmailEnabled'?'email':'push');
+    if(off.length)await client.query("UPDATE leaderboard_notifications SET status='cancelled',last_error='disabled_by_admin',updated_at=now() WHERE status='pending' AND channel=ANY($1::text[])",[off]);
+    await client.query('COMMIT');
+   }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+   return json({...await notificationSettings(),ready});
+  }catch{return json({error:'Unable to save notification settings.'},500);}
+ }
  if(path.join('/')==='settings'){
   try{
    const input=await request.json();

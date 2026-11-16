@@ -398,6 +398,12 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url else { decisionHandler(.cancel); return }
         if isInternal(url) {
+            if url.path == "/native/notifications" {
+                if action.navigationType == .linkActivated && action.targetFrame?.isMainFrame == true {
+                    PushNotifications.shared.requestPermission()
+                }
+                decisionHandler(.cancel); return
+            }
             if url.path == "/native/start" { beginSignIn(); decisionHandler(.cancel); return }
             if action.targetFrame == nil { webView.load(action.request); decisionHandler(.cancel) }
             else { decisionHandler(.allow) }
@@ -418,6 +424,8 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard let url = webView.url, isInternal(url) else { fail(); return }
+        PushNotifications.shared.attach(webView, controller: self)
+        PushNotifications.shared.sync()
         configureInputLayout()
         webView.evaluateJavaScript(Self.gameInputObserver, in: nil, in: .defaultClient, completionHandler: nil)
         #if !targetEnvironment(macCatalyst)
@@ -450,6 +458,8 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         webView.evaluateJavaScript("(function(){if(!document.querySelector('.GravityGameplayView:not(.has-splash):not(.is-gameOver)'))return;var b=Array.from(document.querySelectorAll('button')).find(function(b){return !b.disabled && (b.getAttribute('aria-label')==='Pause' || b.textContent.trim()==='Pause');});window.__gravityPausedByApp=!!b;if(b)b.click();})()", completionHandler: nil)
     }
     func sceneDidBecomeActive() {
+        PushNotifications.shared.refreshAuthorization()
+        PushNotifications.shared.sync()
         intro?.resume()
         configureInputLayout()
         if let url = webView.url, isInternal(url) {

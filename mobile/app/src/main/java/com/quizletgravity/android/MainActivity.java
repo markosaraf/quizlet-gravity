@@ -134,6 +134,25 @@ public final class MainActivity extends ComponentActivity {
         } catch (Exception e) { Toast.makeText(this, "Could not open sign-in. Please try again.", Toast.LENGTH_LONG).show(); }
     }
     private String requestedUrl = NavigationPolicy.HOME;
+    private final ActivityResultLauncher<String> notificationPermission = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) enableNotifications(); else notificationStatus("denied");
+            });
+    private void notificationStatus(String status) {
+        if (webView != null && NavigationPolicy.isInternal(webView.getUrl()))
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('quizlet-native-notifications',{detail:{status:'" + status + "'}}));", null);
+    }
+    private void enableNotifications() {
+        NotificationRegistration.optIn(this);
+        NotificationRegistration.sync(this, true, registered -> notificationStatus(registered ? "enabled" : "error"));
+    }
+    private void requestNotifications() {
+        NotificationRegistration.createChannel(this);
+        if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+        else if (!androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()) notificationStatus("denied");
+        else enableNotifications();
+    }
 
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -158,6 +177,7 @@ public final class MainActivity extends ComponentActivity {
     @Override public void onCreate(Bundle state) {
         SplashScreen.installSplashScreen(this);
         super.onCreate(state);
+        NotificationRegistration.createChannel(this);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
@@ -303,6 +323,10 @@ public final class MainActivity extends ComponentActivity {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 if (NavigationPolicy.isInternal(url)) {
+                    if (request.isForMainFrame() && "/native/notifications".equals(request.getUrl().getPath())) {
+                        if (request.hasGesture()) requestNotifications();
+                        return true;
+                    }
                     if (request.isForMainFrame() && "/native/start".equals(request.getUrl().getPath())) { beginSignIn(); return true; }
                     return false;
                 }
@@ -320,6 +344,7 @@ public final class MainActivity extends ComponentActivity {
             @Override public void onPageCommitVisible(WebView view, String url) { revealPage(view, url); }
             @Override public void onPageFinished(WebView view, String url) {
                 revealPage(view, url);
+                if (NavigationPolicy.isInternal(url)) NotificationRegistration.sync(MainActivity.this, false, null);
             }
 
             @Override public void onReceivedError(WebView view, WebResourceRequest request,
@@ -457,6 +482,7 @@ public final class MainActivity extends ComponentActivity {
         if (logo != null) logo.resumeMotion();
         if (revealAnimation != null) revealAnimation.resume();
         if (webView != null) { webView.resumeTimers(); webView.onResume(); }
+        NotificationRegistration.sync(this, false, null);
     }
     @Override protected void onDestroy() {
         cancelReveal();

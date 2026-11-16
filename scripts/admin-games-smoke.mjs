@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium,webkit,expect} from '@playwright/test';
 const base=process.env.TEST_URL||'http://localhost:3059';
-const games=Array.from({length:31},(_,i)=>({id:`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,public_id:String(1000+i),title:`Admin game ${i+1}`,created_at:new Date(Date.UTC(2026,10,16-i)).toISOString(),term_count:10,added_by:'Marko Sarafijanovic',creator_name:null,player_count:i===0?7:0,top_score:i===0?700:null}));
+const games=Array.from({length:31},(_,i)=>({id:`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`,public_id:String(1000+i),title:`Admin game ${i+1}`,created_at:new Date(Date.UTC(2026,10,16-i)).toISOString(),term_count:10,added_by:'Marko Sarafijanovic',creator_name:null,player_count:i===0?7:i<25?1:0,top_score:i<25?700:null}));
 for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
  const browser=await engine.launch();
  try{for(const width of [390,1280]){
@@ -13,12 +13,12 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.route('**/api/community/sets?*',r=>r.fulfill({json:{sets:[{...games[1],title:'Popular game'}],hasMore:false,total:1}}));
   await page.route('**/api/admin/game-overview?*',async r=>{
    const url=new URL(r.request().url()),offset=Number(url.searchParams.get('offset')),q=url.searchParams.get('q');
-   const rows=q?games.filter(g=>g.title.includes(q)):games;
+   const rows=games.filter(g=>(!q||g.title.includes(q))&&(url.searchParams.get('withScores')!=='true'||g.player_count>0));
    await r.fulfill({json:{games:rows.slice(offset,offset+24),total:rows.length,hasMore:offset+24<rows.length}});
   });
   await page.route('**/api/admin/leaderboards/*?*',async r=>{
-   const url=new URL(r.request().url()),offset=Number(url.searchParams.get('offset'));const hasScores=url.pathname.endsWith(games[0].id);
-   const rows=hasScores?Array.from({length:7},(_,i)=>({player_id:`player-${i}`,username:`Player ${i+1}`,rank:i+1,score:700-i*100,level:2,mode:'BEGINNER',is_current:false})):[];
+   const url=new URL(r.request().url()),offset=Number(url.searchParams.get('offset'));const count=games.find(g=>url.pathname.endsWith(g.id))?.player_count||0;
+   const rows=Array.from({length:count},(_,i)=>({player_id:`player-${i}`,username:`Player ${i+1}`,rank:i+1,score:700-i*100,level:2,mode:'BEGINNER',is_current:false}));
    await r.fulfill({json:{entries:rows.slice(offset,offset+5),total:rows.length,current_rank:null,offset,page_size:5,hasMore:offset+5<rows.length}});
   });
   await page.goto(base+'/sets');
@@ -38,20 +38,38 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.getByRole('link',{name:'All leaderboards',exact:true}).click();
   await expect(page.getByRole('heading',{name:'All leaderboards',exact:true})).toBeVisible();
   await expect(page.locator('.admin-game-list>li')).toHaveCount(24);
-  await page.getByRole('button',{name:'View leaderboard',exact:true}).first().click();
-  await expect(page.locator('.shared-leaderboard-row')).toHaveCount(5);
-  await page.getByRole('button',{name:'Next leaderboard page'}).click();
-  await expect(page.locator('.shared-leaderboard-row')).toHaveCount(2);
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(24);
+  await expect(page.getByRole('button',{name:'View leaderboard',exact:true})).toHaveCount(0);
+  await expect(page.locator('.shared-leaderboard').first().locator('.shared-leaderboard-row')).toHaveCount(5);
+  await page.getByRole('button',{name:'Next leaderboard page'}).first().click();
+  await expect(page.locator('.shared-leaderboard').first().locator('.shared-leaderboard-row')).toHaveCount(2);
   await expect(page.locator('.shared-leaderboard-name').first()).toHaveText('Player 6');
+  await expect(page.getByText('Be the first to finish a game.')).toHaveCount(0);
+  await page.getByRole('button',{name:'Next',exact:true}).click();
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(1);
+  await page.getByRole('button',{name:'Hide all leaderboards',exact:true}).click();
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'View leaderboard',exact:true})).toHaveCount(24);
   await page.getByRole('button',{name:'View leaderboard',exact:true}).first().click();
-  await expect(page.getByText('Be the first to finish a game.')).toBeVisible();
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(1);
+  await page.getByRole('button',{name:'Hide leaderboard',exact:true}).click();
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(0);
+  await page.getByLabel('Search games by title or creator').fill('Admin game 25');
+  await expect(page.getByRole('button',{name:'View leaderboard',exact:true})).toHaveCount(1);
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(0);
+  await page.getByRole('button',{name:'Show all leaderboards',exact:true}).click();
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(1);
+  await expect(page.locator('.shared-leaderboard-row')).toHaveCount(1);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Mobile overflow');
-  await page.getByLabel('Search games by title or creator').fill('Admin game 31');
+  await page.getByLabel('Search games by title or creator').fill('Admin game 25');
   await expect(page.locator('.admin-game-list>li')).toHaveCount(1);
+  await page.getByLabel('Search games by title or creator').fill('Admin game 31');
+  await expect(page.getByText('No matching games.',{exact:true})).toBeVisible();
+  await expect(page.locator('.shared-leaderboard')).toHaveCount(0);
   admin=false;await page.goto(base+'/sets');await expect(page.locator('.d-game h2')).toHaveText('Popular game');
   await expect(page.getByRole('switch',{name:/Newest first/})).toHaveCount(0);
   await expect(page.getByRole('link',{name:'All leaderboards',exact:true})).toHaveCount(0);
   await page.goto(base+'/admin/leaderboards');await expect(page.getByText('Sign in with your administrator account to see all leaderboards.')).toBeVisible();
-  assert.deepEqual(errors,[]);console.log(`PASS ${name} ${width}: admin visibility, toggle, dates, search/reset, both paginations, empty scores, mobile layout, member denial.`);await page.close();
+  assert.deepEqual(errors,[]);console.log(`PASS ${name} ${width}: admin visibility, toggle, dates, search/reset, both paginations, empty boards excluded, default expansion, hide/show all, mobile layout, member denial.`);await page.close();
  }}finally{await browser.close();}
 }

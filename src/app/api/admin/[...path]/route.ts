@@ -22,7 +22,7 @@ export async function GET(request:NextRequest,{params}:Context){
   const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);
   const pattern='%'+q.replace(/[\\%_]/g,'\\$&')+'%';
   if(path.join('/')==='game-overview'){
-   const {rows}=await db.query(adminGamesQuery,[q,pattern,offset]);
+   const {rows}=await db.query(adminGamesQuery,[q,pattern,offset,request.nextUrl.searchParams.get('withScores')==='true']);
    return json({games:rows.slice(0,24).map(({catalogue_total,...game})=>game),total:Number(rows[0]?.catalogue_total||0),hasMore:rows.length>24});
   }
   if(path[0]==='leaderboards'&&path.length===2){

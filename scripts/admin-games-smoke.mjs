@@ -7,7 +7,7 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
  try{for(const width of [390,1280]){
   const page=await browser.newPage({viewport:{width,height:844}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
   let admin=true;
-  await page.route('**/api/auth/get-session*',r=>r.fulfill({json:{session:{id:'fixture-session',userId:'fixture-admin',expiresAt:'2030-01-01T00:00:00Z'},user:{id:'fixture-admin',name:'Marko Sarafijanovic',isAnonymous:false}}}));
+  await page.route('**/api/auth/get-session*',r=>r.fulfill({json:{session:{id:'fixture-session',userId:'fixture-admin',expiresAt:'2030-01-01T00:00:00Z'},user:{id:'fixture-admin',name:'Marko Sarafijanovic',username:'Marko Sarafijanovic',displayUsername:'Marko Sarafijanovic',emailVerified:true,isAnonymous:false}}}));
   await page.route('**/api/admin/status',r=>r.fulfill({json:{admin}}));
   await page.route('**/api/community/config',r=>r.fulfill({json:{tutorialEnabled:false}}));
   await page.route('**/api/community/sets?*',r=>r.fulfill({json:{sets:[{...games[1],title:'Popular game'}],hasMore:false,total:1}}));

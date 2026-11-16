@@ -34,8 +34,40 @@
                 <data android:path="/create-set" />
                 <data android:path="/import-game" />
                 <data android:path="/import-edit" />
-                <data android:pathPattern="/.*-flash-cards" />
-                <data android:pathPattern="/.*-flash-cards/" />
+                <!-- Android simple globs do not backtrack: /.*-flash-cards fails
+                     for multi-word slugs. Match the numeric-ID route instead,
+                     with optional xx or xx-XX locale. NavigationPolicy validates
+                     the full shared-game URL before loading it. -->
+                <data android:pathPattern="/0.*/.*" />
+                <data android:pathPattern="/1.*/.*" />
+                <data android:pathPattern="/2.*/.*" />
+                <data android:pathPattern="/3.*/.*" />
+                <data android:pathPattern="/4.*/.*" />
+                <data android:pathPattern="/5.*/.*" />
+                <data android:pathPattern="/6.*/.*" />
+                <data android:pathPattern="/7.*/.*" />
+                <data android:pathPattern="/8.*/.*" />
+                <data android:pathPattern="/9.*/.*" />
+                <data android:pathPattern="/../0.*/.*" />
+                <data android:pathPattern="/../1.*/.*" />
+                <data android:pathPattern="/../2.*/.*" />
+                <data android:pathPattern="/../3.*/.*" />
+                <data android:pathPattern="/../4.*/.*" />
+                <data android:pathPattern="/../5.*/.*" />
+                <data android:pathPattern="/../6.*/.*" />
+                <data android:pathPattern="/../7.*/.*" />
+                <data android:pathPattern="/../8.*/.*" />
+                <data android:pathPattern="/../9.*/.*" />
+                <data android:pathPattern="/...../0.*/.*" />
+                <data android:pathPattern="/...../1.*/.*" />
+                <data android:pathPattern="/...../2.*/.*" />
+                <data android:pathPattern="/...../3.*/.*" />
+                <data android:pathPattern="/...../4.*/.*" />
+                <data android:pathPattern="/...../5.*/.*" />
+                <data android:pathPattern="/...../6.*/.*" />
+                <data android:pathPattern="/...../7.*/.*" />
+                <data android:pathPattern="/...../8.*/.*" />
+                <data android:pathPattern="/...../9.*/.*" />
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -50,8 +82,40 @@
                 <data android:path="/create-set" />
                 <data android:path="/import-game" />
                 <data android:path="/import-edit" />
-                <data android:pathPattern="/.*-flash-cards" />
-                <data android:pathPattern="/.*-flash-cards/" />
+                <!-- Android simple globs do not backtrack: /.*-flash-cards fails
+                     for multi-word slugs. Match the numeric-ID route instead,
+                     with optional xx or xx-XX locale. NavigationPolicy validates
+                     the full shared-game URL before loading it. -->
+                <data android:pathPattern="/0.*/.*" />
+                <data android:pathPattern="/1.*/.*" />
+                <data android:pathPattern="/2.*/.*" />
+                <data android:pathPattern="/3.*/.*" />
+                <data android:pathPattern="/4.*/.*" />
+                <data android:pathPattern="/5.*/.*" />
+                <data android:pathPattern="/6.*/.*" />
+                <data android:pathPattern="/7.*/.*" />
+                <data android:pathPattern="/8.*/.*" />
+                <data android:pathPattern="/9.*/.*" />
+                <data android:pathPattern="/../0.*/.*" />
+                <data android:pathPattern="/../1.*/.*" />
+                <data android:pathPattern="/../2.*/.*" />
+                <data android:pathPattern="/../3.*/.*" />
+                <data android:pathPattern="/../4.*/.*" />
+                <data android:pathPattern="/../5.*/.*" />
+                <data android:pathPattern="/../6.*/.*" />
+                <data android:pathPattern="/../7.*/.*" />
+                <data android:pathPattern="/../8.*/.*" />
+                <data android:pathPattern="/../9.*/.*" />
+                <data android:pathPattern="/...../0.*/.*" />
+                <data android:pathPattern="/...../1.*/.*" />
+                <data android:pathPattern="/...../2.*/.*" />
+                <data android:pathPattern="/...../3.*/.*" />
+                <data android:pathPattern="/...../4.*/.*" />
+                <data android:pathPattern="/...../5.*/.*" />
+                <data android:pathPattern="/...../6.*/.*" />
+                <data android:pathPattern="/...../7.*/.*" />
+                <data android:pathPattern="/...../8.*/.*" />
+                <data android:pathPattern="/...../9.*/.*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

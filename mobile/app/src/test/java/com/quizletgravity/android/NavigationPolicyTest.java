@@ -34,6 +34,18 @@ public class NavigationPolicyTest {
             assertEquals("https://www.quizletgravity.com" + path, NavigationPolicy.appLink("https://quizletgravity.com" + path));
         }
     }
+    @Test public void sharedGameLinksPreserveMultiWordSlugsAndLocaleVariants() {
+        for (String path : new String[]{
+                "/1000000000000029/voices-2-unit-1-words-no-sentences-flash-cards",
+                "/ch/123/words-with-many-hyphens-flash-cards/",
+                "/de-CH/123/flash-cards-in-the-title-flash-cards?source=share#play",
+                "/123/caf%C3%A9-and-numbers-123-flash-cards"}) {
+            for (String host : new String[]{"quizletgravity.com", "www.quizletgravity.com"}) {
+                assertEquals("https://www.quizletgravity.com" + path,
+                        NavigationPolicy.appLink("https://" + host + path));
+            }
+        }
+    }
     @Test public void appLinksExcludeAuthenticationAdminAndUntrustedTargets() {
         for (String value : new String[]{null, "https://evil.example/123/french-flash-cards",
                 "https://www.quizletgravity.com@evil.example/", "http://quizletgravity.com/",

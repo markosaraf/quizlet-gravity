@@ -21,6 +21,38 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.quizletgravity.com" />
+                <data android:path="/" />
+                <data android:path="/example" />
+                <data android:path="/sets" />
+                <data android:pathPrefix="/sets/" />
+                <data android:path="/my-games" />
+                <data android:path="/create-set" />
+                <data android:path="/import-game" />
+                <data android:path="/import-edit" />
+                <data android:pathPattern="/.*-flash-cards" />
+                <data android:pathPattern="/.*-flash-cards/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="quizletgravity.com" />
+                <data android:path="/" />
+                <data android:path="/example" />
+                <data android:path="/sets" />
+                <data android:pathPrefix="/sets/" />
+                <data android:path="/my-games" />
+                <data android:path="/create-set" />
+                <data android:path="/import-game" />
+                <data android:path="/import-edit" />
+                <data android:pathPattern="/.*-flash-cards" />
+                <data android:pathPattern="/.*-flash-cards/" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

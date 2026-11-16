@@ -16,9 +16,19 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = GameViewController()
+        let controller = GameViewController()
+        for activity in connectionOptions.userActivities where activity.activityType == NSUserActivityTypeBrowsingWeb {
+            if let url = activity.webpageURL { controller.openAppLink(url) }
+        }
+        window.rootViewController = controller
         window.makeKeyAndVisible()
         self.window = window
+    }
+
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+              let url = userActivity.webpageURL else { return }
+        (window?.rootViewController as? GameViewController)?.openAppLink(url)
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {

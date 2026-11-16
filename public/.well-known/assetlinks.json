@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.quizletgravity.android",
+      "sha256_cert_fingerprints": [
+        "18:21:CD:27:98:AA:A8:6C:60:13:43:FE:96:BB:87:B0:0A:06:8D:08:D1:2A:B9:B5:CB:F0:47:0B:4A:C1:FC:03",
+        "01:1D:A1:7A:9F:44:11:E5:1F:E3:9E:4A:55:77:D2:A6:C7:4C:B1:19:2D:EB:A9:58:0B:08:8F:C0:03:06:FA:5E"
+      ]
+    }
+  }
+]

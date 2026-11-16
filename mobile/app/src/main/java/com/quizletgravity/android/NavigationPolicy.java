@@ -20,6 +20,26 @@ final class NavigationPolicy {
         } catch (URISyntaxException e) { return false; }
     }
 
+    /** Public game links only; authentication callbacks stay in their browser session. */
+    static String appLink(String value) {
+        if (!isInternal(value)) return null;
+        try {
+            URI uri = new URI(value);
+            String path = uri.getPath();
+            if (path == null || path.isEmpty()) path = "/";
+            boolean allowed = path.matches("^/(?:[a-zA-Z]{2}(?:-[a-zA-Z]{2})?/)?[0-9]{1,20}/[^/]+-flash-cards/?$")
+                    || path.matches("^/sets(?:/[a-fA-F0-9-]{36})?/?$")
+                    || path.matches("^/(?:example|my-games|create-set|import-game|import-edit)?/?$");
+            if (!allowed) return null;
+            // Retain the original encoded path, query and fragment; canonicalise only the host.
+            String suffix = uri.getRawPath();
+            if (suffix == null || suffix.isEmpty()) suffix = "/";
+            return "https://www.quizletgravity.com" + suffix
+                    + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery())
+                    + (uri.getRawFragment() == null ? "" : "#" + uri.getRawFragment());
+        } catch (URISyntaxException e) { return null; }
+    }
+
     static boolean isExternal(String value) {
         if (value == null) return false;
         try {

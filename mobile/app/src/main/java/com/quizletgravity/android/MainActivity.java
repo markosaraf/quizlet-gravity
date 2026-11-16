@@ -133,9 +133,19 @@ public final class MainActivity extends ComponentActivity {
                     "quizletgravity");
         } catch (Exception e) { Toast.makeText(this, "Could not open sign-in. Please try again.", Toast.LENGTH_LONG).show(); }
     }
+    private String requestedUrl = NavigationPolicy.HOME;
+
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        completeSignIn(intent.getData());
+        setIntent(intent);
+        String link = Intent.ACTION_VIEW.equals(intent.getAction())
+                ? NavigationPolicy.appLink(intent.getDataString()) : null;
+        if (link != null) {
+            requestedUrl = link;
+            loadHome();
+        } else {
+            completeSignIn(intent.getData());
+        }
     }
     private void completeSignIn(Uri uri) {
         if (uri == null || !"quizletgravity".equals(uri.getScheme()) || !"auth".equals(uri.getHost()) || authState == null || !authState.equals(uri.getQueryParameter("state")) || System.currentTimeMillis()-authStarted > 600000) return;
@@ -177,6 +187,9 @@ public final class MainActivity extends ComponentActivity {
         });
         createOverlay();
         createWebView();
+        String link = Intent.ACTION_VIEW.equals(getIntent().getAction())
+                ? NavigationPolicy.appLink(getIntent().getDataString()) : null;
+        if (link != null) requestedUrl = link;
         loadHome();
         handler.post(updateNavigationSurface);
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -390,7 +403,7 @@ public final class MainActivity extends ComponentActivity {
         handler.removeCallbacks(loadTimeout);
         handler.postDelayed(loadTimeout, 30000);
         logo.start(this::finishIntro);
-        webView.loadUrl(NavigationPolicy.HOME);
+        webView.loadUrl(requestedUrl);
     }
 
     private void showError() {

@@ -82,7 +82,7 @@ export function OptionsView({
       : STRINGS.options.side_selector.definition;
 
   return (
-    <div className="GravityUIModal">
+    <div className="GravityUIModal GravityUIModal--options">
       <div className="GravityUIModal-box">
         <div className="GravityUIModal-boxHeader">{STRINGS.options.title}</div>
         <div className="GravityOptionsView">

@@ -5,7 +5,7 @@ import AuthenticationServices
 import CryptoKit
 
 final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, ASWebAuthenticationPresentationContextProviding {
-    private let home = URL(string: "https://www.quizletgravity.com/")!
+    private var requestedURL = URL(string: "https://www.quizletgravity.com/")!
     private var webView: WKWebView!
     private var authSession: ASWebAuthenticationSession?
     private var intro: IntroView?
@@ -330,6 +330,22 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         overlay.start()
     }
 
+    func openAppLink(_ url: URL) {
+        guard isInternal(url), var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return }
+        let path = components.path.isEmpty ? "/" : components.path
+        let patterns = [
+            "^/(?:[a-zA-Z]{2}(?:-[a-zA-Z]{2})?/)?[0-9]{1,20}/[^/]+-flash-cards/?$",
+            "^/sets(?:/[a-fA-F0-9-]{36})?/?$",
+            "^/(?:example|my-games|create-set|import-game|import-edit)?/?$"
+        ]
+        guard patterns.contains(where: { path.range(of: $0, options: .regularExpression) != nil }) else { return }
+        components.host = "www.quizletgravity.com"
+        components.port = nil
+        guard let target = components.url else { return }
+        requestedURL = target
+        if isViewLoaded { loadGame() }
+    }
+
     private func loadGame() {
         generation += 1
         loaded = false
@@ -337,7 +353,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         webView.stopLoading()
         showIntro()
         armTimeout()
-        webView.load(URLRequest(url: home, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
+        webView.load(URLRequest(url: requestedURL, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
     }
 
     private func armTimeout() {

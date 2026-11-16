@@ -2701,3 +2701,8 @@
 /* Keep every control reachable even on the narrowest phones or with a long score. */
 .GravitySiteHeader-mobileControls { flex-wrap: wrap; }
 .GravitySiteHeader-actions { flex-wrap: wrap; }
+
+/* Open mobile Options near the header, keeping the primary action in view. */
+@media (max-width: 768px), (pointer: coarse) {
+  .GravityUIModal.GravityUIModal--options { padding-top: 2rem; }
+}

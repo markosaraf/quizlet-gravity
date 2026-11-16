@@ -5,7 +5,7 @@ import {communitySettings} from '@/lib/community/settings';
 import {db} from '@/lib/community/db';
 import {revokeAppleAccess} from '@/lib/community/apple';
 import {isAdmin} from '@/lib/community/admin';
-import {leaderboardQuery,leaderboardPageSize} from '@/lib/community/leaderboard';
+import {adminLeaderboardQuery,leaderboardPageSize} from '@/lib/community/leaderboard';
 import {adminGamesQuery} from '@/lib/community/admin-games';
 export const runtime='nodejs';
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
@@ -28,7 +28,7 @@ export async function GET(request:NextRequest,{params}:Context){
   if(path[0]==='leaderboards'&&path.length===2){
    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path[1]))return json({error:'Invalid game.'},400);
    // Administrators must see the full board, including personally blocked players.
-   const {rows}=await db.query(leaderboardQuery,[path[1],offset,null,leaderboardPageSize(request.nextUrl.searchParams.get('limit')),false]);
+   const {rows}=await db.query(adminLeaderboardQuery,[path[1],offset,null,leaderboardPageSize(request.nextUrl.searchParams.get('limit')),false]);
    return json(rows[0]);
   }
   if(path.join('/')==='reports'){

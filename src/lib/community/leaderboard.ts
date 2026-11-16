@@ -5,9 +5,9 @@ export function leaderboardPageSize(value: string | null): number {
 }
 
 /** Rank, count and page against one snapshot, with the same block filter throughout. */
-export const leaderboardQuery = `
+function makeLeaderboardQuery(includeDate:boolean){return `
 WITH ranked AS (
- SELECT h.score,h.level,h.mode,u.id AS player_id,
+ SELECT ${includeDate?'h.achieved_at,':''}h.score,h.level,h.mode,u.id AS player_id,
  coalesce(u."displayUsername",u.username,u.name) AS username,u."isAnonymous" AS guest,
  coalesce(u.id=$3,false) AS is_current,
  row_number() OVER (ORDER BY h.score DESC,h.achieved_at,u.id)::int AS rank
@@ -29,3 +29,7 @@ SELECT total,current_rank,page_offset AS "offset",$4::int AS page_size,
  coalesce((SELECT jsonb_agg(r ORDER BY r.rank) FROM ranked r
   WHERE r.rank>paging.page_offset AND r.rank<=paging.page_offset+$4::int),'[]'::jsonb) AS entries
 FROM paging`;
+}
+
+export const leaderboardQuery=makeLeaderboardQuery(false);
+export const adminLeaderboardQuery=makeLeaderboardQuery(true);

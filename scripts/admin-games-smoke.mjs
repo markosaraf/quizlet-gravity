@@ -18,7 +18,7 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   });
   await page.route('**/api/admin/leaderboards/*?*',async r=>{
    const url=new URL(r.request().url()),offset=Number(url.searchParams.get('offset'));const count=games.find(g=>url.pathname.endsWith(g.id))?.player_count||0;
-   const rows=Array.from({length:count},(_,i)=>({player_id:`player-${i}`,username:`Player ${i+1}`,rank:i+1,score:700-i*100,level:2,mode:'BEGINNER',is_current:false}));
+   const rows=Array.from({length:count},(_,i)=>({player_id:`player-${i}`,username:`Player ${i+1}`,rank:i+1,score:700-i*100,level:2,mode:'BEGINNER',is_current:false,achieved_at:'2026-11-15T14:30:00.000Z'}));
    await r.fulfill({json:{entries:rows.slice(offset,offset+5),total:rows.length,current_rank:null,offset,page_size:5,hasMore:offset+5<rows.length}});
   });
   await page.goto(base+'/sets');
@@ -41,6 +41,9 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   await expect(page.locator('.shared-leaderboard')).toHaveCount(24);
   await expect(page.getByRole('button',{name:'View leaderboard',exact:true})).toHaveCount(0);
   await expect(page.locator('.shared-leaderboard').first().locator('.shared-leaderboard-row')).toHaveCount(5);
+  await expect(page.locator('.shared-leaderboard').first().locator('time')).toHaveCount(5);
+  await expect(page.locator('.shared-leaderboard time').first()).toHaveAttribute('datetime','2026-11-15T14:30:00.000Z');
+  await expect(page.locator('.shared-leaderboard time').first()).toContainText('2026');
   await page.getByRole('button',{name:'Next leaderboard page'}).first().click();
   await expect(page.locator('.shared-leaderboard').first().locator('.shared-leaderboard-row')).toHaveCount(2);
   await expect(page.locator('.shared-leaderboard-name').first()).toHaveText('Player 6');

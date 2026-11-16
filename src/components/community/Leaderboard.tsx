@@ -18,8 +18,8 @@ const modeLabels:Record<string,string>={
  MAD_MAX:STRINGS.options.difficulty_selector.mad_max,
 };
 
-export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready=true}:{
- id:string;refresh?:string|number;compact?:boolean;aroundPlayer?:boolean;ready?:boolean;
+export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready=true,adminView=false}:{
+ id:string;refresh?:string|number;compact?:boolean;aroundPlayer?:boolean;ready?:boolean;adminView?:boolean;
 }){
  const {data:session}=authClient.useSession();
  const [offset,setOffset]=useState<number|null>(null);
@@ -28,18 +28,18 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
  const sectionRef=useRef<HTMLElement>(null);
  const revealedResult=useRef<string|null>(null);
  // Key the result to its request so old rows never flash under a new page number.
- const requestKey=JSON.stringify([id,offset,refresh,retry,session?.user.id,aroundPlayer]);
+ const requestKey=JSON.stringify([id,offset,refresh,retry,session?.user.id,aroundPlayer,adminView]);
  useEffect(()=>{
   if(!ready)return;
   const controller=new AbortController();
   const params=new URLSearchParams({limit:String(PAGE_SIZE),offset:String(offset??0)});
   if(aroundPlayer&&offset===null)params.set('around','me');
-  fetch(`/api/community/sets/${id}/leaderboard?${params}`,{signal:controller.signal,cache:'no-store'})
+  fetch(`${adminView?'/api/admin/leaderboards':'/api/community/sets'}/${id}${adminView?'':'/leaderboard'}?${params}`,{signal:controller.signal,cache:'no-store'})
    .then(async response=>{const body=await response.json();if(!response.ok)throw Error(body.error||'Could not load the leaderboard.');return body as Page;})
    .then(page=>{if(!controller.signal.aborted)setResult({key:requestKey,page});})
    .catch(error=>{if(!controller.signal.aborted)setResult({key:requestKey,error:error.message});});
   return()=>controller.abort();
- },[id,offset,ready,requestKey,aroundPlayer]);
+ },[id,offset,ready,requestKey,aroundPlayer,adminView]);
  const current=result?.key===requestKey?result:null;
  const page=current?.page;
  const revealKey=JSON.stringify([id,refresh]);
@@ -72,7 +72,7 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
       <small>Level {entry.level} · {modeLabels[entry.mode.toUpperCase()]||entry.mode}</small>
      </div>
      <strong className="shared-leaderboard-score">{entry.score.toLocaleString()}<small>points</small></strong>
-     {!compact&&!entry.is_current&&entry.username!=='Deleted user'?<div className="shared-leaderboard-safety"><SafetyActions kind="user" id={entry.player_id} userId={entry.player_id} onBlocked={()=>setRetry(n=>n+1)}/></div>:null}
+     {!adminView&&!compact&&!entry.is_current&&entry.username!=='Deleted user'?<div className="shared-leaderboard-safety"><SafetyActions kind="user" id={entry.player_id} userId={entry.player_id} onBlocked={()=>setRetry(n=>n+1)}/></div>:null}
     </li>)}
    </ol>
    {page.total===0?<p>Be the first to finish a game.</p>:<nav className="shared-leaderboard-pagination" aria-label="Leaderboard pages">

@@ -5,6 +5,8 @@ import {communitySettings} from '@/lib/community/settings';
 import {db} from '@/lib/community/db';
 import {revokeAppleAccess} from '@/lib/community/apple';
 import {isAdmin} from '@/lib/community/admin';
+import {leaderboardQuery,leaderboardPageSize} from '@/lib/community/leaderboard';
+import {adminGamesQuery} from '@/lib/community/admin-games';
 export const runtime='nodejs';
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
 type Context={params:Promise<{path:string[]}>};
@@ -16,9 +18,19 @@ export async function GET(request:NextRequest,{params}:Context){
   if(path.join('/')==='status')return json({admin});
   if(!admin)return json({error:'Administrator access required.'},403);
   if(path.join('/')==='settings')return json(await communitySettings());
-  const offset=Math.max(0,Math.min(100000,Number(request.nextUrl.searchParams.get('offset'))||0));
+  const offset=Math.max(0,Math.min(100000,Math.floor(Number(request.nextUrl.searchParams.get('offset'))||0)));
   const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);
   const pattern='%'+q.replace(/[\\%_]/g,'\\$&')+'%';
+  if(path.join('/')==='game-overview'){
+   const {rows}=await db.query(adminGamesQuery,[q,pattern,offset]);
+   return json({games:rows.slice(0,24).map(({catalogue_total,...game})=>game),total:Number(rows[0]?.catalogue_total||0),hasMore:rows.length>24});
+  }
+  if(path[0]==='leaderboards'&&path.length===2){
+   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path[1]))return json({error:'Invalid game.'},400);
+   // Administrators must see the full board, including personally blocked players.
+   const {rows}=await db.query(leaderboardQuery,[path[1],offset,null,leaderboardPageSize(request.nextUrl.searchParams.get('limit')),false]);
+   return json(rows[0]);
+  }
   if(path.join('/')==='reports'){
    const {rows}=await db.query(`SELECT r.id,r.target_kind,r.target_id,r.reason,r.created_at,s.title,s.public_id,coalesce(u."displayUsername",u.username,u.name) AS username FROM content_reports r LEFT JOIN shared_sets s ON r.target_kind='set' AND s.id::text=r.target_id LEFT JOIN "user" u ON r.target_kind='user' AND u.id=r.target_id WHERE r.status='open' ORDER BY r.created_at,r.id LIMIT 51 OFFSET $1`,[offset]);
    return json({reports:rows.slice(0,50),hasMore:rows.length>50});

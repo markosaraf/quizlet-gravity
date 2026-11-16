@@ -1,4 +1,5 @@
 import {sharedSetPath} from './set-links';
+import {emailBrand,emailPreheader} from './email-brand';
 
 export type OvertakenGame={id:string;public_id:string;title:string;source_url?:string|null};
 const escape=(value:string)=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -17,10 +18,10 @@ export function renderOvertakenEmail(opponent:string,game:OvertakenGame,{preview
  const text=`${message.body}\n\nPlay ${game.title}: ${message.url}\n\n${footer}${unsubscribeUrl?'\nUnsubscribe: '+unsubscribeUrl:''}`;
  const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:#2e384f;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;">
+${emailPreheader(message.body)}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" background="${background}" style="background-color:#2e384f;background-image:url('${background}');background-position:center bottom;background-size:cover;"><tr><td align="center" style="padding:32px 16px;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;"><tr><td style="padding:16px 24px;background:#4255b4;border-radius:8px 8px 0 0;">
-<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="padding-right:12px;"><img src="${origin}/brand-q-original-gold-thick-transparent.png" width="44" height="44" alt="" style="display:block;border:0;"></td><td style="font-size:24px;font-weight:bold;color:#ffffff;">Quizlet Gravity</td></tr></table>
-</td></tr><tr><td style="padding:4px 28px 24px;background-color:#eeeeee;background-color:rgba(255,255,255,.90);border-radius:0 0 8px 8px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#f7f7fa;border:1px solid #dadce5;border-radius:12px;"><tr><td style="padding:32px 28px;">
+${emailBrand}
 <h1 style="font-size:29px;line-height:1.2;margin:28px 0 14px;">You’ve been overtaken!</h1>
 <p style="font-size:17px;line-height:1.6;margin:0 0 22px;"><strong>${escape(opponent)}</strong> has overtaken you on the leaderboard. Ready to earn your place back?</p>
 <a href="${url}" style="display:block;text-decoration:none;"><img src="${image}" alt="${escape(game.title)} — open this game" width="504" style="width:100%;max-width:504px;height:auto;display:block;border:0;border-radius:10px;"></a>

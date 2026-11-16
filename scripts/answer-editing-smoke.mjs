@@ -47,7 +47,25 @@ for (const [name, engine] of [['Chromium', chromium], ['WebKit', webkit]]) {
       console.log(`PASS ${name} ${selector}: wrapping, touch placement, insertion and spacebar cursor`);
     }
     await check('.GravityTypingPrompt-input');
-    await page.keyboard.press('Escape');
+    // Continue typing in the same render transition as an asteroid impact.
+    // Waiting for the solution's 500ms focus timer would hide the regression.
+    const afterImpact = await page.evaluate(() => new Promise(resolve => {
+      const observer = new MutationObserver(() => {
+        const field = document.querySelector('.GravityCopyTermView-input');
+        if (!field) return;
+        observer.disconnect();
+        for (const key of ['7', '8']) {
+          const button = document.querySelector(`.glass-keyboard button[aria-label="${key}"]`);
+          button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 1, pointerType: 'touch' }));
+          button.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, pointerId: 1, pointerType: 'touch' }));
+        }
+        resolve(field.value);
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      document.querySelector('[data-testid="GravityTerm"]').dispatchEvent(new Event('animationend', { bubbles: true }));
+    }));
+    assert.equal(afterImpact, 'z78', `${name}: impact-time keys append to the carried answer`);
+    console.log(`PASS ${name}: actual asteroid impact preserves typing order before delayed focus.`);
     await check('.GravityCopyTermView-input');
     await page.locator('.GravityCopyTermView-input').fill('Long answers grow upward and stay above the transparent keyboard.');
     await page.screenshot({ path: `/tmp/gravity-answer-editing-${name}.png` });

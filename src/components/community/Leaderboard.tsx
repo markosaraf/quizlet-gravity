@@ -7,7 +7,7 @@ import {STRINGS} from '@/lib/gravity/strings';
 import {SafetyActions} from './Safety';
 import './leaderboard.css';
 
-type Entry = {player_id:string;username:string;guest:boolean;score:number;level:number;mode:string;rank:number;is_current:boolean;achieved_at?:string};
+type Entry = {player_id:string;username:string;guest:boolean;score:number;level:number;mode:string;rank:number;is_current:boolean;achieved_at?:string;email?:string|null};
 type Page = {entries:Entry[];total:number;current_rank:number|null;offset:number;page_size:number;hasMore:boolean};
 const PAGE_SIZE=5;
 const modeLabels:Record<string,string>={
@@ -69,6 +69,7 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
     {page.entries.map(entry=><li key={entry.player_id} className={`shared-leaderboard-row${entry.is_current?' is-current':''}`} aria-current={entry.is_current?'true':undefined}>
      <span className="shared-leaderboard-rank" aria-label={`Rank ${entry.rank}`}>{entry.rank}</span>
      <div className="shared-leaderboard-player"><span className="shared-leaderboard-name">{entry.username}</span>{entry.is_current?<span className="shared-leaderboard-you">You</span>:null}
+      {adminView&&entry.email&&<small style={{overflowWrap:'anywhere'}}>{entry.email}</small>}
       <small>Level {entry.level} · {modeLabels[entry.mode.toUpperCase()]||entry.mode}</small>
       {adminView&&entry.achieved_at&&<small>Achieved <time dateTime={entry.achieved_at}>{new Date(entry.achieved_at).toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</time></small>}
      </div>

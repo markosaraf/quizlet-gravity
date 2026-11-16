@@ -7,7 +7,7 @@ export function leaderboardPageSize(value: string | null): number {
 /** Rank, count and page against one snapshot, with the same block filter throughout. */
 function makeLeaderboardQuery(includeDate:boolean){return `
 WITH ranked AS (
- SELECT ${includeDate?'h.achieved_at,':''}h.score,h.level,h.mode,u.id AS player_id,
+ SELECT ${includeDate?`h.achieved_at,CASE WHEN NOT coalesce(u."isAnonymous",false) AND NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id) THEN u.email END AS email,`:''}h.score,h.level,h.mode,u.id AS player_id,
  coalesce(u."displayUsername",u.username,u.name) AS username,u."isAnonymous" AS guest,
  coalesce(u.id=$3,false) AS is_current,
  row_number() OVER (ORDER BY h.score DESC,h.achieved_at,u.id)::int AS rank

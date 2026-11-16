@@ -30,7 +30,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         view.backgroundColor = pageBackground
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
-        configuration.applicationNameForUserAgent = "QuizletGravityApp"
+        configuration.applicationNameForUserAgent = "QuizletGravityApp NotificationOnboarding/1"
         #if targetEnvironment(macCatalyst)
         // Use Safari's desktop layout without iPad scaling or touch-layout overrides.
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
@@ -399,8 +399,12 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         guard let url = action.request.url else { decisionHandler(.cancel); return }
         if isInternal(url) {
             if url.path == "/native/notifications" {
-                if action.navigationType == .linkActivated && action.targetFrame?.isMainFrame == true {
-                    PushNotifications.shared.requestPermission()
+                if action.targetFrame?.isMainFrame == true, action.sourceFrame.isMainFrame,
+                   let source = action.sourceFrame.request.url, isInternal(source) {
+                    PushNotifications.shared.attach(webView, controller: self)
+                    let afterSignup = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains { $0.name == "afterSignup" && $0.value == "1" } == true
+                    if afterSignup { PushNotifications.shared.requestAfterSignup() }
+                    else if action.navigationType == .linkActivated { PushNotifications.shared.requestPermission() }
                 }
                 decisionHandler(.cancel); return
             }

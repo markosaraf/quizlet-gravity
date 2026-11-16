@@ -33,8 +33,21 @@ final class PushNotifications: NSObject, UNUserNotificationCenterDelegate, URLSe
         return url.scheme == "https" && ["www.quizletgravity.com", "quizletgravity.com"].contains(url.host ?? "") && url.user == nil && url.password == nil && (url.port == nil || url.port == 443)
     }
 
-    func requestPermission() {
+    func requestAfterSignup() {
         guard trusted(webView?.url) else { return }
+        if UserDefaults.standard.bool(forKey: "leaderboardSignupPromptShown") || UserDefaults.standard.bool(forKey: "leaderboardNotificationsOptIn") {
+            refreshAuthorization()
+            sync()
+            return
+        }
+        // Persist before the asynchronous request to prevent duplicate prompts.
+        UserDefaults.standard.set(true, forKey: "leaderboardSignupPromptShown")
+        requestPermission()
+    }
+
+    func requestPermission() {
+        guard trusted(webView?.url), !explicitRequest else { return }
+        UserDefaults.standard.set(true, forKey: "leaderboardSignupPromptShown")
         explicitRequest = true
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             DispatchQueue.main.async {

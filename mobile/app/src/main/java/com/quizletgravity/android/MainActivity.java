@@ -146,12 +146,27 @@ public final class MainActivity extends ComponentActivity {
         NotificationRegistration.optIn(this);
         NotificationRegistration.sync(this, true, registered -> notificationStatus(registered ? "enabled" : "error"));
     }
+    private void requestNotificationsAfterSignup() {
+        android.content.SharedPreferences preferences = getSharedPreferences("notifications", MODE_PRIVATE);
+        if (preferences.getBoolean("signup_prompt_shown", false) || NotificationRegistration.optedIn(this)) {
+            NotificationRegistration.sync(this, false, null);
+            return;
+        }
+        requestNotifications();
+    }
     private void requestNotifications() {
+        getSharedPreferences("notifications", MODE_PRIVATE).edit().putBoolean("signup_prompt_shown", true).apply();
         NotificationRegistration.createChannel(this);
         if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
             notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS);
         else if (!androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()) notificationStatus("denied");
-        else enableNotifications();
+        else if (android.os.Build.VERSION.SDK_INT < 33 && !NotificationRegistration.optedIn(this)) {
+            new AlertDialog.Builder(this).setTitle("Leaderboard notifications")
+                    .setMessage("Get notified when another player overtakes you, and earn your place back.")
+                    .setPositiveButton("Allow", (dialog, which) -> enableNotifications())
+                    .setNegativeButton("Not now", (dialog, which) -> notificationStatus("denied"))
+                    .show();
+        } else enableNotifications();
     }
 
     @Override protected void onNewIntent(Intent intent) {
@@ -276,7 +291,7 @@ public final class MainActivity extends ComponentActivity {
                 });
         }
         WebSettings settings = webView.getSettings();
-        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp");
+        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp NotificationOnboarding/1");
         // The first-party site needs JS and DOM storage for its game and remembered sets.
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -324,7 +339,10 @@ public final class MainActivity extends ComponentActivity {
                 String url = request.getUrl().toString();
                 if (NavigationPolicy.isInternal(url)) {
                     if (request.isForMainFrame() && "/native/notifications".equals(request.getUrl().getPath())) {
-                        if (request.hasGesture()) requestNotifications();
+                        if (NavigationPolicy.isInternal(view.getUrl())) {
+                            if ("1".equals(request.getUrl().getQueryParameter("afterSignup"))) requestNotificationsAfterSignup();
+                            else if (request.hasGesture()) requestNotifications();
+                        }
                         return true;
                     }
                     if (request.isForMainFrame() && "/native/start".equals(request.getUrl().getPath())) { beginSignIn(); return true; }

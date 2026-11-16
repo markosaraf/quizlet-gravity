@@ -14,8 +14,8 @@ android {
         applicationId = "com.quizletgravity.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 25
-        versionName = "2.0.13"
+        versionCode = 26
+        versionName = "2.0.14"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

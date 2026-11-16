@@ -5,7 +5,9 @@ const games=Array.from({length:31},(_,i)=>({id:`00000000-0000-4000-8000-${String
 for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
  const browser=await engine.launch();
  try{for(const width of [390,1280]){
-  const page=await browser.newPage({viewport:{width,height:844},timezoneId:'Europe/Zurich'});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const timezoneId=width===390?'Europe/Zurich':'America/Costa_Rica';
+  const expectedTime=width===390?'15:30:00':'08:30:00';
+  const page=await browser.newPage({viewport:{width,height:844},timezoneId});const errors=[];page.on('pageerror',e=>errors.push(e.message));
   let admin=true;
   await page.route('**/api/auth/get-session*',r=>r.fulfill({json:{session:{id:'fixture-session',userId:'fixture-admin',expiresAt:'2030-01-01T00:00:00Z'},user:{id:'fixture-admin',name:'Marko Sarafijanovic',username:'Marko Sarafijanovic',displayUsername:'Marko Sarafijanovic',emailVerified:true,isAnonymous:false}}}));
   await page.route('**/api/admin/status',r=>r.fulfill({json:{admin}}));
@@ -44,7 +46,8 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   await expect(page.locator('.shared-leaderboard').first().locator('time')).toHaveCount(5);
   await expect(page.locator('.shared-leaderboard time').first()).toHaveAttribute('datetime','2026-11-15T14:30:00.000Z');
   await expect(page.locator('.shared-leaderboard time').first()).toContainText('2026');
-  await expect(page.locator('.shared-leaderboard time').first()).toContainText('15:30:00');
+  await expect(page.locator('.shared-leaderboard time').first()).toContainText(expectedTime);
+  await expect(page.locator('.shared-leaderboard time').first()).not.toContainText(/CET|GMT|UTC|CST/);
   await page.getByRole('button',{name:'Next leaderboard page'}).first().click();
   await expect(page.locator('.shared-leaderboard').first().locator('.shared-leaderboard-row')).toHaveCount(2);
   await expect(page.locator('.shared-leaderboard-name').first()).toHaveText('Player 6');
@@ -74,6 +77,6 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   await expect(page.getByRole('switch',{name:/Newest first/})).toHaveCount(0);
   await expect(page.getByRole('link',{name:'All leaderboards',exact:true})).toHaveCount(0);
   await page.goto(base+'/admin/leaderboards');await expect(page.getByText('Sign in with your administrator account to see all leaderboards.')).toBeVisible();
-  assert.deepEqual(errors,[]);console.log(`PASS ${name} ${width}: admin visibility, toggle, dates, search/reset, both paginations, empty boards excluded, default expansion, hide/show all, mobile layout, member denial.`);await page.close();
+  assert.deepEqual(errors,[]);console.log(`PASS ${name} ${width} ${timezoneId}: admin visibility, toggle, dates, search/reset, both paginations, empty boards excluded, default expansion, hide/show all, mobile layout, member denial.`);await page.close();
  }}finally{await browser.close();}
 }

@@ -70,7 +70,7 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
      <span className="shared-leaderboard-rank" aria-label={`Rank ${entry.rank}`}>{entry.rank}</span>
      <div className="shared-leaderboard-player"><span className="shared-leaderboard-name">{entry.username}</span>{entry.is_current?<span className="shared-leaderboard-you">You</span>:null}
       <small>Level {entry.level} · {modeLabels[entry.mode.toUpperCase()]||entry.mode}</small>
-      {adminView&&entry.achieved_at&&<small>Achieved <time dateTime={entry.achieved_at}>{new Date(entry.achieved_at).toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZoneName:'short'})}</time></small>}
+      {adminView&&entry.achieved_at&&<small>Achieved <time dateTime={entry.achieved_at}>{new Date(entry.achieved_at).toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</time></small>}
      </div>
      <strong className="shared-leaderboard-score">{entry.score.toLocaleString()}<small>points</small></strong>
      {!adminView&&!compact&&!entry.is_current&&entry.username!=='Deleted user'?<div className="shared-leaderboard-safety"><SafetyActions kind="user" id={entry.player_id} userId={entry.player_id} onBlocked={()=>setRetry(n=>n+1)}/></div>:null}

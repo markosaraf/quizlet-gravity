@@ -13,7 +13,7 @@ async function user(adminRole){const id=randomUUID();ids.push(id);const name='te
 try{
  const admin=await browser.newContext(),member=await browser.newContext(),anon=await browser.newContext();
  for(const [ctx,role] of [[admin,true],[member,false]]){const u=await user(role);const r=await ctx.request.post(base+'/api/auth/sign-in/username',{data:{username:u.name,password},headers:{Origin:base},timeout:180000});assert.equal(r.status(),200,await r.text());}
- for(const ctx of [anon,member]){assert.equal((await ctx.request.get(base+'/api/admin/overview')).status(),403);assert.equal((await ctx.request.post(base+'/api/indexnow',{headers:{Origin:base}})).status(),403);}
+ for(const ctx of [anon,member]){assert.equal((await ctx.request.get(base+'/api/admin/overview')).status(),403);assert.equal((await ctx.request.get(base+'/api/admin/traffic')).status(),403);assert.equal((await ctx.request.post(base+'/api/indexnow',{headers:{Origin:base}})).status(),403);}
  assert.equal((await anon.request.get(base+'/api/indexnow',{headers:{'x-vercel-cron':'1'}})).status(),401);
  assert.equal((await admin.request.post(base+'/api/indexnow',{headers:{Origin:'https://evil.invalid'}})).status(),403);
  assert.equal((await admin.request.get(base+'/api/admin/overview?days=2')).status(),400);
@@ -21,7 +21,14 @@ try{
  assert(await entry.evaluate(e=>e.compareDocumentPosition(document.querySelector('h2'))&Node.DOCUMENT_POSITION_FOLLOWING));
  await entry.click();await expect(page.locator('.overview-metric')).toHaveCount(4);
  for(const days of [7,30,1]){await page.getByRole('button',{name:days===1?'Today':`${days} days`,exact:true}).click();await expect(page.locator('.overview-day')).toHaveCount(days);}
- await page.getByRole('button',{name:'Submit due URLs'}).click();await expect(page.getByRole('status').filter({hasText:'disabled on previews'})).toBeVisible();
+ for(const label of ['Registered accounts','Guest accounts','Games played','Games created']){
+  const card=page.locator('.analytics-card').filter({hasText:label});await card.click();await expect(card).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.analytics-chart-heading h2')).toContainText(label);
+ }
+ await page.locator('.analytics-hit').first().focus();await expect(page.locator('.analytics-hover strong')).toBeVisible();
+ await page.getByRole('button',{name:'7 days',exact:true}).click();await expect(page.locator('.analytics-panel').first().locator('.overview-day')).toHaveCount(7);
+ await page.getByRole('button',{name:'Retry due URLs now (optional)'}).click();await expect(page.getByRole('status').filter({hasText:'disabled on previews'})).toBeVisible();
+ await expect(page.getByText('Updating overview…')).toBeHidden();
  for(const width of [390,1440]){await page.setViewportSize({width,height:1100});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:`/tmp/quizlet-admin-overview-${width}.png`,fullPage:true});}
  const sitemap=await anon.request.get(base+'/sitemap.xml');assert.equal(sitemap.status(),200);assert.match(await sitemap.text(),/sitemaps\/games\/0.xml/);
  const gamesXml=await (await anon.request.get(base+'/sitemaps/games/0.xml')).text();const urls=[...gamesXml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m=>m[1]);assert.equal(urls.length,331);

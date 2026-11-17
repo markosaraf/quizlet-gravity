@@ -1,4 +1,5 @@
-import {NextRequest,NextResponse} from 'next/server';
+import {safelyProcessGameIndexing} from '@/lib/community/game-indexing';
+import {after,NextRequest,NextResponse} from 'next/server';
 import {randomUUID} from 'node:crypto';
 import {auth} from '@/lib/community/auth';
 import {communitySettings} from '@/lib/community/settings';
@@ -79,7 +80,7 @@ export async function DELETE(request:NextRequest,{params}:Context){
    if(!result.rows.length){await client.query('ROLLBACK');return json({error:'Set not found.'},404);}
   }
   await client.query('INSERT INTO moderation_log(actor_id,action,target_id) VALUES($1,$2,$3)',[session.user.id,path[0]==='users'?'delete_user':'delete_set',path[1]]);
-  await client.query('COMMIT');return json({deleted:true});
+  await client.query('COMMIT');if(path[0]==='sets')after(()=>safelyProcessGameIndexing().then(()=>{}));return json({deleted:true});
  }catch{await client.query('ROLLBACK');return json({error:'Unable to delete. Please retry.'},500);}finally{client.release();}
 }
 

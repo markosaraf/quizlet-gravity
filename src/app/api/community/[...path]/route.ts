@@ -1,3 +1,4 @@
+import {safelyProcessGameIndexing} from '@/lib/community/game-indexing';
 import { after, NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { auth } from '@/lib/community/auth';
@@ -87,7 +88,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{path:st
  // Attribution comes from the saved source and authenticated user, never client-supplied names.
  const key=source?'adapted:'+source.id+':'+session.user.id+':'+fingerprint(v.cards):'custom:'+fingerprint(v.cards);
  const {rows}=await db.query(`INSERT INTO shared_sets(fingerprint,title,created_by,cards,term_count,creator_name,creator_url,source_url) VALUES($1,$2,$3,$4,$5,$6,$7,$8)
- ON CONFLICT(fingerprint) DO UPDATE SET fingerprint=EXCLUDED.fingerprint RETURNING id,public_id,title`,[key,v.title,session.user.id,JSON.stringify(v.cards),v.cards.length,source?.creator_name??null,source?.creator_url??null,source?.source_url??null]);return json(rows[0]);
+ ON CONFLICT(fingerprint) DO UPDATE SET fingerprint=EXCLUDED.fingerprint RETURNING id,public_id,title`,[key,v.title,session.user.id,JSON.stringify(v.cards),v.cards.length,source?.creator_name??null,source?.creator_url??null,source?.source_url??null]);after(()=>safelyProcessGameIndexing().then(()=>{}));return json(rows[0]);
  }
  if(path[0]==='runs'&&path.length===1){
  const v=z.object({setId:uuid,mode:z.enum(['SLOTH','BEGINNER','INTERMEDIATE','EXPERT','MAD_MAX'])}).parse(input);

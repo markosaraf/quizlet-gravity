@@ -1,3 +1,7 @@
 mobile/
 release-artifacts/
 *.bundle
+.env*
+scripts/
+tests/
+.git/

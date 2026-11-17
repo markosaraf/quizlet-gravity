@@ -8,9 +8,9 @@ import {authClient} from '@/lib/community/auth-client';
 import {GravityApp} from '@/components/gravity/GravityApp';
 import {importedCardsToTerms} from '@/lib/gravity/import-cards';
 import '@/gravity/gravity.css';
-export function SharedSet({id}:{id:string}){
+export function SharedSet({id,initialSet}:{id:string;initialSet?:SetRecord}){
  const router=useRouter();
- const [set,setSet]=useState<SetRecord|null>(null);const [error,setError]=useState('');const [playing,setPlaying]=useState(false);const [copied,setCopied]=useState(false);const {data:session}=authClient.useSession();
+ const [set,setSet]=useState<SetRecord|null>(initialSet??null);const [error,setError]=useState('');const [playing,setPlaying]=useState(false);const [copied,setCopied]=useState(false);const {data:session}=authClient.useSession();
  const gameSet=useMemo(()=>set?{set:{id:set.id,title:set.title,wordLang:'en',defLang:'en'},terms:importedCardsToTerms(set.cards)!}:null,[set]);
  useEffect(()=>{api('sets/'+id).then(setSet).catch(e=>setError(e.message));},[id]);
  if(error)return <main className="community-page"><h1>Set unavailable</h1><p>{error}</p></main>;

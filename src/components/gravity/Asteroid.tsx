@@ -37,7 +37,12 @@ function AsteroidBase({
   // A stable lane keeps this asteroid from rerolling on resize or a text-size change.
   const [lane] = useState(() => Math.random());
   const nominalSize = termSize * textScale;
-  const nominalContentWidth = (termSize - Math.max(60 * textLength / maxLen, 30) - Math.max(55 * textLength / maxLen, 25)) * textScale;
+  // Original image prompts use fixed 60px/75px padding, regardless of caption
+  // length; text-only prompts use the original length-dependent padding.
+  const horizontalPadding = hasImage
+    ? 60 + 75
+    : Math.max(60 * textLength / maxLen, 30) + Math.max(55 * textLength / maxLen, 25);
+  const nominalContentWidth = (termSize - horizontalPadding) * textScale;
 
   useLayoutEffect(() => {
     const asteroid = asteroidRef.current;

@@ -2683,7 +2683,7 @@
   color: #000;
 }
 
-/* Scale learning text only. Planets, asteroids and controls retain their dimensions. */
+/* Scale learning text; Asteroid.tsx applies the same scale to the rock. */
 [data-game-text-size="large"] { --game-text-scale: 1.33; }
 [data-game-text-size="small"] { --game-text-scale: .75; }
 .GravityCopyTermView-promptText { font-size: calc(1em * var(--game-text-scale, 1)); }

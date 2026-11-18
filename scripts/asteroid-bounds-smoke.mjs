@@ -91,6 +91,16 @@ try{for(const[name,engine]of[['Chromium',chromium],['WebKit',webkit]]){
   await update({width:350,left:-90});await bounds('partially clipped left edge');
   await update({width:350,left:20,text:samples[0],image:'/wide.svg',meteor:true,side:'definition',definition:samples[2]},true);
   await page.waitForFunction(()=>document.querySelector('.GravityTerm img')?.naturalWidth===1600);await bounds('loaded image plus long definition');
+  // Original Gravity reserves 60px + 75px inside its 364px image asteroid,
+  // independently of caption length. Preserve that width before screen fitting.
+  for(const [size,scale] of [['normal',1],['large',1.33],['small',0.75]]) {
+   for(const lane of [0,0.99999]) {
+    await update({width:350,left:20,image:'/wide.svg',definition:'Picture caption',side:'definition',manualSize:size,lane},true);
+    await page.waitForFunction(()=>document.querySelector('.GravityTerm img')?.naturalWidth===1600);
+    const data=await bounds('original image padding '+size+' '+lane);
+    assert(Math.abs(data.text.right-data.text.left-Math.min(229*scale,326))<1,'Image prompts must retain the original 229px content width, scaled and constrained to the viewport');
+   }
+  }
   // The actual button cycles larger → normal → smaller → normal; both rock
   // and text scale together, and the next click's label stays truthful.
   await update({width:350,left:20,text:'Read this question',image:'',side:'word',meteor:false,manualSize:null},true);

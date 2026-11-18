@@ -1,10 +1,12 @@
 # Quizlet Gravity
 
-[Play Quizlet Gravity](https://www.quizletgravity.com/) — a recreation of Quizlet's original falling-asteroid study game, developed by **Marko Sarafijanovic**, with a website and Android, iPhone, iPad and Mac apps.
+[Play Quizlet Gravity](https://www.quizletgravity.com/) — my recreation of Quizlet's original falling-asteroid study game, available on the web and as Android, iPhone, iPad and Mac apps.
 
-Type the matching term or definition before an asteroid lands. The project started by studying archived Gravity pages, JavaScript, CSS and assets, then developed into a shared learning-game platform. Preserving the original game's behaviour and documenting its sources are central to the project.
+I started by studying archived Gravity pages, JavaScript, CSS and assets to recreate the original game as closely as possible. Since then, I've added shared study games, accounts and online leaderboards. I want to preserve the original game's behaviour while making it easier to create, share and learn from your own study material.
 
-## What this project adds
+To play, type the matching term or definition before an asteroid lands.
+
+## What I've added
 
 - Create study games, paste terms, upload CSV files, or import Quizlet sets.
 - Share public games with their own links, searchable titles and term/definition previews.
@@ -14,19 +16,19 @@ Type the matching term or definition before an asteroid lands. The project start
 - Discover public games through crawlable pages, a dynamic sitemap and automatic IndexNow submissions.
 - Admin tools for users, games, moderation, activity charts and search-submission status.
 
-## Development history and repositories
+## My development and repositories
 
-- **This repository:** the current website, shared games, accounts, online leaderboards and mobile apps.
-- **[Classic edition](https://github.com/markosaraf/quizlet-gravity-classic-no-leaderboards):** the preserved 6 November 2026 snapshot before the accounts/shared-games release.
+- **This repository:** my current website, shared games, accounts, online leaderboards and mobile apps.
+- **[Classic edition](https://github.com/markosaraf/quizlet-gravity-classic-no-leaderboards):** a snapshot I kept from 6 November 2026, before I added accounts and shared games.
 - `src/lib/gravity/`: game state and rules; `src/components/gravity/`: gameplay; `src/gravity/gravity.css`: game presentation.
 - `src/components/community/` and `src/app/api/`: shared games, accounts and administration.
 - `mobile/`: Android and Apple app sources and build instructions.
 
 ## Original Quizlet Gravity sources — permanent reference
 
-These are the Web Archive sources used to study the original Gravity game: playable page snapshots, game logic, styles, images and fonts. **Keep this source list in this README. Never remove it during a rewrite, cleanup or release.** Add new references without replacing the recovered ones.
+These are the Web Archive sources I used to study the original Gravity game: playable page snapshots, game logic, styles, images and fonts. **Keep this source list in this README. Never remove it during a rewrite, cleanup or release.** Add new references without replacing the recovered ones.
 
-Recovered from the source collection dated **3 September 2026**. Its complete historical notes are preserved unchanged in [the original recovery kit](docs/original-gravity-recovery-kit.md). Availability and verification claims in that document refer to the collection date.
+These links come from my source collection dated **3 September 2026**. I keep the complete historical notes unchanged in [the original recovery kit](docs/original-gravity-recovery-kit.md). Availability and verification claims in that document refer to the collection date.
 
 - [Archived game page — June 2019](https://web.archive.org/web/20190609163653/https://quizlet.com/100056322/gravity)
 - [Archived game page — September 2023](https://web.archive.org/web/20230928234054/https://quizlet.com/10051542/gravity)
@@ -54,7 +56,7 @@ The “golden” CSS URL ends in `.css`; the dot and “THIS IS THE GOLDEN LINK!
 
 For another set, use `https://web.archive.org/web/2023/https://quizlet.com/<SET_ID>/gravity`. Raw archived files use `https://web.archive.org/web/<TIMESTAMP>id_/<ORIGINAL_ASSET_URL>`.
 
-The current game is an independent project by **Marko Sarafijanovic**, not affiliated with Quizlet. These references preserve the project's development history; they do not transfer ownership of Quizlet's original code or artwork.
+This is my independent project, and I am not affiliated with Quizlet. I keep these references to document how I developed it. Quizlet's original code and artwork remain their property.
 
 ## Run and develop locally
 

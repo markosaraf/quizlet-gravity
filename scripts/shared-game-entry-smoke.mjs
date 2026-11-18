@@ -4,9 +4,10 @@ const expect=baseExpect.configure({timeout:90000});
 const base=process.env.SMOKE_BASE||'http://localhost:4390';
 const path='/ch/1181229873/voci-mission-6-flash-cards';
 const browser=await chromium.launch();
+async function newContext(options){const ctx=await browser.newContext(options);if(process.env.SMOKE_ACCESS_FILE){const {readFile}=await import('node:fs/promises');const access=await readFile(process.env.SMOKE_ACCESS_FILE,'utf8');const bootstrap=await ctx.newPage();await bootstrap.goto(access.trim());await bootstrap.close();}return ctx;}
 const session={session:{id:'smoke-session',userId:'smoke-user',expiresAt:new Date(Date.now()+3600000).toISOString()},user:{id:'smoke-user',name:'Smoke Player',username:'smokeplayer',displayUsername:'Smoke Player',isAnonymous:false,email:'smoke@example.invalid',emailVerified:true,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}};
 try{
- const context=await browser.newContext({javaScriptEnabled:false});const crawler=await context.newPage();
+ const context=await newContext({javaScriptEnabled:false});const crawler=await context.newPage();
  await crawler.goto(base+path,{timeout:180000});
  await expect(crawler.locator('.community-terms>div')).toHaveCount(62);
  assert.match(await crawler.locator('.community-terms').textContent(),/accueillir/);
@@ -15,7 +16,7 @@ try{
  await expect(crawler.getByRole('button',{name:'Play this game',exact:true})).toHaveCount(1);
  await expect(crawler.getByRole('heading',{name:'Your username'})).toHaveCount(0);
  console.log('PASS: all 62 terms in server HTML, preview collapsed, one play button, no sign-in panel.');
- const ctx=await browser.newContext();const page=await ctx.newPage();page.setDefaultTimeout(90000);let authenticated=false;let setFetches=0;
+ const ctx=await newContext();const page=await ctx.newPage();page.setDefaultTimeout(90000);let authenticated=false;let setFetches=0;
  await page.route('**/api/**',async route=>{
   const url=new URL(route.request().url());
   if(url.pathname==='/api/auth/get-session')return route.fulfill({json:authenticated?session:null});
@@ -28,6 +29,8 @@ try{
  await page.getByRole('button',{name:'Play this game',exact:true}).click();
  await expect(page.getByRole('dialog')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Your username'})).toBeVisible();
+ await expect(page.locator('.community-tabs').getByRole('button',{name:'Create account',exact:true})).toHaveAttribute('aria-pressed','true');
+ assert.deepEqual(await page.getByRole('button',{name:'Guest',exact:true}).evaluate(e=>({background:getComputedStyle(e).backgroundColor,color:getComputedStyle(e).color})),{background:'rgb(212, 175, 55)',color:'rgb(0, 0, 0)'});
  await page.getByRole('button',{name:'Close account'}).click();
  await expect(page.getByRole('dialog')).toHaveCount(0);
  await expect(page.locator('h1')).toHaveText('Voci Mission 6');

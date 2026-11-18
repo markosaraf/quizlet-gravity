@@ -121,7 +121,7 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
   // No screen-size/device blockers — the game is playable everywhere
   // (mobile layout in the top bar handles narrow widths).
   return (
-    <div className="gravity-root" data-large-game-text={textSize.large} data-playing={[GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP, GAME_STATES.PAUSED].some(state => state === data.gameState) ? "true" : "false"}>
+    <div className="gravity-root" data-game-text-size={textSize.size} data-playing={[GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP, GAME_STATES.PAUSED].some(state => state === data.gameState) ? "true" : "false"}>
       {(scoreMessage||starting)&&<p className="community-message" role="status">{starting?"Starting ranked game…":scoreMessage}</p>}
       <SiteHeader
         title={data.set.title}
@@ -135,7 +135,7 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
         onRestart={() => void beginGame(true)}
         onNewSet={handleNewSet}
         exitHref={exitHref}
-        largeGameText={textSize.large}
+        gameTextStep={textSize.step}
         onToggleGameText={textSize.toggle}
       />
       <div className="GravityModeLayout">
@@ -150,7 +150,7 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
             onRestart={() => void beginGame(true)}
             onNewSet={handleNewSet}
             exitHref={exitHref}
-        largeGameText={textSize.large}
+        gameTextStep={textSize.step}
         onToggleGameText={textSize.toggle}
           />}
           <div
@@ -158,6 +158,7 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
             ref={gameplayRef}
           >
             <GameplayView
+              textScale={textSize.scale}
               data={data}
               specialChars={specialChars}
               onMissed={(id) => gravityStore.missTerm(id, false)}

@@ -28,15 +28,15 @@ try{
     if(!hovering)await page.mouse.move(5,5);
     await page.waitForTimeout(180);
     const style=await button.evaluate(el=>({bg:getComputedStyle(el).backgroundColor,color:getComputedStyle(el).color,shadow:getComputedStyle(el).boxShadow}));
-    assert.equal(style.bg,name==='Guest'?(hovering?'rgb(198, 163, 50)':'rgb(212, 175, 55)'):'rgb(66, 85, 180)');
-    assert.equal(style.color,name==='Guest'?'rgb(0, 0, 0)':'rgb(255, 255, 255)');
+    assert.equal(style.bg,name==='Guest'?(hovering?'rgb(198, 163, 50)':'rgb(212, 175, 55)'):'rgba(212, 175, 55, 0.15)');
+    assert.equal(style.color,name==='Guest'?'rgb(0, 0, 0)':theme==='light'?'rgb(37, 99, 235)':'rgb(168, 181, 245)');
     assert.match(style.shadow,/rgb\(0, 0, 0\)/);
    }
    const guest=tabs.getByRole('button',{name:'Guest',exact:true});
    assert.equal(await guest.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(212, 175, 55)');
   }
  }
- console.log('PASS: Create account and Sign in stay blue/white; Guest gold/black; selected underline remains in both themes.');
+ console.log('PASS: Create account and Sign in keep translucent gold; Guest gold/black; selected underline remains in both themes.');
  await page.getByRole('button',{name:'Close account'}).click();
  failLeaderboard=true;await page.reload();
  await expect(page.getByText('Could not load the leaderboard. Please retry.',{exact:true})).toBeVisible();

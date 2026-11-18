@@ -528,7 +528,10 @@
 }
 
 .GravityTerm-text {
-  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  min-width: 0;
+  width: 100%;
   color: #282e3e;
   font-size: calc(1.25rem * var(--game-text-scale, 1));
   font-weight: 600;
@@ -2681,7 +2684,8 @@
 }
 
 /* Scale learning text only. Planets, asteroids and controls retain their dimensions. */
-[data-large-game-text="true"] { --game-text-scale: 1.33; }
+[data-game-text-size="large"] { --game-text-scale: 1.33; }
+[data-game-text-size="small"] { --game-text-scale: .75; }
 .GravityCopyTermView-promptText { font-size: calc(1em * var(--game-text-scale, 1)); }
 .GravityModeControls-pauseRow { display: flex; align-items: stretch; gap: .5rem; }
 .GravityModeControls-pauseRow > .UIButton { min-width: 0; flex: 1; }
@@ -2705,4 +2709,26 @@
 /* Open mobile Options near the header, keeping the primary action in view. */
 @media (max-width: 768px), (pointer: coarse) {
   .GravityUIModal.GravityUIModal--options { padding-top: 2rem; }
+}
+
+/* Only the learning content is constrained to the screen; the square rock may overhang. */
+.GravityTerm { visibility: var(--asteroid-visibility, hidden); }
+.GravityTerm-content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: var(--asteroid-content-width);
+}
+.GravityTerm .dvzmxm1 { max-width: 100%; }
+.GravityTerm .i13a2vzw {
+  display: block;
+  margin: 0 auto;
+  box-sizing: border-box;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(200px * var(--game-text-scale, 1));
+  object-fit: contain;
 }

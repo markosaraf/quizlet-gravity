@@ -1,4 +1,4 @@
-import { GameplayTextToggle } from './GameplayTextToggle';
+import { GameplayTextToggle, type GameTextStep } from './GameplayTextToggle';
 import { memo } from 'react';
 import Link from 'next/link';
 import { GAME_STATES } from '@/lib/gravity/constants';
@@ -17,7 +17,7 @@ interface ControlsProps {
   onRestart: () => void;
   onNewSet: () => void;
   exitHref?: string;
-  largeGameText?: boolean;
+  gameTextStep?: GameTextStep;
   onToggleGameText?: () => void;
 }
 
@@ -31,7 +31,7 @@ function ModeControlsBase({
   onRestart,
   onNewSet,
   exitHref,
-  largeGameText = false,
+  gameTextStep = 0,
   onToggleGameText,
 }: ControlsProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
@@ -66,7 +66,7 @@ function ModeControlsBase({
 
         <div style={{ marginTop: '2rem', display: 'grid', gap: '1rem' }}>
           <div className="GravityModeControls-pauseRow">
-          {onToggleGameText && <GameplayTextToggle large={largeGameText} onToggle={onToggleGameText}/>}
+          {onToggleGameText && <GameplayTextToggle step={gameTextStep} onToggle={onToggleGameText}/>}
           <button
             className="UIButton UIButton--hero UIButton--fill GravityGame-pause"
             disabled={pauseDisabled}
@@ -114,7 +114,7 @@ interface SiteHeaderProps {
   onRestart?: () => void;
   onNewSet?: () => void;
   exitHref?: string;
-  largeGameText?: boolean;
+  gameTextStep?: GameTextStep;
   onToggleGameText?: () => void;
 }
 
@@ -156,7 +156,7 @@ export function SiteHeader({
   onRestart,
   onNewSet,
   exitHref,
-  largeGameText = false,
+  gameTextStep = 0,
   onToggleGameText,
 }: SiteHeaderProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
@@ -192,7 +192,7 @@ export function SiteHeader({
               aria-label="ESC: skip this answer"
               title="Skip this answer (ESC)"
             >ESC</button>
-            {onToggleGameText && <GameplayTextToggle className="GravitySiteHeader-iconButton" large={largeGameText} onToggle={onToggleGameText}/>}
+            {onToggleGameText && <GameplayTextToggle className="GravitySiteHeader-iconButton" step={gameTextStep} onToggle={onToggleGameText}/>}
             <button
               type="button"
               className="GravitySiteHeader-iconButton GravityGame-pause"

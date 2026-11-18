@@ -56,6 +56,24 @@ try{for(const[name,engine]of[['Chromium',chromium],['WebKit',webkit]]){
    return data;
   }
   await bounds('first asteroid with narrow actual container');
+  // Check the entire horizontal range, including the rightmost legal position.
+  // Original Gravity used one independent Math.random() per asteroid; do not
+  // replace that with forced alternating lanes merely to avoid random clusters.
+  await page.setViewportSize({width:1792,height:1000});
+  for(const size of ['normal','large','small']) {
+   let previous=-Infinity;
+   for(const lane of [0,0.1,0.25,0.5,0.75,0.9,0.99999]) {
+    await update({width:1597,left:195,text:'Continued development and improvement of a person’s emotional maturity and ability to handle life’s experiences',manualSize:size,image:'',lane},true);
+    const data=await bounds('full range '+size+' '+lane);
+    const expected=data.start+12+lane*(data.end-data.start-24-(data.text.right-data.text.left));
+    assert(Math.abs(data.text.left-expected)<1,'Random lane must cover the entire safe range without a left/right bias');
+    assert(data.text.left>previous,'Every higher random lane must land farther right');
+    previous=data.text.left;
+    if(lane===0) assert(Math.abs(data.text.left-data.start-12)<1,'Reach left margin');
+    if(lane===0.99999) assert(Math.abs(data.end-data.text.right-12)<1,'Reach right margin');
+   }
+  }
+  console.log('PASS '+name+': full left-to-right range at normal, larger and smaller sizes, including both 12px margins.');
   const samples=['Short word','VeryLongUnbrokenWord'.repeat(22),'These are contextual influences on dispositional characteristics and narrative descriptions which rely on life circumstances and change over time. '.repeat(3),'日本語の長い学習問題と説明文です。'.repeat(12)];
   for(const width of[320,390,768,1280]){
    await page.setViewportSize({width,height:900});

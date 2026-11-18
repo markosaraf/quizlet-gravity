@@ -27,6 +27,7 @@ const server=createServer(async(req,res)=>{try{
  if(req.url==='/gravity.css'){res.setHeader('Content-Type','text/css');return res.end(await readFile('src/gravity/gravity.css'));}
  if(req.url.startsWith('/assets/')&&!req.url.includes('..'))return res.end(await readFile('public'+req.url));
  if(req.url==='/wide.svg'){res.setHeader('Content-Type','image/svg+xml');return setTimeout(()=>res.end('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400"><rect width="1600" height="400" fill="#5266aa"/></svg>'),120);}
+ if(req.url==='/portrait.svg'){res.setHeader('Content-Type','image/svg+xml');return res.end('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="520"><rect width="400" height="520" fill="#777"/><text x="200" y="260" text-anchor="middle" font-size="45" fill="white">Photo</text></svg>');}
  res.setHeader('Content-Type','text/html');res.end('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/gravity.css"><style>*{box-sizing:border-box}body{margin:0}#area{position:relative;height:1800px;overflow:hidden}.static-fixture .GravityTerm{animation:none!important;top:40px!important;opacity:1!important}</style><div id="root"></div><script src="/fixture.js"></script>');
  }catch{res.statusCode=404;res.end();}
 });
@@ -101,6 +102,39 @@ try{for(const[name,engine]of[['Chromium',chromium],['WebKit',webkit]]){
     assert(Math.abs(data.text.right-data.text.left-Math.min(229*scale,326))<1,'Image prompts must retain the original 229px content width, scaled and constrained to the viewport');
    }
   }
+  // Verify content against the actual opaque sprite, not the sizing formula.
+  await page.setViewportSize({width:390,height:900});
+  let smallestImageRock;
+  for(const [size,scale] of [['normal',1],['large',1.33],['small',0.75]]) {
+   for(const meteor of [false,true]) for(const lane of [0,0.99999]) {
+    await update({width:390,left:0,image:'/portrait.svg',definition:'1',side:'definition',manualSize:size,meteor,lane},true);
+    await page.waitForFunction(()=>document.querySelector('.GravityTerm img')?.naturalWidth===400);
+    const data=await bounds('compact image asteroid '+size+' '+meteor+' '+lane);
+    const detail=await page.evaluate(async meteor=>{
+     const rock=document.querySelector('.GravityTerm'),r=rock.getBoundingClientRect(),pic=rock.querySelector('img').getBoundingClientRect();
+     const range=document.createRange();range.selectNodeContents(rock.querySelector('.GravityTerm-text'));
+     const boxes=[pic,...range.getClientRects()];
+     const sprite=new Image();sprite.src='/assets/gravity/asteroids/'+(meteor?'Red':'Blue')+'LargeAsteroid.png';await sprite.decode();
+     const canvas=document.createElement('canvas');canvas.width=canvas.height=366;const ctx=canvas.getContext('2d');
+     ctx.drawImage(sprite,0,5,366,366,0,0,366,366);
+     const alpha=[];
+     for(const box of boxes)for(const x of[box.left,box.right])for(const y of[box.top,box.bottom]){
+      const px=Math.floor((x-r.left)/r.width*366),py=Math.floor((y-r.top)/r.height*366);
+      alpha.push(px>=0&&px<366&&py>=0&&py<366?ctx.getImageData(px,py,1,1).data[3]:0);
+     }
+     const content=rock.querySelector('.GravityTerm-content').getBoundingClientRect();return{alpha,imageHeight:pic.height,boxes:boxes.map(b=>({left:b.left-content.left-content.width/2,right:b.right-content.left-content.width/2,top:b.top-content.top-content.height/2,bottom:b.bottom-content.top-content.height/2}))};
+    },meteor);
+    assert(detail.alpha.every(a=>a>=250),'Picture and caption corners must remain inside the solid original rock');
+    assert(Math.abs(detail.imageHeight-200*scale)<1,'Compact rock must not shrink the displayed picture');
+    if(size==='normal'&&!meteor){
+     if(lane===0){smallestImageRock=data.rock.width;assert(data.rock.width<350,'Portrait fit: '+JSON.stringify({data,detail}));}
+     else assert(data.rock.width>smallestImageRock*1.08&&data.rock.width<smallestImageRock*1.12,'Stable size variation makes some image rocks about 10% larger');
+    }
+   }
+  }
+  await update({manualSize:'normal',lane:0.3,meteor:false},true);
+  await page.screenshot({path:'/tmp/quizlet-compact-image-'+name.toLowerCase()+'.png'});
+  console.log('PASS '+name+': smaller portrait rocks, unchanged picture size, stable size variation, and image/caption corners inside blue/red artwork at all sizes.');
   // The actual button cycles larger → normal → smaller → normal; both rock
   // and text scale together, and the next click's label stays truthful.
   await update({width:350,left:20,text:'Read this question',image:'',side:'word',meteor:false,manualSize:null},true);

@@ -1,6 +1,7 @@
 import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { GAME_STATES, getMaxTextLength, getTermSize } from '@/lib/gravity/constants';
 import type { GravityTerm } from '@/lib/gravity/types';
+import { imageAsteroidSize, IMAGE_CONTENT_CENTER_Y } from '@/lib/gravity/image-asteroid-size';
 
 interface Props {
   liveTermId: string;
@@ -36,6 +37,7 @@ function AsteroidBase({
   const contentRef = useRef<HTMLDivElement>(null);
   // A stable lane keeps this asteroid from rerolling on resize or a text-size change.
   const [lane] = useState(() => Math.random());
+  const [imageSizeVariation] = useState(() => Math.random());
   const nominalSize = termSize * textScale;
   // Original image prompts use fixed 60px/75px padding, regardless of caption
   // length; text-only prompts use the original length-dependent padding.
@@ -62,8 +64,20 @@ function AsteroidBase({
       asteroid.style.setProperty('--asteroid-content-width', `${contentWidth}px`);
       // Measure wrapped text and loaded images at the final available width.
       // Enlarge uniformly when necessary: never squeeze/stretch the artwork.
-      const contentHeight = content.getBoundingClientRect().height;
-      const diameter = Math.max(nominalSize, Math.ceil(contentHeight / 0.6));
+      const contentBounds = content.getBoundingClientRect();
+      const contentHeight = contentBounds.height;
+      let diameter = Math.max(nominalSize, Math.ceil(contentHeight / 0.6));
+      if (hasImage) {
+        const range = document.createRange();
+        range.selectNodeContents(content.querySelector('.GravityTerm-text')!);
+        const picture = content.querySelector('img');
+        const rectangles = [...range.getClientRects(), ...(picture ? [picture.getBoundingClientRect()] : [])];
+        const cx = contentBounds.left + contentBounds.width / 2;
+        const cy = contentBounds.top + contentBounds.height / 2;
+        diameter = imageAsteroidSize(rectangles.filter(r => r.width && r.height).map(r => ({
+          left: r.left - cx, right: r.right - cx, top: r.top - cy, bottom: r.bottom - cy,
+        })), textScale, imageSizeVariation);
+      }
       const contentInset = (diameter - contentWidth) / 2;
       const left = start + margin + lane * Math.max(0, available - contentWidth) - contentInset;
       asteroid.style.setProperty('--asteroid-size', `${diameter}px`);
@@ -86,7 +100,7 @@ function AsteroidBase({
       viewport?.removeEventListener('resize', measure);
       viewport?.removeEventListener('scroll', measure);
     };
-  }, [nominalSize, nominalContentWidth, lane]);
+  }, [nominalSize, nominalContentWidth, lane, hasImage, textScale, imageSizeVariation]);
 
   const zIndex = (() => {
     const n = parseInt(liveTermId.split('-')[3] ?? '0', 10);
@@ -123,7 +137,7 @@ function AsteroidBase({
         zIndex,
       }}
     >
-      <div ref={contentRef} className="GravityTerm-content">
+      <div ref={contentRef} className="GravityTerm-content" style={hasImage ? { top: `${IMAGE_CONTENT_CENTER_Y * 100}%` } : undefined}>
         {hasImage ? (
           <div className="dvzmxm1">
             <img

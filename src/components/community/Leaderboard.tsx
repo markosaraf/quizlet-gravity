@@ -35,9 +35,14 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
   const params=new URLSearchParams({limit:String(PAGE_SIZE),offset:String(offset??0)});
   if(aroundPlayer&&offset===null)params.set('around','me');
   fetch(`${adminView?'/api/admin/leaderboards':'/api/community/sets'}/${id}${adminView?'':'/leaderboard'}?${params}`,{signal:controller.signal,cache:'no-store'})
-   .then(async response=>{const body=await response.json();if(!response.ok)throw Error(body.error||'Could not load the leaderboard.');return body as Page;})
+   .then(async response=>{
+    if(!response.ok)throw Error('Could not load the leaderboard. Please retry.');
+    const body=await response.json();
+    if(!body||!Array.isArray(body.entries)||!Number.isInteger(body.total)||body.total<0)throw Error('Invalid leaderboard response');
+    return body as Page;
+   })
    .then(page=>{if(!controller.signal.aborted)setResult({key:requestKey,page});})
-   .catch(error=>{if(!controller.signal.aborted)setResult({key:requestKey,error:error.message});});
+   .catch(()=>{if(!controller.signal.aborted)setResult({key:requestKey,error:'Could not load the leaderboard. Please retry.'});});
   return()=>controller.abort();
  },[id,offset,ready,requestKey,aroundPlayer,adminView]);
  const current=result?.key===requestKey?result:null;

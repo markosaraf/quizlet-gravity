@@ -14,7 +14,7 @@ import { isCardImage } from '@/lib/gravity/card-images';
 import {enqueueOvertakenNotifications} from '@/lib/community/notification-events';
 import {publishLeaderboardNotifications} from '@/lib/community/notification-queue';
 export const runtime='nodejs';
-const noCache={'Cache-Control':'no-store'};
+const noCache={'Cache-Control':'no-store','X-Robots-Tag':'noindex'};
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:noCache});
 const uuid=z.string().uuid();
 const imageSchema=z.string().refine(isCardImage,'Choose a supported image.').optional();

@@ -97,4 +97,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 /* Guest play stays visible in both themes, independent of the selected tab. */
 .community-panel .community-tabs button.community-guest-option{background:#d4af37;color:#000;border-color:#d4af37}
 .community-panel .community-tabs button.community-guest-option:hover:not(:disabled){background:#c6a332;border-color:#c6a332;color:#000}
-.community-tabs button[aria-pressed=true]{box-shadow:inset 0 -3px 0 currentColor}
+
+/* Account selection must be consistent before, during and after hover. */
+.community-panel .community-tabs button:not(.community-guest-option)[aria-pressed=true],
+.community-panel .community-tabs button:not(.community-guest-option)[aria-pressed=true]:hover:not(:disabled){background:#4255b4;color:#fff;border-color:#4255b4}
+
+.community-tabs button[aria-pressed=true]{box-shadow:inset 0 -3px 0 #000}

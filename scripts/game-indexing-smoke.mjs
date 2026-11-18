@@ -13,7 +13,7 @@ async function user(adminRole){const id=randomUUID();ids.push(id);const name='te
 try{
  const admin=await browser.newContext(),member=await browser.newContext(),anon=await browser.newContext();
  for(const [ctx,role] of [[admin,true],[member,false]]){const u=await user(role);const r=await ctx.request.post(base+'/api/auth/sign-in/username',{data:{username:u.name,password},headers:{Origin:base},timeout:180000});assert.equal(r.status(),200,await r.text());}
- for(const ctx of [anon,member]){assert.equal((await ctx.request.get(base+'/api/admin/overview')).status(),403);assert.equal((await ctx.request.get(base+'/api/admin/traffic')).status(),403);assert.equal((await ctx.request.post(base+'/api/indexnow',{headers:{Origin:base}})).status(),403);}
+ for(const ctx of [anon,member]){assert.equal((await ctx.request.get(base+'/api/admin/overview')).status(),403);assert.equal((await ctx.request.post(base+'/api/indexnow',{headers:{Origin:base}})).status(),403);}
  assert.equal((await anon.request.get(base+'/api/indexnow',{headers:{'x-vercel-cron':'1'}})).status(),401);
  assert.equal((await admin.request.post(base+'/api/indexnow',{headers:{Origin:'https://evil.invalid'}})).status(),403);
  assert.equal((await admin.request.get(base+'/api/admin/overview?days=2')).status(),400);

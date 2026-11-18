@@ -12,12 +12,13 @@ end
 end
 group.new_file('Info.plist')
 group.new_file('Mac.entitlements')
+group.new_file('App.entitlements')
 target.build_configurations.each do |config|
   config.build_settings.merge!({
     'PRODUCT_BUNDLE_IDENTIFIER' => 'com.quizletgravity.ios',
     'PRODUCT_NAME' => 'QuizletGravity',
-    'MARKETING_VERSION' => '2.0.1',
-    'CURRENT_PROJECT_VERSION' => '20',
+    'MARKETING_VERSION' => '2.0.3',
+    'CURRENT_PROJECT_VERSION' => '29',
     'INFOPLIST_FILE' => 'QuizletGravity/Info.plist',
     'SWIFT_VERSION' => '5.0',
     'TARGETED_DEVICE_FAMILY' => '1,2,6',
@@ -28,6 +29,7 @@ target.build_configurations.each do |config|
     'IPHONEOS_DEPLOYMENT_TARGET' => '16.0',
     'SUPPORTS_MACCATALYST' => 'YES',
     'DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER' => 'NO',
+    'CODE_SIGN_ENTITLEMENTS' => 'QuizletGravity/App.entitlements',
     'CODE_SIGN_ENTITLEMENTS[sdk=macosx*]' => 'QuizletGravity/Mac.entitlements',
     'ENABLE_APP_SANDBOX[sdk=macosx*]' => 'YES',
     'DEVELOPMENT_TEAM' => 'K2273P6PJC',

@@ -133,9 +133,53 @@ public final class MainActivity extends ComponentActivity {
                     "quizletgravity");
         } catch (Exception e) { Toast.makeText(this, "Could not open sign-in. Please try again.", Toast.LENGTH_LONG).show(); }
     }
+    private String requestedUrl = NavigationPolicy.HOME;
+    private final ActivityResultLauncher<String> notificationPermission = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) enableNotifications(); else notificationStatus("denied");
+            });
+    private void notificationStatus(String status) {
+        if (webView != null && NavigationPolicy.isInternal(webView.getUrl()))
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('quizlet-native-notifications',{detail:{status:'" + status + "'}}));", null);
+    }
+    private void enableNotifications() {
+        NotificationRegistration.optIn(this);
+        NotificationRegistration.sync(this, true, registered -> notificationStatus(registered ? "enabled" : "error"));
+    }
+    private void requestNotificationsAfterSignup() {
+        android.content.SharedPreferences preferences = getSharedPreferences("notifications", MODE_PRIVATE);
+        if (preferences.getBoolean("signup_prompt_shown", false) || NotificationRegistration.optedIn(this)) {
+            NotificationRegistration.sync(this, false, null);
+            return;
+        }
+        requestNotifications();
+    }
+    private void requestNotifications() {
+        getSharedPreferences("notifications", MODE_PRIVATE).edit().putBoolean("signup_prompt_shown", true).apply();
+        NotificationRegistration.createChannel(this);
+        if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+        else if (!androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()) notificationStatus("denied");
+        else if (android.os.Build.VERSION.SDK_INT < 33 && !NotificationRegistration.optedIn(this)) {
+            new AlertDialog.Builder(this).setTitle("Leaderboard notifications")
+                    .setMessage("Get notified when another player overtakes you, and earn your place back.")
+                    .setPositiveButton("Allow", (dialog, which) -> enableNotifications())
+                    .setNegativeButton("Not now", (dialog, which) -> notificationStatus("denied"))
+                    .show();
+        } else enableNotifications();
+    }
+
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        completeSignIn(intent.getData());
+        setIntent(intent);
+        String link = Intent.ACTION_VIEW.equals(intent.getAction())
+                ? NavigationPolicy.appLink(intent.getDataString()) : null;
+        if (link != null) {
+            requestedUrl = link;
+            loadHome();
+        } else {
+            completeSignIn(intent.getData());
+        }
     }
     private void completeSignIn(Uri uri) {
         if (uri == null || !"quizletgravity".equals(uri.getScheme()) || !"auth".equals(uri.getHost()) || authState == null || !authState.equals(uri.getQueryParameter("state")) || System.currentTimeMillis()-authStarted > 600000) return;
@@ -148,6 +192,7 @@ public final class MainActivity extends ComponentActivity {
     @Override public void onCreate(Bundle state) {
         SplashScreen.installSplashScreen(this);
         super.onCreate(state);
+        NotificationRegistration.createChannel(this);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
@@ -177,6 +222,9 @@ public final class MainActivity extends ComponentActivity {
         });
         createOverlay();
         createWebView();
+        String link = Intent.ACTION_VIEW.equals(getIntent().getAction())
+                ? NavigationPolicy.appLink(getIntent().getDataString()) : null;
+        if (link != null) requestedUrl = link;
         loadHome();
         handler.post(updateNavigationSurface);
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -243,7 +291,7 @@ public final class MainActivity extends ComponentActivity {
                 });
         }
         WebSettings settings = webView.getSettings();
-        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp");
+        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp NotificationOnboarding/1");
         // The first-party site needs JS and DOM storage for its game and remembered sets.
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -290,6 +338,13 @@ public final class MainActivity extends ComponentActivity {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 if (NavigationPolicy.isInternal(url)) {
+                    if (request.isForMainFrame() && "/native/notifications".equals(request.getUrl().getPath())) {
+                        if (NavigationPolicy.isInternal(view.getUrl())) {
+                            if ("1".equals(request.getUrl().getQueryParameter("afterSignup"))) requestNotificationsAfterSignup();
+                            else if (request.hasGesture()) requestNotifications();
+                        }
+                        return true;
+                    }
                     if (request.isForMainFrame() && "/native/start".equals(request.getUrl().getPath())) { beginSignIn(); return true; }
                     return false;
                 }
@@ -307,6 +362,7 @@ public final class MainActivity extends ComponentActivity {
             @Override public void onPageCommitVisible(WebView view, String url) { revealPage(view, url); }
             @Override public void onPageFinished(WebView view, String url) {
                 revealPage(view, url);
+                if (NavigationPolicy.isInternal(url)) NotificationRegistration.sync(MainActivity.this, false, null);
             }
 
             @Override public void onReceivedError(WebView view, WebResourceRequest request,
@@ -390,7 +446,7 @@ public final class MainActivity extends ComponentActivity {
         handler.removeCallbacks(loadTimeout);
         handler.postDelayed(loadTimeout, 30000);
         logo.start(this::finishIntro);
-        webView.loadUrl(NavigationPolicy.HOME);
+        webView.loadUrl(requestedUrl);
     }
 
     private void showError() {
@@ -444,6 +500,7 @@ public final class MainActivity extends ComponentActivity {
         if (logo != null) logo.resumeMotion();
         if (revealAnimation != null) revealAnimation.resume();
         if (webView != null) { webView.resumeTimers(); webView.onResume(); }
+        NotificationRegistration.sync(this, false, null);
     }
     @Override protected void onDestroy() {
         cancelReveal();

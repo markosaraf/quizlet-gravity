@@ -40,7 +40,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "How do I import a Quizlet set?",
-    "answer": "Choose Import game from Quizlet, paste a public Quizlet set link and select Add & play."
+    "answer": "Choose Search Quizlet & import, search for a public set or paste its Quizlet link, then import and play."
   },
   {
     "question": "How do I create my own game and how do I edit an existing Quizlet set?",
@@ -64,7 +64,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "When does my score appear on the leaderboard?",
-    "answer": "Choose Play this game on a shared game. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears on the leaderboard."
+    "answer": "Choose Play & learn on a shared game. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears on the leaderboard."
   },
   {
     "question": "What information is public?",

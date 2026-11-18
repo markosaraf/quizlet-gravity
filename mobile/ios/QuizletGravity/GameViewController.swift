@@ -5,7 +5,7 @@ import AuthenticationServices
 import CryptoKit
 
 final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, ASWebAuthenticationPresentationContextProviding {
-    private let home = URL(string: "https://www.quizletgravity.com/")!
+    private var requestedURL = URL(string: "https://www.quizletgravity.com/")!
     private var webView: WKWebView!
     private var authSession: ASWebAuthenticationSession?
     private var intro: IntroView?
@@ -30,7 +30,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         view.backgroundColor = pageBackground
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
-        configuration.applicationNameForUserAgent = "QuizletGravityApp"
+        configuration.applicationNameForUserAgent = "QuizletGravityApp NotificationOnboarding/1"
         #if targetEnvironment(macCatalyst)
         // Use Safari's desktop layout without iPad scaling or touch-layout overrides.
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
@@ -330,6 +330,22 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         overlay.start()
     }
 
+    func openAppLink(_ url: URL) {
+        guard isInternal(url), var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return }
+        let path = components.path.isEmpty ? "/" : components.path
+        let patterns = [
+            "^/(?:[a-zA-Z]{2}(?:-[a-zA-Z]{2})?/)?[0-9]{1,20}/[^/]+-flash-cards/?$",
+            "^/sets(?:/[a-fA-F0-9-]{36})?/?$",
+            "^/(?:example|my-games|create-set|import-game|import-edit)?/?$"
+        ]
+        guard patterns.contains(where: { path.range(of: $0, options: .regularExpression) != nil }) else { return }
+        components.host = "www.quizletgravity.com"
+        components.port = nil
+        guard let target = components.url else { return }
+        requestedURL = target
+        if isViewLoaded { loadGame() }
+    }
+
     private func loadGame() {
         generation += 1
         loaded = false
@@ -337,7 +353,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         webView.stopLoading()
         showIntro()
         armTimeout()
-        webView.load(URLRequest(url: home, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
+        webView.load(URLRequest(url: requestedURL, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
     }
 
     private func armTimeout() {
@@ -382,6 +398,16 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url else { decisionHandler(.cancel); return }
         if isInternal(url) {
+            if url.path == "/native/notifications" {
+                if action.targetFrame?.isMainFrame == true, action.sourceFrame.isMainFrame,
+                   let source = action.sourceFrame.request.url, isInternal(source) {
+                    PushNotifications.shared.attach(webView, controller: self)
+                    let afterSignup = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.contains { $0.name == "afterSignup" && $0.value == "1" } == true
+                    if afterSignup { PushNotifications.shared.requestAfterSignup() }
+                    else if action.navigationType == .linkActivated { PushNotifications.shared.requestPermission() }
+                }
+                decisionHandler(.cancel); return
+            }
             if url.path == "/native/start" { beginSignIn(); decisionHandler(.cancel); return }
             if action.targetFrame == nil { webView.load(action.request); decisionHandler(.cancel) }
             else { decisionHandler(.allow) }
@@ -402,6 +428,8 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard let url = webView.url, isInternal(url) else { fail(); return }
+        PushNotifications.shared.attach(webView, controller: self)
+        PushNotifications.shared.sync()
         configureInputLayout()
         webView.evaluateJavaScript(Self.gameInputObserver, in: nil, in: .defaultClient, completionHandler: nil)
         #if !targetEnvironment(macCatalyst)
@@ -434,6 +462,8 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         webView.evaluateJavaScript("(function(){if(!document.querySelector('.GravityGameplayView:not(.has-splash):not(.is-gameOver)'))return;var b=Array.from(document.querySelectorAll('button')).find(function(b){return !b.disabled && (b.getAttribute('aria-label')==='Pause' || b.textContent.trim()==='Pause');});window.__gravityPausedByApp=!!b;if(b)b.click();})()", completionHandler: nil)
     }
     func sceneDidBecomeActive() {
+        PushNotifications.shared.refreshAuthorization()
+        PushNotifications.shared.sync()
         intro?.resume()
         configureInputLayout()
         if let url = webView.url, isInternal(url) {

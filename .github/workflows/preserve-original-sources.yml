@@ -1,0 +1,10 @@
+name: Preserve original Gravity sources
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/check-original-sources.mjs

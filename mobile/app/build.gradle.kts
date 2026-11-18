@@ -1,6 +1,6 @@
 import java.util.Properties
 
-plugins { id("com.android.application") }
+plugins { id("com.android.application"); id("com.google.gms.google-services") }
 
 val signingPath = providers.environmentVariable("QUIZLETGRAVITY_SIGNING_PROPERTIES").orNull
 val signing = Properties().apply {
@@ -14,8 +14,8 @@ android {
         applicationId = "com.quizletgravity.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "2.0.1"
+        versionCode = 26
+        versionName = "2.0.14"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -42,8 +42,12 @@ android {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
+    implementation("com.google.firebase:firebase-messaging")
     implementation("androidx.webkit:webkit:1.12.1")
     implementation("androidx.activity:activity:1.10.1")
+    // Firebase brings Fragment 1.1; Activity Result APIs require a modern version.
+    implementation("androidx.fragment:fragment:1.8.9")
     implementation("androidx.browser:browser:1.10.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     testImplementation("junit:junit:4.13.2")

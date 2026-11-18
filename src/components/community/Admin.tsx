@@ -5,6 +5,8 @@ import {useRouter} from 'next/navigation';
 import {authClient} from '@/lib/community/auth-client';
 import {QuizletDiscovery} from './QuizletDiscovery';
 import {sharedSetPath} from '@/lib/community/set-links';
+import './admin-overview.css';
+import {AdminNotificationSettings} from './Notifications';
 export function useAdmin(){
  const {data:session}=authClient.useSession();
  const id=session?.user.id;
@@ -30,7 +32,7 @@ export function AdminUsers(){
  useEffect(()=>{let active=true;if(!admin)return;const timer=setTimeout(()=>{setLoading(true);fetch(`/api/admin/${kind}?q=${encodeURIComponent(q)}&offset=${offset}`).then(async r=>{const value=await r.json();if(!r.ok)throw Error(value.error);if(active){setData(value);setError('');}}).catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});},200);return()=>{active=false;clearTimeout(timer);};},[admin,kind,q,offset,version]);
  async function deleteItem(id:string,name:string){if(!confirm(kind==='users'?`Delete user “${name}”? Their login and personal details will be removed. Existing scores will say “Deleted user”.`:`Delete “${name}” and its leaderboard? This cannot be undone.`))return;setBusy(id);try{await remove(kind,id);setVersion(v=>v+1);}catch(e){setError((e as Error).message);}finally{setBusy('');}}
  if(!admin)return <main className="community-page"><h1>Users</h1><p>Sign in with your administrator account to manage users and games.</p></main>;
- return <main className="community-page"><TutorialSettings/><CharacterSettings/><QuizletDiscovery onImported={()=>setVersion(v=>v+1)}/><ReportQueue/><h1>{kind==='users'?'Users':'Manage games'}</h1><div className="community-tabs"><button aria-pressed={kind==='users'} onClick={()=>{setKind('users');setOffset(0);setQ('');}}>Users</button><button aria-pressed={kind==='sets'} onClick={()=>{setKind('sets');setOffset(0);setQ('');}}>Games</button></div>{kind==='users'&&data.total!==undefined&&<p><strong>{data.total} users</strong> · {data.accounts} accounts · {data.guests} guests</p>}<label>Search {kind}<input type="search" value={q} onChange={e=>{setQ(e.target.value);setOffset(0);}}/></label>{error&&<p role="alert">{error}</p>}{loading?<p>Loading…</p>:<ul className="admin-list">{kind==='users'?data.users?.map(u=><li key={u.id}><div><strong>{u.username}</strong>{u.email&&<small>{u.email}</small>}<small>{u.admin?'Administrator':u.guest?'Guest':'Account'}</small></div><button disabled={!!busy||u.admin} onClick={()=>deleteItem(u.id,u.username)}>{busy===u.id?'Deleting…':'Delete user'}</button></li>):data.sets?.map(s=><li key={s.id}><div><Link href={sharedSetPath(s)}>{s.title}</Link><small>{s.term_count} terms · {s.creator}</small></div><button disabled={!!busy} onClick={()=>deleteItem(s.id,s.title)}>{busy===s.id?'Deleting…':'Delete game'}</button></li>)}</ul>}<div className="community-pagination"><button disabled={!offset||loading} onClick={()=>setOffset(Math.max(0,offset-50))}>Previous</button><button disabled={!data.hasMore||loading} onClick={()=>setOffset(offset+50)}>Next</button></div></main>;
+ return <main className="community-page"><Link href="/admin/overview" className="overview-entry">Admin overview →</Link><AdminNotificationSettings/><TutorialSettings/><GamePageSettings/><QuizletSearchSettings/><CharacterSettings/><QuizletDiscovery onImported={()=>setVersion(v=>v+1)}/><ReportQueue/><h1>{kind==='users'?'Users':'Manage games'}</h1><div className="community-tabs"><button aria-pressed={kind==='users'} onClick={()=>{setKind('users');setOffset(0);setQ('');}}>Users</button><button aria-pressed={kind==='sets'} onClick={()=>{setKind('sets');setOffset(0);setQ('');}}>Games</button></div>{kind==='users'&&data.total!==undefined&&<p><strong>{data.total} users</strong> · {data.accounts} accounts · {data.guests} guests</p>}<label>Search {kind}<input type="search" value={q} onChange={e=>{setQ(e.target.value);setOffset(0);}}/></label>{error&&<p role="alert">{error}</p>}{loading?<p>Loading…</p>:<ul className="admin-list">{kind==='users'?data.users?.map(u=><li key={u.id}><div><strong>{u.username}</strong>{u.email&&<small>{u.email}</small>}<small>{u.admin?'Administrator':u.guest?'Guest':'Account'}</small><small>Created <time dateTime={u.created_at} title={new Date(u.created_at).toLocaleString(undefined,{timeZoneName:'short'})}>{new Date(u.created_at).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}</time></small></div><button disabled={!!busy||u.admin} onClick={()=>deleteItem(u.id,u.username)}>{busy===u.id?'Deleting…':'Delete user'}</button></li>):data.sets?.map(s=><li key={s.id}><div><Link href={sharedSetPath(s)}>{s.title}</Link><small>{s.term_count} terms · {s.creator}</small></div><button disabled={!!busy} onClick={()=>deleteItem(s.id,s.title)}>{busy===s.id?'Deleting…':'Delete game'}</button></li>)}</ul>}<div className="community-pagination"><button disabled={!offset||loading} onClick={()=>setOffset(Math.max(0,offset-50))}>Previous</button><button disabled={!data.hasMore||loading} onClick={()=>setOffset(offset+50)}>Next</button></div></main>;
 }
 
 interface ReportRow{id:string;target_kind:'set'|'user';target_id:string;reason:string;created_at:string;title?:string;public_id?:string;username?:string}
@@ -90,4 +92,39 @@ function CharacterSettings(){
   </li>)}</ul>
   {error&&<p role="alert">{error}</p>}
  </section>;
+}
+
+function GamePageSettings(){
+ const [enabled,setEnabled]=useState<boolean|null>(null);
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{
+  let active=true;
+  fetch('/api/admin/settings').then(async response=>{
+   const value=await response.json();if(!response.ok)throw Error(value.error);
+   if(active)setEnabled(value.gamePageTotalEnabled!==false);
+  }).catch(e=>{if(active)setError(e.message);});
+  return()=>{active=false;};
+ },[]);
+ async function toggle(){
+  if(enabled===null||busy)return;
+  setBusy(true);setError('');
+  try{
+   const response=await fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gamePageTotalEnabled:!enabled})});
+   const value=await response.json();if(!response.ok)throw Error(value.error);
+   setEnabled(value.gamePageTotalEnabled);
+  }catch(e){setError((e as Error).message);}finally{setBusy(false);}
+ }
+ return <section aria-labelledby="game-page-setting-title">
+  <h2 id="game-page-setting-title">Game page counter</h2>
+  <p>Show the total number of pages: “1 / 8”. Turn off to show only the current page: “1”.</p>
+  <button role="switch" aria-label="Show total game pages" aria-checked={enabled===true} disabled={enabled===null||busy} onClick={()=>void toggle()}>{enabled===null?'Loading…':enabled?'On':'Off'}</button>
+  {error&&<p role="alert">{error}</p>}
+ </section>;
+}
+
+function QuizletSearchSettings(){
+ const [enabled,setEnabled]=useState<boolean|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{let active=true;fetch('/api/admin/settings').then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);if(active)setEnabled(d.quizletSearchEnabled);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[]);
+ async function toggle(){setBusy(true);setError('');try{const r=await fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quizletSearchEnabled:!enabled})});const d=await r.json();if(!r.ok)throw Error(d.error);setEnabled(d.quizletSearchEnabled);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ return <section aria-labelledby="quizlet-search-setting-title"><h2 id="quizlet-search-setting-title">Quizlet search in the importer</h2><p>On: let players search Quizlet by title or creator and preview terms before importing. Off: show only the paste-link option.</p><button role="switch" aria-label="Allow players to search Quizlet" aria-checked={enabled===true} disabled={enabled===null||busy} onClick={()=>void toggle()}>{enabled===null?'Loading…':enabled?'On':'Off'}</button>{error&&<p role="alert">{error}</p>}</section>;
 }

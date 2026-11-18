@@ -4,13 +4,14 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// Same Q path, colour and uniform scale as the verified iPad launcher icon.
-// Rounded outer corners are for browsers, which do not apply an iOS icon mask.
+// Original-gold, thick 3D Q. Tabs use the transparent SVG; search/touch icons
+// use the corresponding gold-on-blue PNG.
 const svg = await fs.readFile(path.join(root, 'assets/branding/app-icon.svg'));
 const tabSvg = await fs.readFile(path.join(root, 'assets/branding/tab-icon.svg'));
+const appPng = await fs.readFile(path.join(root, 'assets/branding/app-icon.png'));
 await fs.writeFile(path.join(root, 'public/logo.svg'), svg);
 // Browser tabs use the transparent gold mark. Keep the former URL working too.
-for (const name of ['public/tab-gold.svg', 'public/icon.svg']) {
+for (const name of ['public/tab-original-gold-thick.svg', 'public/tab-gold-thick-fit.svg', 'public/tab-gold.svg', 'public/icon.svg']) {
   await fs.writeFile(path.join(root, name), tabSvg);
 }
 for (const [name, size] of [
@@ -19,11 +20,11 @@ for (const [name, size] of [
   ['public/icon-192.png', 192],
   ['src/app/apple-icon.png', 180],
 ]) {
-  await sharp(svg).resize(size, size).png().toFile(path.join(root, name));
+  await sharp(appPng).resize(size, size).png().toFile(path.join(root, name));
 }
 // ICO directory with lossless PNG frames at the advertised favicon sizes.
 const sizes = [16, 32, 48];
-const frames = await Promise.all(sizes.map(size => sharp(svg).resize(size, size).png().toBuffer()));
+const frames = await Promise.all(sizes.map(size => sharp(tabSvg).resize(size, size).png().toBuffer()));
 const directory = Buffer.alloc(6 + 16 * frames.length);
 directory.writeUInt16LE(1, 2);
 directory.writeUInt16LE(frames.length, 4);

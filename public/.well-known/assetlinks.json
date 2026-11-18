@@ -1,0 +1,17 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.quizletgravity.android",
+      "sha256_cert_fingerprints": [
+        "18:21:CD:27:98:AA:A8:6C:60:13:43:FE:96:BB:87:B0:0A:06:8D:08:D1:2A:B9:B5:CB:F0:47:0B:4A:C1:FC:03",
+        "01:1D:A1:7A:9F:44:11:E5:1F:E3:9E:4A:55:77:D2:A6:C7:4C:B1:19:2D:EB:A9:58:0B:08:8F:C0:03:06:FA:5E",
+        "1A:8A:EA:11:0E:24:0B:64:BC:4C:B8:F4:00:66:CA:2D:7F:04:12:A1:55:BF:9E:07:07:91:91:79:BB:1B:79:2A",
+        "1D:71:12:7A:AA:0E:7E:2C:7D:C7:06:B9:AE:7A:7D:A7:CD:74:92:CA:81:43:FA:4B:06:7B:EF:B5:49:1B:E8:6B"
+      ]
+    }
+  }
+]

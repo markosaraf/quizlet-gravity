@@ -14,7 +14,7 @@ import { StartView, GameOverView } from './StartScreens';
 import { ImportScreen } from './ImportScreen';
 import { setGameStarted } from './LandingSections';
 
-export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
+export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
   const textSize = useGameplayTextSize();
   const [characterVisibility,setCharacterVisibility]=useState({specialLettersEnabled:true,specialCharactersEnabled:true});
   useEffect(()=>{
@@ -77,24 +77,23 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
     [data?.terms, data?.showingTermSide, characterVisibility],
   );
 
-  // keyboard: ESC skips the first live term (keymaster GAMEPLAY scope)
+  const handleSkip = useCallback(() => {
+    const current = gravityStore.getSnapshot();
+    if (current.gameState !== GAME_STATES.FREE_FALL) return;
+    const firstLive = Object.keys(current.liveTerms)[0];
+    if (firstLive) gravityStore.missTerm(firstLive, true);
+  }, []);
+
   useEffect(() => {
-    if (!started || !data) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      const target = e.target as HTMLElement | null;
-      const inInput = target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
-      if (data.gameState === GAME_STATES.FREE_FALL) {
-        e.preventDefault();
-        const firstLive = Object.keys(data.liveTerms)[0];
-        if (firstLive) gravityStore.missTerm(firstLive, true);
-      } else if (data.gameState === GAME_STATES.COPY_ANSWER && !inInput) {
-        // nothing — copy modal is modal
-      }
+    if (!started) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || gravityStore.getSnapshot().gameState !== GAME_STATES.FREE_FALL) return;
+      event.preventDefault();
+      handleSkip();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [started, data]);
+  }, [started, handleSkip]);
 
   const handleNewSet = useCallback(() => {
     if (shared || localGame) { window.location.assign("/create-set"); return; }
@@ -114,28 +113,34 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
     return <ImportScreen onStart={handleStartSet} />;
   }
 
+  const showGameControls = [
+    GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP,
+    GAME_STATES.PAUSED, GAME_STATES.GAME_OVER,
+  ].some(state => state === data.gameState);
+
   // No screen-size/device blockers — the game is playable everywhere
   // (mobile layout in the top bar handles narrow widths).
   return (
-    <div className="gravity-root" data-large-game-text={textSize.large} data-playing={[GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP, GAME_STATES.PAUSED].some(state => state === data.gameState) ? "true" : "false"}>
+    <div className="gravity-root" data-game-text-size={textSize.size} data-playing={[GAME_STATES.FREE_FALL, GAME_STATES.COPY_ANSWER, GAME_STATES.LEVEL_UP, GAME_STATES.PAUSED].some(state => state === data.gameState) ? "true" : "false"}>
       {(scoreMessage||starting)&&<p className="community-message" role="status">{starting?"Starting ranked game…":scoreMessage}</p>}
       <SiteHeader
         title={data.set.title}
         points={data.points}
         level={data.level}
         gameState={data.gameState}
-        showMobileControls
+        showMobileControls={showGameControls}
+        onSkip={handleSkip}
         onPause={() => gravityStore.pauseGame()}
         onResume={() => gravityStore.resumeGame()}
         onRestart={() => void beginGame(true)}
         onNewSet={handleNewSet}
         exitHref={exitHref}
-        largeGameText={textSize.large}
+        gameTextStep={textSize.step}
         onToggleGameText={textSize.toggle}
       />
       <div className="GravityModeLayout">
         <div className="GravityModeLayout-body">
-          <ModeControls
+          {showGameControls && <ModeControls
             gameState={data.gameState}
             points={data.points}
             level={data.level}
@@ -145,14 +150,15 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref}:{shared?:{
             onRestart={() => void beginGame(true)}
             onNewSet={handleNewSet}
             exitHref={exitHref}
-        largeGameText={textSize.large}
+        gameTextStep={textSize.step}
         onToggleGameText={textSize.toggle}
-          />
+          />}
           <div
             className="GravityModeLayout-main"
             ref={gameplayRef}
           >
             <GameplayView
+              textScale={textSize.scale}
               data={data}
               specialChars={specialChars}
               onMissed={(id) => gravityStore.missTerm(id, false)}

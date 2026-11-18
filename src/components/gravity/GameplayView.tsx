@@ -20,6 +20,7 @@ type CharInserter = (char: string) => void;
 
 interface Props {
   data: GameData;
+  textScale?: number;
   specialChars: string[];
   onMissed: (liveTermId: string) => void;
   onType: (value: string) => void;
@@ -32,6 +33,7 @@ interface Props {
 
 function GameplayViewBase({
   data,
+  textScale = 1,
   specialChars,
   onMissed,
   onType,
@@ -163,8 +165,7 @@ function GameplayViewBase({
                 (data.termLuidToMissedCount[live.luid] ?? 0) === 1
               }
               termLife={data.termLife}
-              windowWidth={windowWidth}
-              windowHeight={windowHeight}
+              textScale={textScale}
               onMissed={onMissed}
             />
           ),

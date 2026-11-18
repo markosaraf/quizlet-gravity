@@ -1,0 +1,58 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "K2273P6PJC.com.quizletgravity.ios"
+        ],
+        "components": [
+          {
+            "/": "/"
+          },
+          {
+            "/": "/example"
+          },
+          {
+            "/": "/example/"
+          },
+          {
+            "/": "/sets"
+          },
+          {
+            "/": "/sets/*"
+          },
+          {
+            "/": "/my-games"
+          },
+          {
+            "/": "/my-games/"
+          },
+          {
+            "/": "/create-set"
+          },
+          {
+            "/": "/create-set/"
+          },
+          {
+            "/": "/import-game"
+          },
+          {
+            "/": "/import-game/"
+          },
+          {
+            "/": "/import-edit"
+          },
+          {
+            "/": "/import-edit/"
+          },
+          {
+            "/": "/*-flash-cards"
+          },
+          {
+            "/": "/*-flash-cards/"
+          }
+        ]
+      }
+    ]
+  }
+}

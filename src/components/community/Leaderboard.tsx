@@ -7,7 +7,7 @@ import {STRINGS} from '@/lib/gravity/strings';
 import {SafetyActions} from './Safety';
 import './leaderboard.css';
 
-type Entry = {player_id:string;username:string;guest:boolean;score:number;level:number;mode:string;rank:number;is_current:boolean};
+type Entry = {player_id:string;username:string;guest:boolean;score:number;level:number;mode:string;rank:number;is_current:boolean;achieved_at?:string;email?:string|null};
 type Page = {entries:Entry[];total:number;current_rank:number|null;offset:number;page_size:number;hasMore:boolean};
 const PAGE_SIZE=5;
 const modeLabels:Record<string,string>={
@@ -18,8 +18,8 @@ const modeLabels:Record<string,string>={
  MAD_MAX:STRINGS.options.difficulty_selector.mad_max,
 };
 
-export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready=true}:{
- id:string;refresh?:string|number;compact?:boolean;aroundPlayer?:boolean;ready?:boolean;
+export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready=true,adminView=false}:{
+ id:string;refresh?:string|number;compact?:boolean;aroundPlayer?:boolean;ready?:boolean;adminView?:boolean;
 }){
  const {data:session}=authClient.useSession();
  const [offset,setOffset]=useState<number|null>(null);
@@ -28,18 +28,23 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
  const sectionRef=useRef<HTMLElement>(null);
  const revealedResult=useRef<string|null>(null);
  // Key the result to its request so old rows never flash under a new page number.
- const requestKey=JSON.stringify([id,offset,refresh,retry,session?.user.id,aroundPlayer]);
+ const requestKey=JSON.stringify([id,offset,refresh,retry,session?.user.id,aroundPlayer,adminView]);
  useEffect(()=>{
   if(!ready)return;
   const controller=new AbortController();
   const params=new URLSearchParams({limit:String(PAGE_SIZE),offset:String(offset??0)});
   if(aroundPlayer&&offset===null)params.set('around','me');
-  fetch(`/api/community/sets/${id}/leaderboard?${params}`,{signal:controller.signal,cache:'no-store'})
-   .then(async response=>{const body=await response.json();if(!response.ok)throw Error(body.error||'Could not load the leaderboard.');return body as Page;})
+  fetch(`${adminView?'/api/admin/leaderboards':'/api/community/sets'}/${id}${adminView?'':'/leaderboard'}?${params}`,{signal:controller.signal,cache:'no-store'})
+   .then(async response=>{
+    if(!response.ok)throw Error('Could not load the leaderboard. Please retry.');
+    const body=await response.json();
+    if(!body||!Array.isArray(body.entries)||!Number.isInteger(body.total)||body.total<0)throw Error('Invalid leaderboard response');
+    return body as Page;
+   })
    .then(page=>{if(!controller.signal.aborted)setResult({key:requestKey,page});})
-   .catch(error=>{if(!controller.signal.aborted)setResult({key:requestKey,error:error.message});});
+   .catch(()=>{if(!controller.signal.aborted)setResult({key:requestKey,error:'Could not load the leaderboard. Please retry.'});});
   return()=>controller.abort();
- },[id,offset,ready,requestKey,aroundPlayer]);
+ },[id,offset,ready,requestKey,aroundPlayer,adminView]);
  const current=result?.key===requestKey?result:null;
  const page=current?.page;
  const revealKey=JSON.stringify([id,refresh]);
@@ -69,10 +74,12 @@ export function Leaderboard({id,refresh=0,compact=false,aroundPlayer=false,ready
     {page.entries.map(entry=><li key={entry.player_id} className={`shared-leaderboard-row${entry.is_current?' is-current':''}`} aria-current={entry.is_current?'true':undefined}>
      <span className="shared-leaderboard-rank" aria-label={`Rank ${entry.rank}`}>{entry.rank}</span>
      <div className="shared-leaderboard-player"><span className="shared-leaderboard-name">{entry.username}</span>{entry.is_current?<span className="shared-leaderboard-you">You</span>:null}
+      {adminView&&entry.email&&<small style={{overflowWrap:'anywhere'}}>{entry.email}</small>}
       <small>Level {entry.level} · {modeLabels[entry.mode.toUpperCase()]||entry.mode}</small>
+      {adminView&&entry.achieved_at&&<small>Achieved <time dateTime={entry.achieved_at}>{new Date(entry.achieved_at).toLocaleString(undefined,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</time></small>}
      </div>
      <strong className="shared-leaderboard-score">{entry.score.toLocaleString()}<small>points</small></strong>
-     {!compact&&!entry.is_current&&entry.username!=='Deleted user'?<div className="shared-leaderboard-safety"><SafetyActions kind="user" id={entry.player_id} userId={entry.player_id} onBlocked={()=>setRetry(n=>n+1)}/></div>:null}
+     {!adminView&&!compact&&!entry.is_current&&entry.username!=='Deleted user'?<div className="shared-leaderboard-safety"><SafetyActions kind="user" id={entry.player_id} userId={entry.player_id} onBlocked={()=>setRetry(n=>n+1)}/></div>:null}
     </li>)}
    </ol>
    {page.total===0?<p>Be the first to finish a game.</p>:<nav className="shared-leaderboard-pagination" aria-label="Leaderboard pages">

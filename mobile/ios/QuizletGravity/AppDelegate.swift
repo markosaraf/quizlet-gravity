@@ -3,7 +3,14 @@ import UIKit
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        true
+        PushNotifications.shared.start()
+        return true
+    }
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        PushNotifications.shared.registered(deviceToken)
+    }
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        PushNotifications.shared.failed()
     }
 }
 
@@ -16,9 +23,20 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = GameViewController()
+        let controller = GameViewController()
+        for activity in connectionOptions.userActivities where activity.activityType == NSUserActivityTypeBrowsingWeb {
+            if let url = activity.webpageURL { controller.openAppLink(url) }
+        }
+        window.rootViewController = controller
         window.makeKeyAndVisible()
         self.window = window
+        if let response = connectionOptions.notificationResponse { PushNotifications.shared.open(response.notification.request.content.userInfo) }
+    }
+
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+              let url = userActivity.webpageURL else { return }
+        (window?.rootViewController as? GameViewController)?.openAppLink(url)
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {

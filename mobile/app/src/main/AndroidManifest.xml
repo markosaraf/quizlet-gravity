@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
@@ -10,6 +11,11 @@
         android:usesCleartextTraffic="false"
         android:supportsRtl="true"
         android:theme="@style/Theme.Gravity">
+        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+        <service android:name=".LeaderboardMessagingService" android:exported="false">
+            <intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT" /></intent-filter>
+        </service>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -20,6 +26,102 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.quizletgravity.com" />
+                <data android:path="/" />
+                <data android:path="/example" />
+                <data android:path="/sets" />
+                <data android:pathPrefix="/sets/" />
+                <data android:path="/my-games" />
+                <data android:path="/create-set" />
+                <data android:path="/import-game" />
+                <data android:path="/import-edit" />
+                <!-- Android simple globs do not backtrack: /.*-flash-cards fails
+                     for multi-word slugs. Match the numeric-ID route instead,
+                     with optional xx or xx-XX locale. NavigationPolicy validates
+                     the full shared-game URL before loading it. -->
+                <data android:pathPattern="/0.*/.*" />
+                <data android:pathPattern="/1.*/.*" />
+                <data android:pathPattern="/2.*/.*" />
+                <data android:pathPattern="/3.*/.*" />
+                <data android:pathPattern="/4.*/.*" />
+                <data android:pathPattern="/5.*/.*" />
+                <data android:pathPattern="/6.*/.*" />
+                <data android:pathPattern="/7.*/.*" />
+                <data android:pathPattern="/8.*/.*" />
+                <data android:pathPattern="/9.*/.*" />
+                <data android:pathPattern="/../0.*/.*" />
+                <data android:pathPattern="/../1.*/.*" />
+                <data android:pathPattern="/../2.*/.*" />
+                <data android:pathPattern="/../3.*/.*" />
+                <data android:pathPattern="/../4.*/.*" />
+                <data android:pathPattern="/../5.*/.*" />
+                <data android:pathPattern="/../6.*/.*" />
+                <data android:pathPattern="/../7.*/.*" />
+                <data android:pathPattern="/../8.*/.*" />
+                <data android:pathPattern="/../9.*/.*" />
+                <data android:pathPattern="/...../0.*/.*" />
+                <data android:pathPattern="/...../1.*/.*" />
+                <data android:pathPattern="/...../2.*/.*" />
+                <data android:pathPattern="/...../3.*/.*" />
+                <data android:pathPattern="/...../4.*/.*" />
+                <data android:pathPattern="/...../5.*/.*" />
+                <data android:pathPattern="/...../6.*/.*" />
+                <data android:pathPattern="/...../7.*/.*" />
+                <data android:pathPattern="/...../8.*/.*" />
+                <data android:pathPattern="/...../9.*/.*" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="quizletgravity.com" />
+                <data android:path="/" />
+                <data android:path="/example" />
+                <data android:path="/sets" />
+                <data android:pathPrefix="/sets/" />
+                <data android:path="/my-games" />
+                <data android:path="/create-set" />
+                <data android:path="/import-game" />
+                <data android:path="/import-edit" />
+                <!-- Android simple globs do not backtrack: /.*-flash-cards fails
+                     for multi-word slugs. Match the numeric-ID route instead,
+                     with optional xx or xx-XX locale. NavigationPolicy validates
+                     the full shared-game URL before loading it. -->
+                <data android:pathPattern="/0.*/.*" />
+                <data android:pathPattern="/1.*/.*" />
+                <data android:pathPattern="/2.*/.*" />
+                <data android:pathPattern="/3.*/.*" />
+                <data android:pathPattern="/4.*/.*" />
+                <data android:pathPattern="/5.*/.*" />
+                <data android:pathPattern="/6.*/.*" />
+                <data android:pathPattern="/7.*/.*" />
+                <data android:pathPattern="/8.*/.*" />
+                <data android:pathPattern="/9.*/.*" />
+                <data android:pathPattern="/../0.*/.*" />
+                <data android:pathPattern="/../1.*/.*" />
+                <data android:pathPattern="/../2.*/.*" />
+                <data android:pathPattern="/../3.*/.*" />
+                <data android:pathPattern="/../4.*/.*" />
+                <data android:pathPattern="/../5.*/.*" />
+                <data android:pathPattern="/../6.*/.*" />
+                <data android:pathPattern="/../7.*/.*" />
+                <data android:pathPattern="/../8.*/.*" />
+                <data android:pathPattern="/../9.*/.*" />
+                <data android:pathPattern="/...../0.*/.*" />
+                <data android:pathPattern="/...../1.*/.*" />
+                <data android:pathPattern="/...../2.*/.*" />
+                <data android:pathPattern="/...../3.*/.*" />
+                <data android:pathPattern="/...../4.*/.*" />
+                <data android:pathPattern="/...../5.*/.*" />
+                <data android:pathPattern="/...../6.*/.*" />
+                <data android:pathPattern="/...../7.*/.*" />
+                <data android:pathPattern="/...../8.*/.*" />
+                <data android:pathPattern="/...../9.*/.*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

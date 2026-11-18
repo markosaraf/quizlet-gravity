@@ -15,3 +15,17 @@ Please check:
 9. Leave the app during the carousel or final hold and return. The animation should resume. Retry after a failed load should restart the carousel. With Android animations disabled, the final logo should display without a repeating animation.
 
 Do not expect data to be shared with the phone's separate browser or offline imports to work.
+
+## Verified shared-game links
+
+Install the signed release on an emulator and allow Android to verify the website domains.
+Run `ADB=/path/to/adb python3 mobile/scripts/test-app-links.py emulator-5554` from the repository root.
+The check asks Android's resolver which app handles each URL; it does not force a package or
+manually mark domains approved. It covers both hosts, multi-hyphen titles, locale prefixes,
+encoded Unicode, trailing slashes, query strings, and browser-only authentication/admin routes.
+A successful Java NavigationPolicy test alone does not verify the Android manifest.
+
+Then open this exact regression URL via an unqualified ACTION_VIEW intent, once after
+force-stopping the app and once while it is already running:
+`https://www.quizletgravity.com/1000000000000029/voices-2-unit-1-words-no-sentences-flash-cards`
+Confirm MainActivity displays “Voices 2 Unit 1 words, no sentences”, without browser controls.

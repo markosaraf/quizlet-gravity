@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {safelyProcessGameIndexing} from '@/lib/community/game-indexing';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { auth } from '@/lib/community/auth';
 import {appleConfigured} from '@/lib/community/apple';
@@ -10,8 +11,10 @@ import { fingerprint } from '@/lib/community/sets';
 import { correctPendingEmail } from '@/lib/community/pending-email';
 import { z } from 'zod';
 import { isCardImage } from '@/lib/gravity/card-images';
+import {enqueueOvertakenNotifications} from '@/lib/community/notification-events';
+import {publishLeaderboardNotifications} from '@/lib/community/notification-queue';
 export const runtime='nodejs';
-const noCache={'Cache-Control':'no-store'};
+const noCache={'Cache-Control':'no-store','X-Robots-Tag':'noindex'};
 const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:noCache});
 const uuid=z.string().uuid();
 const imageSchema=z.string().refine(isCardImage,'Choose a supported image.').optional();
@@ -22,7 +25,7 @@ async function limit(request:NextRequest, scope:string, max:number){
  const {rows}=await db.query(`INSERT INTO api_limits(key,count,expires_at) VALUES($1,1,now()+interval '1 minute') ON CONFLICT(key) DO UPDATE SET count=CASE WHEN api_limits.expires_at<now() THEN 1 ELSE api_limits.count+1 END,expires_at=CASE WHEN api_limits.expires_at<now() THEN now()+interval '1 minute' ELSE api_limits.expires_at END RETURNING count`,[key]);
  if(rows[0].count>max) throw new Error('RATE');
 }
-function page(request:NextRequest){return Math.max(0,Math.min(100000,Math.floor(Number(request.nextUrl.searchParams.get('offset'))||0)));}
+function page(request:NextRequest,max=100000){return Math.max(0,Math.min(max,Math.floor(Number(request.nextUrl.searchParams.get('offset'))||0)));}
 async function body(request:NextRequest){
  if(!request.headers.get('content-type')?.includes('application/json'))throw Error('JSON required');
  const reader=request.body?.getReader();if(!reader)throw Error('Body required');let size=0,text='';const decoder=new TextDecoder();
@@ -34,12 +37,15 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{path:str
  if(path[0]==='config')return json({google:!!process.env.GOOGLE_CLIENT_ID,apple:appleConfigured(),recovery:!!process.env.GMAIL_REFRESH_TOKEN,...await communitySettings()});
  const viewer=(await auth.api.getSession({headers:request.headers}))?.user.id||null;
  if(path[0]==='sets'&&path.length===1){
- const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request);
- const {rows}=await db.query(`SELECT s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by
+ const filter=request.nextUrl.searchParams.get('mine');
+ const mine=filter==='played'?'played':filter?'created':'';
+ if(mine&&!viewer)return json({error:'Log in to see your games.'},401);
+ const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);const offset=page(request,Number.MAX_SAFE_INTEGER);
+ const {rows}=await db.query(`SELECT count(*) OVER() AS catalogue_total,s.id,s.public_id,s.quizlet_id,s.title,s.creator_name,s.creator_url,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Community') as added_by
  FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by
- WHERE ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(coalesce(s.creator_name,'')||' '||coalesce(u."displayUsername",u.username,u.name,'')) LIKE $2 OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
- ORDER BY (SELECT count(*) FROM high_scores h WHERE h.set_id=s.id) DESC,s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer]);
- return json({sets:rows.slice(0,24),hasMore:rows.length>24,nextOffset:offset+24});
+ WHERE ($5::text='' OR ($5='created' AND s.created_by=$4) OR ($5='played' AND EXISTS(SELECT 1 FROM game_runs r WHERE r.set_id=s.id AND r.user_id=$4))) AND ($1='' OR s.search_document @@ websearch_to_tsquery('simple',$1) OR lower(coalesce(s.creator_name,'')||' '||coalesce(u."displayUsername",u.username,u.name,'')) LIKE $2 OR lower(s.title) LIKE $2 ESCAPE '\\') AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE b.blocker_id=$4 AND b.blocked_id=s.created_by)
+ ORDER BY CASE WHEN $5='played' THEN (SELECT max(r.started_at) FROM game_runs r WHERE r.set_id=s.id AND r.user_id=$4) WHEN $5='created' THEN s.created_at END DESC,(SELECT count(*) FROM high_scores h WHERE h.set_id=s.id) DESC,s.created_at DESC,s.id LIMIT 25 OFFSET $3`,[q,'%'+q.toLowerCase().replace(/[\\%_]/g,'\\$&')+'%',offset,viewer,mine]);
+ return json({sets:rows.slice(0,24).map(({catalogue_total,...set})=>set),total:Number(rows[0]?.catalogue_total||0),hasMore:rows.length>24,nextOffset:offset+24});
  }
  if(path[0]==='sets'&&uuid.safeParse(path[1]).success){
  if(path[2]==='leaderboard'){
@@ -82,7 +88,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{path:st
  // Attribution comes from the saved source and authenticated user, never client-supplied names.
  const key=source?'adapted:'+source.id+':'+session.user.id+':'+fingerprint(v.cards):'custom:'+fingerprint(v.cards);
  const {rows}=await db.query(`INSERT INTO shared_sets(fingerprint,title,created_by,cards,term_count,creator_name,creator_url,source_url) VALUES($1,$2,$3,$4,$5,$6,$7,$8)
- ON CONFLICT(fingerprint) DO UPDATE SET fingerprint=EXCLUDED.fingerprint RETURNING id,public_id,title`,[key,v.title,session.user.id,JSON.stringify(v.cards),v.cards.length,source?.creator_name??null,source?.creator_url??null,source?.source_url??null]);return json(rows[0]);
+ ON CONFLICT(fingerprint) DO UPDATE SET fingerprint=EXCLUDED.fingerprint RETURNING id,public_id,title`,[key,v.title,session.user.id,JSON.stringify(v.cards),v.cards.length,source?.creator_name??null,source?.creator_url??null,source?.source_url??null]);after(()=>safelyProcessGameIndexing().then(()=>{}));return json(rows[0]);
  }
  if(path[0]==='runs'&&path.length===1){
  const v=z.object({setId:uuid,mode:z.enum(['SLOTH','BEGINNER','INTERMEDIATE','EXPERT','MAD_MAX'])}).parse(input);
@@ -93,12 +99,13 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{path:st
  const client=await db.connect();try{
  await client.query('BEGIN');const {rows}=await client.query(`SELECT *,extract(epoch FROM now()-started_at) AS elapsed FROM game_runs WHERE id=$1 AND user_id=$2 FOR UPDATE`,[path[1],session.user.id]);const run=rows[0];
  if(!run){await client.query('ROLLBACK');return json({error:'Run not found'},404);}
- if(run.finished_at){await client.query('ROLLBACK');return json({saved:true});}
+ if(run.finished_at){await client.query('ROLLBACK');after(()=>publishLeaderboardNotifications().then(()=>{}));return json({saved:true});}
  if(run.elapsed<2||run.elapsed>86400||v.level>Math.floor(run.elapsed/2)+2||v.score>run.elapsed*5000){await client.query('ROLLBACK');return json({error:'This run could not be validated.'},400);}
+ await enqueueOvertakenNotifications(client,run,v.score);
  await client.query('UPDATE game_runs SET finished_at=now(),score=$1,level=$2 WHERE id=$3',[v.score,v.level,run.id]);
  await client.query(`INSERT INTO high_scores(set_id,user_id,score,level,mode) VALUES($1,$2,$3,$4,$5)
  ON CONFLICT(set_id,user_id) DO UPDATE SET score=EXCLUDED.score,level=EXCLUDED.level,mode=EXCLUDED.mode,achieved_at=now() WHERE EXCLUDED.score>high_scores.score`,[run.set_id,session.user.id,v.score,v.level,run.mode]);
- await client.query('COMMIT');return json({saved:true});
+ await client.query('COMMIT');after(()=>publishLeaderboardNotifications().then(()=>{}));return json({saved:true});
  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
  }
  return json({error:'Not found'},404);

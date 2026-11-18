@@ -58,6 +58,20 @@
         overflow-y: auto;
       }
 
+      /* Extend artwork to the physical bottom, but keep interactive content clear
+         of the home indicator. Native layout sets this to zero above a keyboard. */
+      html[data-gravity-input] body { padding-bottom: var(--gravity-native-bottom-inset, 0px); }
+      html[data-gravity-input] .GravityGameplayView-typingPrompt {
+        bottom: calc(.625rem + var(--gravity-native-bottom-inset, 0px));
+      }
+      html[data-gravity-input] .GravityUIModal {
+        padding-bottom: calc(2rem + var(--gravity-native-bottom-inset, 0px));
+      }
+      html[data-gravity-input] .GravitySplashView {
+        padding-bottom: var(--gravity-native-bottom-inset, 0px);
+        scroll-padding-bottom: var(--gravity-native-bottom-inset, 0px);
+      }
+
       /* Leave room for the answer field on shorter screens with a keyboard. */
       @media (max-height: 600px) {
         html[data-gravity-input] .GravityUIModal { padding-top: 1rem; }

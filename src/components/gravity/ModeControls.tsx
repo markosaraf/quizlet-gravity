@@ -1,4 +1,4 @@
-import { GameplayTextToggle } from './GameplayTextToggle';
+import { GameplayTextToggle, type GameTextStep } from './GameplayTextToggle';
 import { memo } from 'react';
 import Link from 'next/link';
 import { GAME_STATES } from '@/lib/gravity/constants';
@@ -17,7 +17,7 @@ interface ControlsProps {
   onRestart: () => void;
   onNewSet: () => void;
   exitHref?: string;
-  largeGameText?: boolean;
+  gameTextStep?: GameTextStep;
   onToggleGameText?: () => void;
 }
 
@@ -31,7 +31,7 @@ function ModeControlsBase({
   onRestart,
   onNewSet,
   exitHref,
-  largeGameText = false,
+  gameTextStep = 0,
   onToggleGameText,
 }: ControlsProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
@@ -66,9 +66,9 @@ function ModeControlsBase({
 
         <div style={{ marginTop: '2rem', display: 'grid', gap: '1rem' }}>
           <div className="GravityModeControls-pauseRow">
-          {onToggleGameText && <GameplayTextToggle large={largeGameText} onToggle={onToggleGameText}/>}
+          {onToggleGameText && <GameplayTextToggle step={gameTextStep} onToggle={onToggleGameText}/>}
           <button
-            className="UIButton UIButton--hero UIButton--fill"
+            className="UIButton UIButton--hero UIButton--fill GravityGame-pause"
             disabled={pauseDisabled}
             onClick={pauseHandler}
           >
@@ -82,7 +82,7 @@ function ModeControlsBase({
               {STRINGS.sidebar.restart_button}
             </button>
           </div>
-          {exitHref && <Link href={exitHref} className="UIButton UIButton--hero GravityExample-exit">Exit</Link>}
+          {exitHref && <Link href={exitHref} className="UIButton GravityGame-exit">Exit</Link>}
           <div className="GravityModeControls-newSetButton">
             <button className="UILink UILink--white" onClick={onNewSet}>
               {STRINGS.game_over.new_set_button}
@@ -108,12 +108,13 @@ interface SiteHeaderProps {
   gameState?: string;
   /** Hide the controls row on the import screen. */
   showMobileControls?: boolean;
+  onSkip?: () => void;
   onPause?: () => void;
   onResume?: () => void;
   onRestart?: () => void;
   onNewSet?: () => void;
   exitHref?: string;
-  largeGameText?: boolean;
+  gameTextStep?: GameTextStep;
   onToggleGameText?: () => void;
 }
 
@@ -149,12 +150,13 @@ export function SiteHeader({
   level = 1,
   gameState,
   showMobileControls = false,
+  onSkip,
   onPause,
   onResume,
   onRestart,
   onNewSet,
   exitHref,
-  largeGameText = false,
+  gameTextStep = 0,
   onToggleGameText,
 }: SiteHeaderProps) {
   const isPaused = gameState === GAME_STATES.PAUSED;
@@ -182,10 +184,18 @@ export function SiteHeader({
             <span className="GravitySiteHeader-statValue">{level}</span>
           </div>
           <div className="GravitySiteHeader-actions">
-            {onToggleGameText && <GameplayTextToggle className="GravitySiteHeader-iconButton" large={largeGameText} onToggle={onToggleGameText}/>}
             <button
               type="button"
-              className="GravitySiteHeader-iconButton"
+              className="GravitySiteHeader-iconButton GravitySiteHeader-escape"
+              onClick={onSkip}
+              disabled={gameState !== GAME_STATES.FREE_FALL || !onSkip}
+              aria-label="ESC: skip this answer"
+              title="Skip this answer (ESC)"
+            >ESC</button>
+            {onToggleGameText && <GameplayTextToggle className="GravitySiteHeader-iconButton" step={gameTextStep} onToggle={onToggleGameText}/>}
+            <button
+              type="button"
+              className="GravitySiteHeader-iconButton GravityGame-pause"
               disabled={pauseDisabled || !onPause}
               onClick={pauseHandler}
               aria-label={isPaused ? STRINGS.sidebar.resume_button : STRINGS.sidebar.pause_button}
@@ -213,7 +223,7 @@ export function SiteHeader({
             >
               <HeaderIcon name="newSet" />
             </button>
-            {exitHref && <Link href={exitHref} className="GravitySiteHeader-iconButton GravitySiteHeader-exit GravityExample-exit">Exit</Link>}
+            {exitHref && <Link href={exitHref} className="GravitySiteHeader-iconButton GravitySiteHeader-exit GravityGame-exit">Exit</Link>}
           </div>
         </div>
       ) : null}

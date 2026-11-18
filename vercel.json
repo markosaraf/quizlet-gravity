@@ -1,5 +1,25 @@
 {
   "git": {
     "deploymentEnabled": false
-  }
+  },
+  "functions": {
+    "src/app/api/queues/leaderboard-notifications/route.ts": {
+      "experimentalTriggers": [
+        {
+          "type": "queue/v2beta",
+          "topic": "leaderboard-notifications"
+        }
+      ]
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/notifications/retry",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/indexnow",
+      "schedule": "30 7 * * *"
+    }
+  ]
 }

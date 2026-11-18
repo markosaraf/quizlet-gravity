@@ -1,6 +1,6 @@
 import { GlassKeyboard } from './GlassKeyboard';
 import { useGameKeyboard } from './useGameKeyboard';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { COPY_SUBMIT_DEBOUNCE, COPY_SUBMIT_INITIAL_DELAY, COPY_FOCUS_DELAY } from '@/lib/gravity/constants';
 import { answerInputMode } from '@/lib/gravity/answer-keyboard';
 import { useKeyboardSubmit } from './useKeyboardSubmit';
@@ -50,13 +50,19 @@ function CopyTermViewBase({
   };
   useKeyboardSubmit(inputRef, !imageOnlyAnswer, submitNow);
 
+  useLayoutEffect(() => {
+    // The transparent keyboard can accept the next tap during the impact
+    // transition, before the delayed focus. Initialise the carried text's
+    // insertion position before that first tap, not 500ms afterwards.
+    const input = inputRef.current;
+    if (input) input.setSelectionRange(input.value.length, input.value.length);
+  }, []);
+
   useEffect(() => {
     const t = setTimeout(() => {
       // preventScroll: no mobile auto-scroll-to-input jump when the modal opens
+      // Do not reset selection here: the player may already be typing/editing.
       inputRef.current?.focus({ preventScroll: true });
-      // place caret at end
-      const el = inputRef.current;
-      if (el) el.setSelectionRange(el.value.length, el.value.length);
     }, COPY_FOCUS_DELAY);
     return () => clearTimeout(t);
   }, []);

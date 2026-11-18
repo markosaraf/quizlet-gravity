@@ -10,6 +10,7 @@ import {Play, Search, ChevronLeft, ChevronRight, Plus, Link2, ArrowLeft} from 'l
 import {api, AccountDialog, type SetRecord} from '@/components/community/Community';
 import {sharedSetPath} from '@/lib/community/set-links';
 import {ImportProgress,progressAfterMs} from '@/components/gravity/ImportProgress';
+import {QuizletSearch} from './QuizletSearch';
 import {quizletPasteValue} from '@/lib/gravity/quizlet-share-input';
 import {parseCsv,parsePastedList,type Separator} from '@/lib/gravity/parse';
 import {ThemeToggle} from '@/components/community/ThemeToggle';
@@ -19,6 +20,9 @@ import {importedCardsToTerms} from '@/lib/gravity/import-cards';
 import type {GravitySet, GravityTerm} from '@/lib/gravity/types';
 import '@/gravity/gravity.css';
 import './discovery.css';
+import {animateGamePage} from './game-page-motion';
+import {useAdmin} from '@/components/community/Admin';
+import {AdminGameCatalogue} from '@/components/community/AdminGames';
 
 type LocalGame={set:GravitySet;terms:GravityTerm[]};
 const examples=[['2 + 3','5'],['10 − 4','6'],['3 × 3','9'],['8 + 4','12'],['6 × 2','12'],['20 ÷ 4','5'],['7 + 8','15'],['9 − 6','3'],['4 × 4','16'],['18 ÷ 3','6']];
@@ -26,27 +30,71 @@ const example:LocalGame={set:{id:'local-example',title:'Quick maths',wordLang:'e
 
 export function ExampleGame(){return <GravityApp localGame={example} autoPlay exitHref="/"/>;}
 export function DiscoveryLanding(){
+ const admin=useAdmin();
+ const [newestFirst,setNewestFirst]=useState(false);
+ const showNewest=admin&&newestFirst;
  const [tutorialEnabled,setTutorialEnabled]=useState(false),[tutorialOpen,setTutorialOpen]=useState(false);
+ const [showPageTotal,setShowPageTotal]=useState(true);
  const {data:session}=authClient.useSession();
- useEffect(()=>{api('config').then(r=>setTutorialEnabled(r.tutorialEnabled===true)).catch(()=>{});},[]);
+ useEffect(()=>{let active=true;api('config').then(r=>{if(active){setTutorialEnabled(r.tutorialEnabled===true);setShowPageTotal(r.gamePageTotalEnabled!==false);}}).catch(()=>{});return()=>{active=false;};},[]);
  const [query,setQuery]=useState('');const [page,setPage]=useState(0);const gallery=useRef<HTMLDivElement>(null);
+ const search=useRef<HTMLLabelElement>(null);
+ const cancelMotion=useRef<(()=>void)|null>(null);
+ const targetPage=useRef<number|null>(null);
+ const pendingPage=useRef<number|null>(null);
+ const [requestVersion,setRequestVersion]=useState(0);
+ const [total,setTotal]=useState(0);
+ const prefetchedAt=useRef(-1);
  const [games,setGames]=useState<SetRecord[]>([]),[offset,setOffset]=useState(0),[more,setMore]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState('');
- useEffect(()=>{let active=true;const controller=new AbortController();const timer=setTimeout(async()=>{setLoading(true);try{const response=await fetch('/api/community/sets?q='+encodeURIComponent(query)+'&offset='+offset+'&sort=popular',{signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error);if(active){setGames(previous=>offset?[...previous,...result.sets]:result.sets);setMore(result.hasMore);setError('');}}catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load games.');}finally{if(active)setLoading(false);}},200);return()=>{active=false;clearTimeout(timer);controller.abort();};},[query,offset,session?.user.id]);
+ useEffect(()=>{let active=true;const controller=new AbortController();const timer=setTimeout(async()=>{setLoading(true);try{const response=await fetch('/api/community/sets?q='+encodeURIComponent(query)+'&offset='+offset+'&sort=popular',{signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error);if(active){setGames(previous=>offset?[...previous,...result.sets]:result.sets);setMore(result.hasMore);setTotal(result.total??(offset+result.sets.length));setError('');}}catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load games.');}finally{if(active)setLoading(false);}},200);return()=>{active=false;clearTimeout(timer);controller.abort();};},[query,offset,requestVersion,session?.user.id]);
  const groups=Array.from({length:Math.ceil(games.length/6)},(_,i)=>games.slice(i*6,i*6+6));
- function move(direction:number){const el=gallery.current;if(el)el.scrollBy({left:direction*el.clientWidth,behavior:'smooth'});}
+ // Fetch the next batch before reaching the last loaded slide, including swipes.
+ // Remember failed attempts so an unavailable endpoint cannot cause a retry loop.
+ useEffect(()=>{
+  if(more&&!loading&&!error&&page>=groups.length-2&&prefetchedAt.current!==games.length){
+   prefetchedAt.current=games.length;setLoading(true);setOffset(games.length);setRequestVersion(n=>n+1);
+  }
+ },[page,groups.length,games.length,more,loading,error]);
+ function stopMotion(){cancelMotion.current?.();cancelMotion.current=null;targetPage.current=null;}
+ function goToPage(index:number){
+  const el=gallery.current;if(!el||!search.current)return;
+  stopMotion();targetPage.current=index;
+  cancelMotion.current=animateGamePage(el,search.current,index,()=>{targetPage.current=null;});
+ }
+ function move(direction:number){
+  const el=gallery.current;if(!el)return;
+  const current=targetPage.current??Math.round(el.scrollLeft/el.clientWidth);
+  const next=current+direction;
+  if(next<0)return;
+  if(next<groups.length){goToPage(next);return;}
+  if(more&&!loading&&pendingPage.current===null){
+   pendingPage.current=next;setLoading(true);setOffset(games.length);setRequestVersion(n=>n+1);
+  }
+ }
+ useEffect(()=>{
+  const next=pendingPage.current;
+  if(next===null||loading)return;
+  pendingPage.current=null;
+  if(next<groups.length)goToPage(next);
+ // A queued page only starts after its fetched cards have been laid out.
+ },[games,loading]);
+ useEffect(()=>()=>cancelMotion.current?.(),[]);
  return <main className="d-shell d-landing">
   <div className="d-topline"><div className="d-try"><Link className="d-button d-primary d-example" href="/example"><Play size={21} fill="currentColor"/>Try Example Game</Link><span>Jump straight in. No account needed.</span></div><div className="d-theme-tools">{tutorialEnabled&&<button className="d-button d-secondary d-tutorial" onClick={()=>setTutorialOpen(true)}>Tutorial</button>}<ThemeToggle/></div></div>
   <section className="d-discover" aria-labelledby="d-heading">
    <h1 id="d-heading">Search and/or choose a game.</h1>
-   <label className="d-search"><Search size={24}/><span className="d-sr">Search games</span><input type="search" placeholder="Search games by title or creator" value={query} onChange={e=>{setQuery(e.target.value);setGames([]);setOffset(0);setPage(0);gallery.current?.scrollTo({left:0});}}/></label>
-   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{groups.length>1&&<><span>{page+1} / {groups.length}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
-   <div className="d-gallery" ref={gallery} onScroll={e=>{const el=e.currentTarget;setPage(Math.round(el.scrollLeft/el.clientWidth));}} aria-label="Swipe through games">
+   <label className="d-search" ref={search}><Search size={24}/><span className="d-sr">Search games</span><input type="search" placeholder="Search games by title or creator" value={query} onChange={e=>{stopMotion();pendingPage.current=null;setLoading(true);setQuery(e.target.value);prefetchedAt.current=-1;setTotal(0);setGames([]);setOffset(0);setPage(0);gallery.current?.scrollTo({left:0});}}/></label>
+   {admin&&<div className="d-admin-tools"><button type="button" role="switch" aria-checked={showNewest} className="d-button d-secondary" onClick={()=>{stopMotion();pendingPage.current=null;setPage(0);setNewestFirst(value=>!value);}}>Newest first: {showNewest?'On':'Off'}</button><Link href="/admin/leaderboards" className="d-button d-secondary">All leaderboards</Link></div>}
+   {showNewest?<AdminGameCatalogue key={query} query={query}/>:<>
+   <div className="d-gallery-label"><span aria-live="polite">{query?`Matching games${more?' (more available)':''}`:'Games to try'}</span><div className="d-gallery-controls">{(groups.length>1||more)&&<><span aria-label={`Page ${page+1}${showPageTotal?` of ${Math.max(groups.length,Math.ceil(total/6))}`:''}`}>{page+1}{showPageTotal&&<> / {Math.max(groups.length,Math.ceil(total/6))}</>}</span><button aria-label="Previous games" disabled={page===0} onClick={()=>move(-1)}><ChevronLeft size={19}/></button><button aria-label="More games" disabled={page===groups.length-1&&(!more||loading)} onClick={()=>move(1)}><ChevronRight size={19}/></button></>}</div></div>
+   <div className="d-gallery" ref={gallery} onTouchStart={stopMotion} onPointerDown={stopMotion} onWheel={stopMotion} onScroll={e=>{const el=e.currentTarget;setPage(Math.round(el.scrollLeft/el.clientWidth));}} aria-label="Swipe through games">
     {groups.map((group,index)=><div className="d-game-page" key={index}>{group.map((s)=><Link className="d-game" href={sharedSetPath(s)} key={s.id}><small>{s.term_count.toLocaleString()} terms</small><h2>{s.title}</h2><p>{s.creator_name?<>Original Quizlet set creator:<br/><strong>{s.creator_name}</strong>{!s.quizlet_id&&<><br/>Quizlet Gravity game creator: {s.added_by}</>}</>:<>Quizlet Gravity game creator:<br/><strong>{s.added_by}</strong></>}</p><span className="d-play"><Play size={15} fill="currentColor"/>Play game</span></Link>)}</div>)}
    </div>
-   {loading&&<p role="status">Loading games…</p>}{error&&<p role="alert">{error}</p>}{more&&<button className="d-button d-secondary" disabled={loading} onClick={()=>setOffset(n=>n+24)}>More games</button>}
+   {loading&&<p role="status">Loading games…</p>}{error&&<p role="alert">{error}</p>}{(page<groups.length-1||more)&&<button className="d-button d-secondary d-more-games" disabled={loading} onClick={()=>move(1)}>More games</button>}
    {!loading&&!error&&!games.length&&<p className="d-empty">No matching games. Try another title or import a Quizlet set below.</p>}
+   </>}
   </section>
-  <div className="d-alternatives"><div><Link href="/create-set" data-tour="create-game-bottom" className="d-button d-secondary"><Plus size={21}/>Create your own game</Link><Link href="/import-game" data-tour="import-game" className="d-button d-secondary"><Link2 size={21}/>Import game from Quizlet</Link></div></div>
+  <div className="d-alternatives"><div><Link href="/create-set" data-tour="create-game-bottom" className="d-button d-secondary"><Plus size={21}/>Create your own game</Link><Link href="/import-game" data-tour="import-game" className="d-button d-secondary"><Link2 size={21}/>Search Quizlet &amp; import</Link></div></div>
  {tutorialOpen&&createPortal(<LocalWalkthrough hasUser={!!session?.user} openAccount={()=>{setTutorialOpen(false);document.querySelector<HTMLButtonElement>('[data-tour="username"]')?.click();}} onClose={()=>setTutorialOpen(false)}/>,document.body)}
  </main>;
 }
@@ -83,9 +131,11 @@ export function CreateGame({sourceId}:{sourceId?:string}){
 }
 
 export function ImportGame({edit=false}:{edit?:boolean}){
- const [url,setUrl]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accountOpen,setAccountOpen]=useState(false),[progress,setProgress]=useState<number|null>(null);const router=useRouter();const request=useRef<AbortController|null>(null);
+ const [searchEnabled,setSearchEnabled]=useState(false);
+ useEffect(()=>{let active=true;api('config').then(config=>{if(active)setSearchEnabled(config.quizletSearchEnabled===true);}).catch(()=>{});return()=>{active=false;};},[]);
+ const [url,setUrl]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accountOpen,setAccountOpen]=useState(false),[progress,setProgress]=useState<number|null>(null);const router=useRouter();const request=useRef<AbortController|null>(null);const pendingUrl=useRef('');
  useEffect(()=>()=>request.current?.abort(),[]);
- async function importGame(){if(!url.trim()||request.current)return;const controller=new AbortController();request.current=controller;const timeout=setTimeout(()=>controller.abort(),75000);let ticker:ReturnType<typeof setInterval>|undefined;setBusy(true);setError('');setProgress(null);try{const current=await authClient.getSession();if(controller.signal.aborted)return;if(!current.data){setAccountOpen(true);return;}setProgress(0);const started=Date.now();ticker=setInterval(()=>setProgress(progressAfterMs(Date.now()-started)),150);const response=await fetch('/api/import-quizlet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:quizletPasteValue(url)}),signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to import this Quizlet set.');if(!result.sharedId)throw Error('The game could not be saved. Please try again.');clearInterval(ticker);setProgress(100);router.push(edit?'/edit-game/'+result.sharedId:result.sharePath);}catch(e){setProgress(null);setError(controller.signal.aborted?'The import took too long. Please try again.':e instanceof Error?e.message:'Please try again.');}finally{clearInterval(ticker);clearTimeout(timeout);request.current=null;setBusy(false);}}
+ async function importGame(selectedUrl=url){if(!selectedUrl.trim()||request.current)return;pendingUrl.current=selectedUrl;const controller=new AbortController();request.current=controller;const timeout=setTimeout(()=>controller.abort(),75000);let ticker:ReturnType<typeof setInterval>|undefined;setBusy(true);setError('');setProgress(null);try{const current=await authClient.getSession();if(controller.signal.aborted)return;if(!current.data){setAccountOpen(true);return;}setProgress(0);const started=Date.now();ticker=setInterval(()=>setProgress(progressAfterMs(Date.now()-started)),150);const response=await fetch('/api/import-quizlet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:quizletPasteValue(selectedUrl)}),signal:controller.signal});const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to import this Quizlet set.');if(!result.sharedId)throw Error('The game could not be saved. Please try again.');clearInterval(ticker);setProgress(100);router.push(edit?'/edit-game/'+result.sharedId:result.sharePath);}catch(e){setProgress(null);setError(controller.signal.aborted?'The import took too long. Please try again.':e instanceof Error?e.message:'Please try again.');}finally{clearInterval(ticker);clearTimeout(timeout);request.current=null;setBusy(false);}}
  function submit(e:FormEvent){e.preventDefault();void importGame();}
- return <main className="d-shell d-editor"><Back/><h1>{edit?'Import & edit from Quizlet':'Import game from Quizlet'}</h1><p className="d-subtitle">{edit?'Start with a public Quizlet set. Keep its images, then change or add your own text and images.':'Turn a public Quizlet set into a game, including its images.'}</p><ol className="d-steps"><li><span>1</span><div><strong>Find a set</strong><p><a href="https://quizlet.com/latest" target="_blank" rel="noreferrer">Open Quizlet</a> and choose a public set.</p></div></li><li><span>2</span><div><strong>Copy its link</strong><p>Copy the address, or choose Share → Copy link in the Quizlet app.</p></div></li><li><span>3</span><div><strong>Come back and paste</strong><p>{edit?'Paste the link below, then edit the terms, answers, or images before playing.':'Paste the link below to add the game and play.'}</p></div></li></ol><form onSubmit={submit}><label className="d-label">Quizlet set link<input autoCapitalize="none" autoCorrect="off" spellCheck={false} onPaste={e=>{e.preventDefault();setUrl(quizletPasteValue(e.clipboardData.getData('text/plain')));}} value={url} onChange={e=>{setUrl(e.target.value);setError('');}} placeholder="https://quizlet.com/…" required/></label>{error&&<p className="d-error" role="alert">{error}</p>}<button className="d-button d-primary" disabled={busy||!url.trim()}>{busy?'Importing…':edit?'Import & edit':'Add & play'}</button></form>{progress!==null&&<ImportProgress progress={progress} busy={busy}/>}<AccountDialog open={accountOpen} onOpenChange={setAccountOpen} onDone={()=>void importGame()}/></main>;
+ return <main className="d-shell d-editor d-import-editor" aria-label={edit?'Import and edit a Quizlet set':'Import a Quizlet set'}><Back/>{searchEnabled&&<QuizletSearch edit={edit} importing={busy} onImport={selected=>void importGame(selected)}/>}<section className="quizlet-paste" aria-labelledby="quizlet-paste-title"><h2 id="quizlet-paste-title">{searchEnabled?'Or paste a Quizlet link':'Paste a Quizlet link'}</h2><p>Copy the set’s address, or choose Share → Copy link in the Quizlet app, then paste it below.</p><form onSubmit={submit}><label className="d-label">Quizlet set link<input autoCapitalize="none" autoCorrect="off" spellCheck={false} onPaste={e=>{e.preventDefault();setUrl(quizletPasteValue(e.clipboardData.getData('text/plain')));}} value={url} onChange={e=>{setUrl(e.target.value);setError('');}} placeholder="https://quizlet.com/…" required/></label>{error&&<p className="d-error" role="alert">{error}</p>}<button className="d-button d-primary" disabled={busy||!url.trim()}>{busy?'Importing…':edit?'Import & edit':'Add & play'}</button></form></section>{progress!==null&&<ImportProgress progress={progress} busy={busy}/>}<AccountDialog open={accountOpen} onOpenChange={setAccountOpen} onDone={()=>void importGame(pendingUrl.current)}/></main>;
 }

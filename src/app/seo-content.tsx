@@ -64,7 +64,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "When does my score appear on the leaderboard?",
-    "answer": "Choose Play this game on a shared game. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears on the leaderboard."
+    "answer": "Choose Play & learn on a shared game. When a red asteroid hits your planet and the game ends, your score is saved. Only your highest score for that set appears on the leaderboard."
   },
   {
     "question": "What information is public?",

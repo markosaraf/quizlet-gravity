@@ -39,7 +39,7 @@ try{
  const title=await crawler.locator('h1').innerText();assert.equal(await crawler.title(),title);
  assert.equal(await crawler.locator('link[rel=canonical]').getAttribute('href'),urls[0]);
  assert.match(await crawler.locator('meta[name=description]').getAttribute('content'),/^Practice .* flashcards in Quizlet Gravity/);
- assert((await crawler.locator('.community-terms>div').count())>=2,'Terms must render without JavaScript');
+ assert((await crawler.locator('.community-terms tbody tr').count())>=2,'Terms must render without JavaScript');
  await crawler.goto(base+'/games');assert.equal(await crawler.locator('.admin-list a').count(),60);await expect(crawler.getByRole('link',{name:'Next games'})).toBeVisible();
  console.log('PASS real admin/member access, CSRF, spoofed cron rejection, filters, mobile layout, 331 sitemap URLs, per-game metadata and no-JavaScript game content.');
 }finally{

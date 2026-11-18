@@ -18,7 +18,7 @@ try{
  await page.goto(base+'/34289851/hiragana-flash-cards');
  await expect(page.getByText('Be the first to finish a game.',{exact:true})).toBeVisible();
  console.log('PASS: empty real leaderboard loads when crawler access is allowed, even with other APIs blocked.');
- await page.getByRole('button',{name:'Play this game',exact:true}).click();
+ await page.getByRole('button',{name:'Play & learn',exact:true}).click();
  const tabs=page.locator('.community-panel .community-tabs');
  for(const theme of ['light','dark']){
   await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
@@ -41,7 +41,7 @@ try{
  failLeaderboard=true;await page.reload();
  await expect(page.getByText('Could not load the leaderboard. Please retry.',{exact:true})).toBeVisible();
  await expect(page.getByText(/Unexpected end|Failed to execute/)).toHaveCount(0);
- await expect(page.locator('.community-terms>div')).toHaveCount(102);
+ await expect(page.locator('.community-terms tbody tr')).toHaveCount(102);
  failLeaderboard=false;await page.getByRole('button',{name:'Retry leaderboard',exact:true}).click();
  await expect(page.getByText('Be the first to finish a game.',{exact:true})).toBeVisible();
  const response=await ctx.request.get(base+'/api/community/sets/65a556e7-c3a7-4695-ac3d-2dfc71b438b7/leaderboard?limit=5&offset=0');

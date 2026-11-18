@@ -10,11 +10,11 @@ let debugPage;
 try{
  const context=await newContext({javaScriptEnabled:false});const crawler=await context.newPage();
  await crawler.goto(base+path,{timeout:180000});
- await expect(crawler.locator('.community-terms>div')).toHaveCount(62);
+ await expect(crawler.locator('.community-terms tbody tr')).toHaveCount(62);
  assert.match(await crawler.locator('.community-terms').textContent(),/accueillir/);
  assert.match(await crawler.locator('.community-terms').textContent(),/empfangen/);
  assert.equal(await crawler.locator('details').first().getAttribute('open'),null);
- await expect(crawler.getByRole('button',{name:'Play this game',exact:true})).toHaveCount(1);
+ await expect(crawler.getByRole('button',{name:'Play & learn',exact:true})).toHaveCount(1);
  await expect(crawler.getByRole('heading',{name:'Your username'})).toHaveCount(0);
  console.log('PASS: all 62 terms in server HTML, preview collapsed, one play button, no sign-in panel.');
  const ctx=await newContext();const page=await ctx.newPage();debugPage=page;page.setDefaultTimeout(30000);let authenticated=false;let setFetches=0;
@@ -27,7 +27,7 @@ try{
   return route.fulfill({status:200,body:''});
  });
  await page.goto(base+path,{timeout:180000});
- await page.getByRole('button',{name:'Play this game',exact:true}).click();
+ await page.getByRole('button',{name:'Play & learn',exact:true}).click();
  await expect(page.getByRole('dialog')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Your username'})).toBeVisible();
  await expect(page.locator('.community-tabs').getByRole('button',{name:'Create account',exact:true})).toHaveAttribute('aria-pressed','true');
@@ -36,12 +36,12 @@ try{
  await page.getByRole('button',{name:'Close account'}).click();
  await expect(page.getByRole('dialog')).toHaveCount(0);
  await expect(page.locator('h1')).toHaveText('Voci Mission 6');
- await expect(page.locator('.community-terms>div')).toHaveCount(62);
+ await expect(page.locator('.community-terms tbody tr')).toHaveCount(62);
  assert.equal(setFetches,0,'Public game data must not depend on crawler-blocked API calls');
  await page.getByText('Preview terms',{exact:true}).click();
  await expect(page.getByText('accueillir',{exact:true})).toBeVisible();
  console.log('PASS: empty API responses cannot replace title/terms; preview opens; sign-in opens only on play and can be cancelled.');
- await page.getByRole('button',{name:'Play this game',exact:true}).click();
+ await page.getByRole('button',{name:'Play & learn',exact:true}).click();
  await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await page.getByLabel('Username',{exact:true}).fill('smokeplayer');
  await page.getByLabel('Password',{exact:true}).fill('test-password');
@@ -51,12 +51,12 @@ try{
  console.log('PASS: play → sign in → existing game setup, without a second play click.');
  await page.goto(base+path);
  await expect(page.locator('h1')).toHaveText('Voci Mission 6');
- await page.getByRole('button',{name:'Play this game',exact:true}).click();
+ await page.getByRole('button',{name:'Play & learn',exact:true}).click();
  await expect(page.getByRole('button',{name:'Get Started',exact:true})).toBeVisible();
  await expect(page.getByRole('dialog')).toHaveCount(0);
  console.log('PASS: existing signed-in players proceed straight to game setup.');
  // Simulate leaving for OAuth after clicking play, then returning with a session.
- authenticated=false;await page.goto(base+path);await page.getByRole('button',{name:'Play this game',exact:true}).click();
+ authenticated=false;await page.goto(base+path);await page.getByRole('button',{name:'Play & learn',exact:true}).click();
  await expect(page.getByRole('dialog')).toBeVisible();authenticated=true;await page.reload();
  await expect(page.getByRole('button',{name:'Get Started',exact:true})).toBeVisible();
  assert.equal(await page.evaluate(()=>Object.keys(sessionStorage).filter(k=>k.startsWith('gravity-play-intent:')).length),0);

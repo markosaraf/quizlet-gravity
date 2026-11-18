@@ -1,32 +1,34 @@
 # Quizlet Gravity
 
+**This is the current repository for [quizletgravity.com](https://www.quizletgravity.com/) and my Android, iPhone, iPad and Mac apps.** For the older version without accounts or online leaderboards, see [Quizlet Gravity Classic](https://github.com/markosaraf/quizlet-gravity-classic-no-leaderboards).
+
 [Play Quizlet Gravity](https://www.quizletgravity.com/) — my recreation of Quizlet's original falling-asteroid study game, available on the web and as Android, iPhone, iPad and Mac apps.
 
 I started by studying archived Gravity pages, JavaScript, CSS and assets to recreate the original game as closely as possible. Since then, I've added shared study games, accounts and online leaderboards. I want to preserve the original game's behaviour while making it easier to create, share and learn from your own study material.
 
 To play, type the matching term or definition before an asteroid lands.
 
-## What I've added
+## Play and learn
 
 - Create study games, paste terms, upload CSV files, or import Quizlet sets.
 - Share public games with their own links, searchable titles and term/definition previews.
 - Play as a guest or create an account; keep a personal best on each game's leaderboard.
 - Choose difficulty, answer side and starred terms; learn missed answers before continuing.
 - Use responsive game controls, special-character input and adjustable text/asteroid size.
-- Discover public games through crawlable pages, a dynamic sitemap and automatic IndexNow submissions.
-- Admin tools for users, games, moderation, activity charts and search-submission status.
 
-## My development and repositories
+## About the two repositories
 
-- **This repository:** my current website, shared games, accounts, online leaderboards and mobile apps.
-- **[Classic edition](https://github.com/markosaraf/quizlet-gravity-classic-no-leaderboards):** a snapshot I kept from 6 November 2026, before I added accounts and shared games.
+- **[quizlet-gravity](https://github.com/markosaraf/quizlet-gravity) — current version:** this is where I develop the website and apps, including shared games, accounts and online leaderboards. Use this repository to run or contribute to the current version.
+- **[quizlet-gravity-classic-no-leaderboards](https://github.com/markosaraf/quizlet-gravity-classic-no-leaderboards) — historical snapshot:** I kept the 6 November 2026 version as a reference from before I added accounts, shared games and online leaderboards. It is not the source of the current live site.
+
+## Source layout
 - `src/lib/gravity/`: game state and rules; `src/components/gravity/`: gameplay; `src/gravity/gravity.css`: game presentation.
-- `src/components/community/` and `src/app/api/`: shared games, accounts and administration.
+- `src/components/community/` and `src/app/api/`: shared games and accounts.
 - `mobile/`: Android and Apple app sources and build instructions.
 
 ## Original Quizlet Gravity sources — permanent reference
 
-These are the Web Archive sources I used to study the original Gravity game: playable page snapshots, game logic, styles, images and fonts. **Keep this source list in this README. Never remove it during a rewrite, cleanup or release.** Add new references without replacing the recovered ones.
+These are the Web Archive sources I used to study the original Gravity game: playable page snapshots, game logic, styles, images and fonts.
 
 These links come from my source collection dated **3 September 2026**. I keep the complete historical notes unchanged in [the original recovery kit](docs/original-gravity-recovery-kit.md). Availability and verification claims in that document refer to the collection date.
 

@@ -49,12 +49,12 @@ export function SharedSet({id,initialSet}:{id:string;initialSet:SetRecord}){
    </div>
   </details>
   <div className="community-actions">
+   <button onClick={()=>{navigator.clipboard.writeText(location.href).then(()=>setCopied(true)).catch(()=>alert('Copy this page’s URL from your address bar.'));}}>{copied?'Link copied':'Copy game link'}</button>
    <button onClick={play}>Play &amp; learn</button>
-   <button className="community-copy" onClick={()=>{navigator.clipboard.writeText(location.href).then(()=>setCopied(true)).catch(()=>alert('Copy this page’s URL from your address bar.'));}}>{copied?'Link copied':'Copy game link'}</button>
    <DeleteSetButton id={set.id} title={set.title}/>
   </div>
   <AccountDialog initialMode="signup" open={accountOpen&&!requiresPlayerName(session?.user)} onOpenChange={open=>{setAccountOpen(open);if(!open)clearIntent();}} onDone={()=>{clearIntent();setAccountOpen(false);setPlaying(true);}}/>
-  <SafetyActions kind="set" id={set.id} userId={set.created_by} onBlocked={()=>{router.push('/sets');}}/>
   <Leaderboard id={id}/>
+  <SafetyActions kind="set" id={set.id} userId={set.created_by} onBlocked={()=>{router.push('/sets');}}/>
  </main>;
 }

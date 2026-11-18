@@ -109,4 +109,3 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .community-terms th{position:sticky;top:0;z-index:1;background:#fff;font-weight:700}
 [data-theme="dark"] .community-terms th{background:#293246}
 .community-terms img{display:block;max-width:min(160px,100%);max-height:140px;object-fit:contain;margin-top:6px}
-.community-actions button.community-copy{background:transparent;color:var(--community-link);border-color:var(--community-border)}

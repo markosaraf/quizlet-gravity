@@ -204,6 +204,10 @@ export function useGameplaySize(
       setSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
     };
     measure();
+    // Starting play inserts the desktop sidebar without resizing the window.
+    // Keep planet coordinates in sync with the resulting narrower playfield.
+    const observer = new ResizeObserver(measure);
+    if (ref.current) observer.observe(ref.current);
     let t: ReturnType<typeof setTimeout> | null = null;
     const onResize = () => {
       if (t) clearTimeout(t);
@@ -211,6 +215,8 @@ export function useGameplaySize(
     };
     window.addEventListener('resize', onResize);
     return () => {
+      observer.disconnect();
+      if (t) clearTimeout(t);
       window.removeEventListener('resize', onResize);
     };
   }, [ref, remeasureKey]);

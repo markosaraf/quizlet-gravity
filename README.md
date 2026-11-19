@@ -20,7 +20,7 @@ To play, type the matching term or definition before an asteroid lands.
 
 I restored the level-up animation to the original Quizlet Gravity timing, planet movement and level-up badge. I fixed the third planet’s abrupt spawn by staging it just outside the playfield and sliding it in from the right, so it reaches its position alongside the other planets. On mobile, its speed and easing follow the second planet’s movement. Preparing the small planet texture at its displayed size also prevents Safari from skipping part of the slide.
 
-My first implementation of the planet-spawn fix used a much slower transition. After comparing it with the original, I decided against using that animation. I keep both the original animation code and my earlier slow implementation in the [animation history](docs/animation-history/README.md) as reference files; neither historical version is loaded by the game.
+My first implementation of the planet-spawn fix used a much slower transition. After comparing it with the original, I decided against using that animation. I keep both the original animation code and my earlier slow implementation in the [animation history](docs/animation-history/README.md) as reference files.
 
 ## About the two repositories
 

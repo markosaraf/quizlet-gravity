@@ -1,0 +1,167 @@
+const mode=new URLSearchParams(location.search).get('mode')||'original';
+const duration=mode==='horizontal'&&[500,1000].includes(Number(new URLSearchParams(location.search).get('duration')))?Number(new URLSearchParams(location.search).get('duration')):500;
+const entryDuration=duration*.4;
+const scene=document.getElementById('scene');
+const wrap=n=>((n-1)%10+10)%10+1;
+let level=1,lastFrom=1,busy=false,ready=false,renderEpoch=0,activeEntry=null;
+const V=window.OriginalVelocity;
+const planets=[],targets=new Map(),scheduled=new Map();
+const compactPlanets=new Set();
+const textures=new Map(),entryTextures=new Map();
+const originalTransition=`all ${duration}ms ease-in`;
+function entryTexture(p){
+ const size=Math.ceil(.04*innerWidth*devicePixelRatio),key=p+':'+size;
+ if(!entryTextures.has(key)){
+  const img=textures.get('level'+p),canvas=document.createElement('canvas');
+  canvas.width=canvas.height=size;
+  const context=canvas.getContext('2d'),ratio=Math.max(size/img.naturalWidth,size/img.naturalHeight);
+  context.imageSmoothingQuality='high';
+  // Match background-size:cover and background-position:top, at display resolution.
+  context.drawImage(img,(size-img.naturalWidth*ratio)/2,0,img.naturalWidth*ratio,img.naturalHeight*ratio);
+  entryTextures.set(key,canvas.toDataURL());
+ }
+ return entryTextures.get(key);
+}
+function setTransform(el,t){
+ for(const [name,value] of Object.entries(t))V.hook(el,name,name.startsWith('translate')?value+'px':value);
+}
+function status(){parent.postMessage({status:mode==='image'?`364px asteroid · ${innerWidth}px available width · text weight ${document.querySelector('.GravityTerm-text').style.fontWeight||600}`:!ready?'Loading planet textures…':`Level ${level} · ${mode==='original'?'Original transitions':'Original transitions + sliding third planet'} · ${duration}ms · ${innerWidth}px playfield`,ready,busy},location.origin);}
+function target(p){
+ const w=innerWidth,h=innerHeight;
+ if(p===wrap(level))return{translateX:-.5*w,translateY:h-300,scaleX:1,scaleY:1};
+ if(p===wrap(level+1))return{translateX:.7*w,translateY:.1*h,scaleX:.05,scaleY:.05};
+ if(p===wrap(level+2))return{translateX:.9*w,translateY:.08*h,scaleX:.02,scaleY:.02};
+ // Only change the staging location/size of the planet about to enter.
+ if(p===wrap(level+3))return mode==='horizontal'
+  ?{translateX:w+8,translateY:.08*h,scaleX:.02,scaleY:.02}
+  :{translateX:9999,translateY:-1200,scaleX:1,scaleY:1};
+ return{translateX:0,translateY:9999,scaleX:1,scaleY:1};
+}
+function render(animate){
+ const epoch=++renderEpoch;
+ activeEntry?.cancel();activeEntry=null;
+ if(animate)window.PreviewBadge?.start();else window.PreviewBadge?.stop();
+ const incoming=planets[wrap(level+2)-1];
+ const leaders=[planets[wrap(level)-1],planets[wrap(level+1)-1]];
+ let completedLeaders=0;
+ function syncThirdToArrival(){
+  // The original CSS transitions continue after Velocity has finished writing.
+  // Give the incoming planet the same compositor deadline as those transitions.
+  function synchronize(){
+   if(epoch!==renderEpoch)return;
+   for(const el of leaders)getComputedStyle(el).transform;
+   const transitions=leaders.flatMap(el=>el.getAnimations()).filter(a=>a.transitionProperty==='transform'||a.transitionProperty==='-webkit-transform');
+   if(transitions.some(a=>a.startTime===null)){requestAnimationFrame(synchronize);return;}
+   const endTime=Math.max(Number(document.timeline.currentTime),...transitions.map(a=>Number(a.startTime)+a.effect.getComputedTiming().endTime));
+   const t=targets.get(incoming),startX=innerWidth+8;
+   // Sample Velocity's swing curve; the browser runs this transform on the
+   // same timeline as the other planets, without a separate frame-loop delay.
+   let frames=Array.from({length:61},(_,i)=>{
+    const progress=i/60,eased=.5-Math.cos(Math.PI*progress)/2;
+    return{offset:progress,transform:`translate(${startX+(t.translateX-startX)*eased}px, ${t.translateY}px) scale(1, 1)`};
+   });
+   let entryTiming={duration:entryDuration,easing:'linear',fill:'both'},entryStart=endTime-entryDuration;
+   const secondTransition=leaders[1].getAnimations().find(a=>a.transitionProperty==='transform'||a.transitionProperty==='-webkit-transform');
+   if(innerWidth<=620&&secondTransition){
+    // On narrow playfields, follow the second planet's visible centre rather
+    // than squeezing an independent swing curve into the last 200/400ms.
+    // Its centre is translateX + W * scaleX (the original element is 2W wide).
+    // A fixed .17W centre separation puts the third at its original .9W target.
+    frames=secondTransition.effect.getKeyframes().map(frame=>{
+     const matrix=new DOMMatrixReadOnly(frame.transform);
+     const x=matrix.m41+innerWidth*matrix.m11+.15*innerWidth;
+     return{offset:frame.computedOffset,easing:frame.easing,transform:`translate(${x}px, ${t.translateY}px) scale(1, 1)`};
+    });
+    entryTiming={...secondTransition.effect.getTiming(),fill:'both'};
+    entryStart=secondTransition.startTime;
+   }
+   // Paint the incoming texture at its visible size. A full-playfield bitmap
+   // scaled to 2% stalls WebKit when it first crosses the clipping boundary.
+   // Keep this geometry after entry; normalize it before its next movement.
+   incoming.style.width=incoming.style.height=2*innerWidth*t.scaleX+'px';
+   incoming.style.backgroundImage=`url("${entryTexture(wrap(level+2))}")`;
+   setTransform(incoming,{translateX:startX,translateY:t.translateY,scaleX:1,scaleY:1});
+   compactPlanets.add(incoming);
+   incoming.classList.remove('is-hidden');
+   activeEntry=incoming.animate(frames,entryTiming);
+   activeEntry.startTime=entryStart;
+   const animation=activeEntry;
+   animation.onfinish=()=>{
+    if(epoch!==renderEpoch)return;
+    // Preserve the final position in Velocity's cache for the following level.
+    setTransform(incoming,{...t,scaleX:1,scaleY:1});
+    animation.cancel();activeEntry=null;busy=false;status();
+   };
+  }
+  synchronize();
+ }
+
+ function leaderComplete(){if(++completedLeaders===2)syncThirdToArrival();}
+
+ planets.forEach((el,i)=>{
+  const p=i+1,t=target(p),visible=[wrap(level),wrap(level+1),wrap(level+2)].includes(p);
+  const entering=mode==='horizontal'&&p===wrap(level+2);
+  if(compactPlanets.has(el)){
+   // Equivalent geometry, changed atomically before enabling the original
+   // transition: a small unscaled planet becomes a large, 2%-scaled planet.
+   el.style.webkitTransition='none';
+   el.style.width=el.style.height=2*innerWidth+'px';
+   el.style.backgroundImage='';
+   setTransform(el,targets.get(el));
+   getComputedStyle(el).transform;
+   compactPlanets.delete(el);
+  }
+  el.style.width=el.style.height=2*innerWidth+'px';
+  // Existing planets retain the original CSS transition and Velocity scheduling.
+  // The third planet follows the end of the leaders' actual transition,
+  // without adding another CSS transition or fading it into place.
+  el.style.webkitTransition=animate&&!entering?originalTransition:'none';
+  el.className='GravityPlanet'+(visible&&!(animate&&entering)?'':' is-hidden')+((level===1||level===2)&&p===1?' GravityPlanet--level1Placeholder':' GravityPlanet--level'+p);
+  const previous=targets.get(el);targets.set(el,t);
+  if(!animate){
+   clearTimeout(scheduled.get(el));scheduled.delete(el);
+   V(el,'stop',true);V(el,t,{duration:0});
+  }else if(JSON.stringify(previous)!==JSON.stringify(t)){
+   // Recovered velocity-react componentDidUpdate: stop, then schedule each
+   // changed planet separately using setTimeout(runAnimation, 0).
+   V(el,'stop',true);
+   if(entering)return; // Its short entry is synchronized with the leaders' arrival.
+   if(!scheduled.has(el))scheduled.set(el,setTimeout(()=>{
+    scheduled.delete(el);if(epoch!==renderEpoch)return;
+    const options={duration};
+    if(mode==='horizontal'&&leaders.includes(el))options.complete=leaderComplete;
+    V(el,targets.get(el),options);
+   },0));
+  }
+ });
+ document.querySelector('.level').textContent='LEVEL '+level;status();
+}
+if(mode==='image'){
+ scene.innerHTML='<div class="image-rock"><div class="image-inner"><div class="image-content"><div class="GravityTerm-text">Robotaxi</div><img class="photo" src="/robotaxi.jpg" alt="Your Robotaxi photo"></div></div></div>';
+ ready=true;status();
+}else{
+ for(let p=1;p<=10;p++){
+  const el=document.createElement('div');el.dataset.planet=p;scene.appendChild(el);planets.push(el);
+  // Velocity 1.5.2 forces the first sub-unit Android scale to 1 when its
+  // transform cache is empty. Seed unit scale before setting the real size.
+  if(mode==='horizontal')setTransform(el,{translateX:0,translateY:0,scaleX:1,scaleY:1});
+ }
+ const label=document.createElement('div');label.className='level';scene.appendChild(label);
+ render(false);
+ Promise.all([...Array.from({length:10},(_,i)=>`level${i+1}`),'level1-placeholder'].map(async name=>{
+  const img=new Image();img.src=`/assets/gravity/planets/${name}.png`;await img.decode();textures.set(name,img);
+ })).then(async()=>{
+  if(mode==='horizontal')await Promise.all(Array.from({length:10},async(_,i)=>{const img=new Image();img.src=entryTexture(i+1);await img.decode();}));
+  ready=true;status();
+ }).catch(()=>{parent.postMessage({status:'A planet texture could not load. Reload this local preview.',ready:false,busy:false},location.origin);});
+}
+function finish(){if(mode==='horizontal')return;setTimeout(()=>{busy=false;status();},2*duration+100);}
+window.addEventListener('message',e=>{
+ if(e.origin!==location.origin)return;
+ if(e.data.action==='weight'&&mode==='image'){document.querySelector('.GravityTerm-text').style.fontWeight=e.data.value;status();return;}
+ if(mode==='image'||busy||!ready)return;
+ if(e.data.action==='reset'){level=1;lastFrom=1;render(false);return;}
+ if(e.data.action==='next'){lastFrom=level;level++;busy=true;render(true);finish();}
+ if(e.data.action==='replay'){busy=true;level=lastFrom;render(false);setTimeout(()=>{level++;render(true);finish();},100);}
+});
+window.addEventListener('resize',()=>{if(mode==='image'){status();return;}if(busy)busy=false;render(false);});

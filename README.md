@@ -16,6 +16,12 @@ To play, type the matching term or definition before an asteroid lands.
 - Choose difficulty, answer side and starred terms; learn missed answers before continuing.
 - Use responsive game controls, special-character input and adjustable text/asteroid size.
 
+## Level-up animation
+
+I restored the level-up animation to the original Quizlet Gravity timing, planet movement and level-up badge. I fixed the third planet’s abrupt spawn by staging it just outside the playfield and sliding it in from the right, so it reaches its position alongside the other planets. On mobile, its speed and easing follow the second planet’s movement. Preparing the small planet texture at its displayed size also prevents Safari from skipping part of the slide.
+
+My first implementation of the planet-spawn fix used a much slower transition. After comparing it with the original, I decided against using that animation. I keep both the original animation code and my earlier slow implementation in the [animation history](docs/animation-history/README.md) as reference files; neither historical version is loaded by the game.
+
 ## About the two repositories
 
 - **[quizlet-gravity](https://github.com/markosaraf/quizlet-gravity) — current version:** this is where I develop the website and apps, including shared games, accounts and online leaderboards. Use this repository to run or contribute to the current version.

@@ -346,7 +346,7 @@
 }
 
 .GravityLevelUpBadge.is-levelingUp {
-  animation: zoomBadge 3.141s ease-in-out 0s;
+  animation: zoomBadge 1.5s ease-in-out .5s;
 }
 
 .GravityLevelUpBadge-icon {

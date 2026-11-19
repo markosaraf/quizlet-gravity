@@ -133,7 +133,6 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
         onPause={() => gravityStore.pauseGame()}
         onResume={() => gravityStore.resumeGame()}
         onRestart={() => void beginGame(true)}
-        onNewSet={handleNewSet}
         exitHref={exitHref}
         gameTextStep={textSize.step}
         onToggleGameText={textSize.toggle}
@@ -148,7 +147,6 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
             onPause={() => gravityStore.pauseGame()}
             onResume={() => gravityStore.resumeGame()}
             onRestart={() => void beginGame(true)}
-            onNewSet={handleNewSet}
             exitHref={exitHref}
         gameTextStep={textSize.step}
         onToggleGameText={textSize.toggle}

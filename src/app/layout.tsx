@@ -274,7 +274,7 @@ export default async function RootLayout({
         // this organization to its canonical profiles elsewhere on the web.
         sameAs: [
           "https://github.com/markosaraf",
-          "https://github.com/markosaraf/quizletgravityLAUNCH",
+          "https://github.com/markosaraf/quizlet-gravity",
         ],
         founder: { "@id": `${siteUrl}/#author` },
       },
@@ -326,7 +326,7 @@ export default async function RootLayout({
         },
         // Link the game entity to its open-source repo — strong signal for
         // LLMs citing/verifying the project.
-        sameAs: ["https://github.com/markosaraf/quizletgravityLAUNCH"],
+        sameAs: ["https://github.com/markosaraf/quizlet-gravity"],
       },
       {
         "@type": "WebPage",

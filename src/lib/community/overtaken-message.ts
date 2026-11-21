@@ -21,7 +21,7 @@ export function renderOvertakenEmail(opponent:string,game:OvertakenGame,{unsubsc
 <body style="margin:0;background:#2e384f;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;">
 ${emailPreheader(message.body)}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" background="${background}" style="background-color:#2e384f;background-image:url('${background}');background-position:center bottom;background-size:cover;"><tr><td align="center" style="padding:32px 16px;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#f7f7fa;border:1px solid #dadce5;border-radius:12px;"><tr><td style="padding:32px 28px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#f7f7fa;background-color:rgba(247,247,250,0.8);border:1px solid #dadce5;border-radius:12px;"><tr><td style="padding:32px 28px;">
 ${emailBrand}
 <h1 style="font-size:29px;line-height:1.2;margin:28px 0 14px;">You’ve been overtaken!</h1>
 <p style="font-size:17px;line-height:1.6;margin:0 0 22px;"><strong>${escape(opponent)}</strong> has overtaken you on the leaderboard. Ready to earn your place back?</p>

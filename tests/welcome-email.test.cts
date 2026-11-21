@@ -22,6 +22,8 @@ test('approved welcome includes image wordmark, preview text, three linked butto
  assert(!mail.html.includes('googleusercontent.com'));
  assert(!mail.html.includes('Quizlet Gravity is already available for iPhone'));
  assert(mail.html.indexOf('Using an iPhone')<mail.html.indexOf('Try the Android app'));
+ assert(mail.html.indexOf('I’d appreciate a rating on the App Store.')>mail.html.indexOf('Download on the App Store'));
+ assert(mail.html.indexOf('I’d appreciate a rating on the App Store.')<mail.html.indexOf('Try the Android app'));
  assert(mail.html.includes('background-color:rgba(247,247,250,0.8)'));
  for(const icon of ['play.png','apple.png','google-play-badge.png'])assert(mail.html.includes('cid:welcome-'+icon));
  assert(mail.html.includes('Prefer not to receive invitations like this? Just reply and let me know.'));

@@ -1,3 +1,4 @@
+import {welcomeEmailSettings,scheduleWelcomeEmails} from '@/lib/community/welcome-emails';
 import {safelyProcessGameIndexing} from '@/lib/community/game-indexing';
 import {after,NextRequest,NextResponse} from 'next/server';
 import {randomUUID} from 'node:crypto';
@@ -23,6 +24,7 @@ export async function GET(request:NextRequest,{params}:Context){
    const {rows}=await db.query("SELECT status,count(*)::int AS count FROM leaderboard_notifications WHERE created_at>now()-interval '7 days' GROUP BY status");
    return json({...await notificationSettings(),ready:notificationReadiness(),deliveries:Object.fromEntries(rows.map(r=>[r.status,r.count]))});
   }
+  if(path.join('/')==='welcome-emails')return json(await welcomeEmailSettings());
   if(path.join('/')==='settings')return json(await communitySettings());
   const offset=Math.max(0,Math.min(100000,Math.floor(Number(request.nextUrl.searchParams.get('offset'))||0)));
   const q=(request.nextUrl.searchParams.get('q')||'').trim().slice(0,120);
@@ -42,12 +44,14 @@ export async function GET(request:NextRequest,{params}:Context){
    return json({reports:rows.slice(0,50),hasMore:rows.length>50});
   }
   if(path.join('/')==='users'){
+   const audience=request.nextUrl.searchParams.get('audience')||'all';
+   if(!['all','accounts','guests'].includes(audience))return json({error:'Choose all users, accounts or guests.'},400);
    const {rows:counts}=await db.query(`SELECT count(*)::int AS total,count(*) FILTER(WHERE NOT coalesce(u."isAnonymous",false))::int AS accounts,count(*) FILTER(WHERE u."isAnonymous")::int AS guests FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id)`);
-   const {rows}=await db.query(`SELECT u.id,coalesce(u."displayUsername",u.username,u.name) AS username,CASE WHEN coalesce(u."isAnonymous",false) THEN NULL ELSE u.email END AS email,u."isAnonymous" AS guest,u."createdAt" AS created_at,EXISTS(SELECT 1 FROM community_admins a WHERE a.user_id=u.id) AS admin FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id) AND ($1='' OR coalesce(u."displayUsername",u.username,u.name) ILIKE $2 ESCAPE '\\') ORDER BY u."createdAt" DESC,u.id LIMIT 51 OFFSET $3`,[q,pattern,offset]);
+   const {rows}=await db.query(`SELECT u.id,coalesce(u."displayUsername",u.username,u.name) AS username,CASE WHEN coalesce(u."isAnonymous",false) THEN NULL ELSE u.email END AS email,u."isAnonymous" AS guest,u."createdAt" AS created_at,EXISTS(SELECT 1 FROM community_admins a WHERE a.user_id=u.id) AS admin FROM "user" u WHERE NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id=u.id) AND ($4='all' OR coalesce(u."isAnonymous",false)=($4='guests')) AND ($1='' OR coalesce(u."displayUsername",u.username,u.name) ILIKE $2 ESCAPE '\\' OR (NOT coalesce(u."isAnonymous",false) AND u.email ILIKE $2 ESCAPE '\\')) ORDER BY u."createdAt" DESC,u.id LIMIT 51 OFFSET $3`,[q,pattern,offset,audience]);
    return json({users:rows.slice(0,50),hasMore:rows.length>50,...counts[0]});
   }
   if(path.join('/')==='sets'){
-   const {rows}=await db.query(`SELECT s.id,s.public_id,s.title,s.source_url,s.term_count,coalesce(u."displayUsername",u.username,u.name,'Deleted user') AS creator FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by WHERE $1='' OR s.title ILIKE $2 ESCAPE '\\' ORDER BY s.created_at DESC,s.id LIMIT 51 OFFSET $3`,[q,pattern,offset]);
+   const {rows}=await db.query(`SELECT s.id,s.public_id,s.title,s.source_url,s.term_count,s.created_at,coalesce(u."displayUsername",u.username,u.name,'Deleted user') AS creator FROM shared_sets s LEFT JOIN "user" u ON u.id=s.created_by WHERE $1='' OR s.title ILIKE $2 ESCAPE '\\' ORDER BY s.created_at DESC,s.id LIMIT 51 OFFSET $3`,[q,pattern,offset]);
    return json({sets:rows.slice(0,50),hasMore:rows.length>50});
   }
   return json({error:'Not found'},404);
@@ -105,6 +109,16 @@ export async function POST(request:NextRequest,{params}:Context){
    }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
    return json({...await notificationSettings(),ready});
   }catch{return json({error:'Unable to save notification settings.'},500);}
+ }
+ if(path.join('/')==='welcome-emails'){
+  try{
+   const input=await request.json();if(!input||Object.keys(input).length!==1||typeof input.enabled!=='boolean')return json({error:'Choose on or off.'},400);
+   if(input.enabled&&(!notificationReadiness().email||!process.env.CRON_SECRET))return json({error:'Configure email delivery and scheduling first.'},409);
+   await db.query('UPDATE welcome_email_settings SET enabled=$1,updated_at=now() WHERE id',[input.enabled]);
+   let schedulingError=false;
+   if(input.enabled)try{await scheduleWelcomeEmails();}catch{console.error('Welcome email scheduling failed after settings update');schedulingError=true;}
+   return json({...await welcomeEmailSettings(),schedulingError});
+  }catch{return json({error:'Unable to save welcome email settings.'},500);}
  }
  if(path.join('/')==='settings'){
   try{

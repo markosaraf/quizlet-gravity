@@ -34,7 +34,7 @@ export async function scheduleWelcomeEmails(now=new Date()){
  if(!settings?.enabled)return null;
  const scheduledFor=nextWelcomeRun(now).toISOString();
  const delaySeconds=Math.max(0,Math.ceil((Date.parse(scheduledFor)-now.getTime())/1000));
- // The Saturday cron will schedule it closer to delivery. Leave ample retention
+ // The Tuesday cron will schedule it closer to delivery. Leave ample retention
  // for retries, including the extra hour when daylight saving ends.
  if(delaySeconds>6*86400)return null;
  await send('welcome-emails',{kind:'dispatch',scheduledFor,cursor:''},{idempotencyKey:'welcome-schedule-'+scheduledFor,delaySeconds,retentionSeconds:604800,region:'iad1'});

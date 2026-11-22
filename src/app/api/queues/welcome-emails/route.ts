@@ -1,8 +1,10 @@
 import {handleCallback} from '@vercel/queue';
 import {dispatchWelcomeEmails,processWelcomeEmail,type WelcomeJob} from '@/lib/community/welcome-emails';
+import {isWelcomeRun} from '@/lib/community/welcome-schedule';
 export const maxDuration=60;
 export const POST=handleCallback<WelcomeJob>(async job=>{
  if(process.env.VERCEL_ENV!=='production')return;
+ if(!isWelcomeRun(job.scheduledFor))return;
  const scheduled=Date.parse(job.scheduledFor);
  if(!Number.isFinite(scheduled)||scheduled<Date.now()-86400000)return;
  if(scheduled>Date.now()+1000)throw Error('Welcome delivery is not due yet');

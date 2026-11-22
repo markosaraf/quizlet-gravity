@@ -10,7 +10,7 @@ export function WelcomeEmailSettings(){
   catch(e){setError((e as Error).message);}finally{setBusy(false);}
  }
  return <section aria-labelledby="welcome-email-title"><h2 id="welcome-email-title">Weekly welcome email</h2>
- <p>Send “Share the fun of Quizlet Gravity” once to new, verified accounts. Every Saturday at 13:09, Zurich time.</p>
+ <p>Send “Share the fun of Quizlet Gravity” once to new, verified accounts. Every Tuesday at 13:09, Zurich time.</p>
  <button role="switch" aria-label="Send weekly welcome emails" aria-checked={settings?.enabled===true} disabled={!settings||busy||(!settings.enabled&&!settings.ready)} onClick={()=>void toggle()}>{!settings?'Loading…':settings.enabled?'On':'Off'}</button>
  {settings&&<><p>{settings.eligible} eligible · {settings.sent} sent</p><p>New accounts since {new Date(settings.eligible_since).toLocaleString(undefined,{timeZone:'Europe/Zurich',timeZoneName:'short'})}. Previous recipients are excluded.</p>
  {settings.enabled&&<p>Next send: {new Date(settings.nextRun).toLocaleString(undefined,{timeZone:'Europe/Zurich',timeZoneName:'short'})}.</p>}

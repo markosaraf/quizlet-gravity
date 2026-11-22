@@ -10,7 +10,7 @@ for(const [name,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.route('**/api/admin/**',async r=>{
    const url=new URL(r.request().url()),path=url.pathname;
    if(path.endsWith('/status'))return r.fulfill({json:{admin:true}});
-   if(path.endsWith('/welcome-emails')){if(r.request().method()==='POST')enabled=r.request().postDataJSON().enabled;return r.fulfill({json:{enabled,ready:true,eligible:2,sent:12,uncertain:0,failed:0,eligible_since:'2026-11-21T10:00:00Z',nextRun:'2026-11-28T12:09:00Z',last_scheduled_for:null}});}
+   if(path.endsWith('/welcome-emails')){if(r.request().method()==='POST')enabled=r.request().postDataJSON().enabled;return r.fulfill({json:{enabled,ready:true,eligible:2,sent:12,uncertain:0,failed:0,eligible_since:'2026-11-21T10:00:00Z',nextRun:'2026-11-24T12:09:00Z',last_scheduled_for:null}});}
    if(path.endsWith('/users')){const audience=url.searchParams.get('audience');return r.fulfill({json:{total:2,accounts:1,guests:1,hasMore:false,users:[{id:'account',username:'Account player',email:'player@example.invalid',guest:false,admin:false,created_at:'2026-11-21T10:00:00Z'},{id:'guest',username:'Guest player',email:null,guest:true,admin:false,created_at:'2026-11-20T10:00:00Z'}].filter(u=>audience==='all'||u.guest===(audience==='guests'))}});}
    if(path.endsWith('/sets'))return r.fulfill({json:{sets:[{id:'game',public_id:'1001',title:'Example game',term_count:8,creator:'Account player',created_at:'2026-11-19T10:00:00Z'}],hasMore:false}});
    if(path.endsWith('/reports'))return r.fulfill({json:{reports:[],hasMore:false}});

@@ -26,6 +26,7 @@ async function main(){
   auth.options.emailVerification!.sendVerificationEmail=async()=>{throw Error('Test must not send emails');};
   console.log('Auth module loaded');
   const context=await auth.$context;
+  context.rateLimit.enabled=false; // These fixtures exercise naming, not request throttling.
   console.log('Auth context ready');
   const {POST}=await import('../src/app/api/native/[action]/route');
   const {leaderboardQuery}=await import('../src/lib/community/leaderboard');
@@ -35,6 +36,31 @@ async function main(){
   await context.internalAdapter.linkAccount({userId:account.id,accountId:account.id,providerId:'credential',password:await context.password.hash(password)});
   const set=(await db.query(`INSERT INTO shared_sets(fingerprint,title,cards,term_count,public_id) VALUES('fixture','Fixture','[{"term":"1","definition":"1"},{"term":"2","definition":"2"}]',2,'9999999999999999999') RETURNING id`)).rows[0];
   await db.query(`INSERT INTO high_scores(set_id,user_id,score,level,mode) VALUES($1,$2,100,1,'BEGINNER')`,[set.id,account.id]);
+  // A second device cannot claim an existing account or guest's username.
+  const namedGuest=(username:unknown)=>auth.handler(new Request('http://localhost:3035/api/auth/sign-in/anonymous',{method:'POST',headers:{Origin:'http://localhost:3035','Content-Type':'application/json'},body:JSON.stringify({username})}));
+  const userCount=async()=>Number((await db.query('SELECT count(*) AS count FROM "user"')).rows[0].count);
+  const beforeTaken=await userCount();
+  const taken=await namedGuest('ACCOUNT');
+  assert.equal(taken.status,400,'Taken name must fail before creating an Anonymous guest');
+  assert.equal((await taken.json()).code,'USERNAME_IS_ALREADY_TAKEN');
+  assert.equal(taken.headers.getSetCookie().length,0);
+  assert.equal(await userCount(),beforeTaken,'No anonymous user is left behind');
+  const named=await namedGuest(' New Guest ');assert.equal(named.status,200);
+  const namedData=await named.clone().json();
+  assert.equal(namedData.user.username,'new guest');assert.equal(namedData.user.displayUsername,'New Guest');assert.equal(namedData.user.name,'New Guest');
+  const namedSession=await auth.api.getSession({headers:new Headers({Cookie:cookie(named)})});
+  assert.equal(namedSession?.user.username,'new guest','The first session already has the chosen name');
+  const beforeGuestTaken=await userCount();
+  assert.equal((await namedGuest('NEW  GUEST')).status,400);
+  assert.equal(await userCount(),beforeGuestTaken);
+  for(const invalid of ['', '   ', 'a', '<script>', null])assert.equal((await namedGuest(invalid)).status,400);
+  assert.equal(await userCount(),beforeGuestTaken);
+  const beforeRace=await userCount();
+  const raced=await Promise.all([namedGuest('Racing Guest'),namedGuest('Racing Guest')]);
+  assert.equal(raced.filter(r=>r.status===200).length,1);
+  assert.ok(raced.some(r=>r.status===400||r.status===500));
+  assert.equal(await userCount(),beforeRace+1,'Concurrent claims create just one named guest');
+  console.log('PASS: taken account/guest names rejected without creating a guest or cookie; available guest name saved in first session; normalization and invalid-name rejection.');
   async function guest(name:string){
    const response=await auth.api.signInAnonymous({asResponse:true});assert.equal(response.status,200);
    const data=await response.clone().json();
@@ -62,6 +88,8 @@ async function main(){
     ?await auth.api.signInUsername({headers:new Headers({cookie:g.cookie}),body:{username:'account',password},asResponse:true})
     :await auth.api.signInEmail({headers:new Headers({cookie:g.cookie}),body:{email:'account@example.test',password},asResponse:true});
    assert.equal(response.status,200);assert.equal((await response.json()).user.id,account.id);await unchanged(g);
+   assert.equal((await auth.api.signOut({headers:new Headers({Cookie:g.cookie}),asResponse:true})).status,200);
+   await unchanged(g); // Signing out cannot remove the guest leaderboard entry.
   }
   const g=await guest('guest_native');
   const login=await auth.api.signInUsername({body:{username:'account',password},asResponse:true});

@@ -13,6 +13,16 @@ export const auth = betterAuth({
   hooks: {before:createAuthMiddleware(async ctx=>{
     if(invalidNameWrite(ctx.path,ctx.body)) throw new APIError('BAD_REQUEST',{code:'INVALID_USERNAME',message:'Choose a name with 3–24 characters, including a letter or number.'});
   })},
+  databaseHooks: {user:{create:{before:async (user,ctx)=>{
+    // Name a new guest in the initial insert, before a session cookie exists.
+    // Keep the legacy nameless API available for older, already-loaded clients.
+    if(ctx?.path!=='/sign-in/anonymous'||ctx.body?.username===undefined)return;
+    const displayUsername=displayPlayerName(ctx.body.username);
+    const username=normalizePlayerName(displayUsername);
+    const existing=await db.query('SELECT id FROM "user" WHERE username=$1',[username]);
+    if(existing.rowCount)throw new APIError('BAD_REQUEST',{code:'USERNAME_IS_ALREADY_TAKEN',message:'This username is already taken. Choose another.'});
+    return {data:{...user,name:displayUsername,username,displayUsername}};
+  }}}},
   emailAndPassword: { enabled: true, requireEmailVerification: true, autoSignIn: false, minPasswordLength: 8, maxPasswordLength: 128, resetPasswordTokenExpiresIn: 1800, revokeSessionsOnPasswordReset: true,
     onExistingUserSignUp: async ({user}) => {
       if (user.emailVerified) return;

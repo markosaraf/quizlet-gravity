@@ -30,6 +30,10 @@ test('blank and invisible names cannot be saved or used to complete registration
  assert(requiresPlayerName({username:'Marko',displayUsername:'   '}));
  assert(!requiresPlayerName({username:'Marko',displayUsername:'Marko'}));
  assert(!requiresPlayerName({username:'Marko',displayUsername:null}));
- assert(!requiresPlayerName({isAnonymous:true,username:null}));
+ assert(requiresPlayerName({isAnonymous:true,username:null}));
+ assert(!requiresPlayerName({isAnonymous:true,username:'godmode',displayUsername:'godmode'}));
+ assert(invalidNameWrite('/sign-in/anonymous',{username:'  '}));
+ assert(!invalidNameWrite('/sign-in/anonymous',{username:'New Guest'}));
+ assert(!invalidNameWrite('/sign-in/anonymous',{}));
  assert(!requiresPlayerName(null));
 });

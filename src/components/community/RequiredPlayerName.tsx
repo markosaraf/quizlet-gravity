@@ -5,7 +5,7 @@ import {useState, type FormEvent} from 'react';
 import {authClient} from '@/lib/community/auth-client';
 import {displayPlayerName, validNameForSaving} from '@/lib/community/usernames';
 
-/** A social account may exist before its owner chooses a public player name. */
+/** Recover any session that does not yet have a chosen public player name. */
 export function RequiredPlayerName() {
  const [name,setName]=useState('');
  const [busy,setBusy]=useState(false);

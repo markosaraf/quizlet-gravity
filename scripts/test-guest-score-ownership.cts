@@ -12,7 +12,7 @@ async function main(){
  let pool:Pool|undefined;
  try{
   await maintenance.query(`CREATE SCHEMA "${schema}"`);
-  for(const table of ['user','session','account','verification','rateLimit','shared_sets','game_runs','high_scores','native_handoffs','user_blocks','deleted_users','notification_preferences','leaderboard_notifications']){
+  for(const table of ['user','session','account','verification','rateLimit','shared_sets','game_runs','high_scores','native_handoffs','user_blocks','deleted_users','notification_preferences','leaderboard_notifications','community_admins']){
    await maintenance.query(`CREATE TABLE "${schema}"."${table}" (LIKE public."${table}" INCLUDING ALL)`);
   }
   // Never fall back to public: a missing test table must fail, not use live data.
@@ -55,6 +55,19 @@ async function main(){
   assert.equal(await userCount(),beforeGuestTaken);
   for(const invalid of ['', '   ', 'a', '<script>', null])assert.equal((await namedGuest(invalid)).status,400);
   assert.equal(await userCount(),beforeGuestTaken);
+  // Existing guests must be checked too, against both guest and account names.
+  const rename=(sessionCookie:string,username:string)=>auth.handler(new Request('http://localhost:3035/api/auth/update-user',{method:'POST',headers:{Origin:'http://localhost:3035','Content-Type':'application/json',Cookie:sessionCookie},body:JSON.stringify({username,name:username,displayUsername:username})}));
+  const other=await namedGuest('Other Guest');assert.equal(other.status,200);
+  for(const name of ['ACCOUNT','NEW  GUEST']){
+   const rejected=await rename(cookie(other),name);assert.equal(rejected.status,400);assert.equal((await rejected.json()).code,'USERNAME_IS_ALREADY_TAKEN');
+   assert.equal((await auth.api.getSession({headers:new Headers({Cookie:cookie(other)}),query:{disableCookieCache:true}}))?.user.username,'other guest');
+  }
+  assert.equal((await rename(cookie(other),'Other Guest')).status,200,'Keeping your own name is allowed');
+  const signup=await auth.handler(new Request('http://localhost:3035/api/auth/sign-up/email',{method:'POST',headers:{Origin:'http://localhost:3035','Content-Type':'application/json'},body:JSON.stringify({email:'duplicate@example.test',password,name:'NEW GUEST',username:'NEW GUEST'})}));
+  assert.equal(signup.status,400,'Account creation cannot claim a guest name');assert.equal((await signup.json()).code,'USERNAME_IS_ALREADY_TAKEN');
+  const accountLogin=await auth.api.signInUsername({body:{username:'account',password},asResponse:true});
+  assert.equal((await rename(cookie(accountLogin),'NEW GUEST')).status,400,'Account rename cannot claim a guest name');
+  console.log('PASS: existing guest rename rejects account and guest names, preserves its old identity; account signup and rename reject guest names.');
   const beforeRace=await userCount();
   const raced=await Promise.all([namedGuest('Racing Guest'),namedGuest('Racing Guest')]);
   assert.equal(raced.filter(r=>r.status===200).length,1);
@@ -102,6 +115,21 @@ async function main(){
   assert.equal((await auth.api.getSession({headers:new Headers({Cookie:cookie(exchange)})}))?.user.id,account.id);
   await unchanged(g);
   assert.equal((await send('exchange',{code,verifier},g.cookie)).status,400);
+  // Exercise the real administrator route: guests without scores AND games only.
+  const {GET:adminUsers}=await import('../src/app/api/admin/[...path]/route');
+  await db.query('INSERT INTO community_admins(user_id) VALUES($1)',[account.id]);
+  const creator=await context.internalAdapter.createUser({email:'creator@example.test',emailVerified:false,name:'Creator Guest',username:'creator guest',isAnonymous:true});
+  await db.query(`INSERT INTO shared_sets(fingerprint,title,cards,term_count,created_by) VALUES('creator-fixture','Guest created game','[{"term":"a","definition":"b"},{"term":"c","definition":"d"}]',2,$1)`,[creator.id]);
+  const queryUsers=async(audience:string,q='',sessionCookie=cookie(login))=>adminUsers(new NextRequest('http://localhost:3035/api/admin/users?audience='+audience+'&q='+encodeURIComponent(q),{headers:{Cookie:sessionCookie}}),{params:Promise.resolve({path:['users']})});
+  const filtered=await queryUsers('unused-guests');assert.equal(filtered.status,200);const filteredData=await filtered.json();
+  assert.ok(filteredData.users.some((u:any)=>u.id===namedData.user.id));
+  assert.ok(filteredData.users.every((u:any)=>u.guest));
+  assert.ok(!filteredData.users.some((u:any)=>[creator.id,g.id,account.id].includes(u.id)));
+  assert.equal((await (await queryUsers('unused-guests','New Guest')).json()).users.length,1);
+  assert.ok((await (await queryUsers('guests')).json()).users.some((u:any)=>u.id===creator.id));
+  assert.ok((await (await queryUsers('accounts')).json()).users.every((u:any)=>!u.guest));
+  assert.equal((await queryUsers('unused-guests','',cookie(named))).status,403);
+  console.log('PASS: administrator filter includes unused guests, excludes score holders, creators and accounts, respects search and admin access.');
   // Exercise the signed opt-out through the same isolated database; no delivery.
   const {notificationUnsubscribeUrl}=await import('../src/lib/community/notification-unsubscribe');
   const {POST:optOut}=await import('../src/app/api/notifications/email-opt-out/route');

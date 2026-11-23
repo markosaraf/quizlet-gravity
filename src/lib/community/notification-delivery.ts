@@ -1,3 +1,4 @@
+import {notificationOpenToken} from './notification-open';
 import {connect} from 'node:http2';
 import {importPKCS8,SignJWT} from 'jose';
 import {renderOvertakenEmail,type OvertakenGame,overtakenMessage} from './overtaken-message';
@@ -6,11 +7,11 @@ import {notificationUnsubscribeUrl} from './notification-unsubscribe';
 export class NotificationDeliveryError extends Error{
  constructor(public code:string,public retryable=false,public invalidToken=false,public uncertain=false){super(code);}
 }
-export type NotificationJob={id:string;actor_name:string;recipient_id:string;email:string;game:OvertakenGame;device?:{token:string;platform:string;environment:string}};
+export type NotificationJob={id:string;notification_id?:string;unread_count?:number;actor_name:string;recipient_id:string;email:string;game:OvertakenGame;device?:{token:string;platform:string;environment:string}};
 
 export async function deliverLeaderboardEmail(job:NotificationJob){
  const unsubscribeUrl=notificationUnsubscribeUrl(job.recipient_id,job.email);
- const mail=renderOvertakenEmail(job.actor_name,job.game,{unsubscribeUrl});
+ const mail=renderOvertakenEmail(job.actor_name,job.game,{unsubscribeUrl,open:job.notification_id?{id:job.notification_id,token:notificationOpenToken(job.notification_id,job.recipient_id)}:undefined});
  if(/[\r\n]/.test(job.email))throw new NotificationDeliveryError('invalid_recipient');
  const tokenResponse=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:process.env.GMAIL_REFRESH_TOKEN||'',client_id:process.env.GMAIL_CLIENT_ID||'',client_secret:process.env.GMAIL_CLIENT_SECRET||''}),signal:AbortSignal.timeout(15000)});
  if(!tokenResponse.ok)throw new NotificationDeliveryError('gmail_authorization_'+tokenResponse.status,tokenResponse.status>=500||tokenResponse.status===429);
@@ -48,8 +49,8 @@ async function firebaseAuthorization(){
 export async function deliverAndroidNotification(job:NotificationJob){
  if(!job.device)throw new NotificationDeliveryError('device_missing');
  const config=JSON.parse(process.env.FCM_SERVICE_ACCOUNT_JSON||'{}');
- const auth=await firebaseAuthorization(),message=overtakenMessage(job.actor_name,job.game);
- const response=await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(config.project_id)}/messages:send`,{method:'POST',headers:{Authorization:'Bearer '+auth,'Content-Type':'application/json'},body:JSON.stringify({message:{token:job.device.token,data:{...message,eventId:job.id},android:{priority:'HIGH',ttl:'86400s',collapse_key:'leaderboard_'+job.game.id}}}),signal:AbortSignal.timeout(20000)});
+ const auth=await firebaseAuthorization(),message=overtakenMessage(job.actor_name,job.game,job.notification_id?{id:job.notification_id,token:notificationOpenToken(job.notification_id,job.recipient_id)}:undefined);
+ const response=await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(config.project_id)}/messages:send`,{method:'POST',headers:{Authorization:'Bearer '+auth,'Content-Type':'application/json'},body:JSON.stringify({message:{token:job.device.token,data:{...message,eventId:job.notification_id||job.id},android:{priority:'HIGH',ttl:'86400s',collapse_key:'leaderboard_'+job.game.id}}}),signal:AbortSignal.timeout(20000)});
  const result=await response.json();
  if(!response.ok){
   const invalid=result.error?.details?.some((d:{errorCode?:string})=>d.errorCode==='UNREGISTERED');
@@ -69,8 +70,8 @@ async function appleAuthorization(){
 
 export async function deliverAppleNotification(job:NotificationJob){
  if(!job.device)throw new NotificationDeliveryError('device_missing');
- const authorization=await appleAuthorization(),message=overtakenMessage(job.actor_name,job.game);
- const payload=JSON.stringify({aps:{alert:{title:message.title,body:message.body},sound:'default','thread-id':'leaderboard_'+job.game.id},url:message.url,eventId:job.id});
+ const authorization=await appleAuthorization(),message=overtakenMessage(job.actor_name,job.game,job.notification_id?{id:job.notification_id,token:notificationOpenToken(job.notification_id,job.recipient_id)}:undefined);
+ const payload=JSON.stringify({aps:{...(job.unread_count===undefined?{}:{badge:job.unread_count}),alert:{title:message.title,body:message.body},sound:'default','thread-id':'leaderboard_'+job.game.id},url:message.url,eventId:job.notification_id||job.id});
  return new Promise<string>((resolve,reject)=>{
   const client=connect(job.device!.environment==='sandbox'?'https://api.sandbox.push.apple.com':'https://api.push.apple.com');
   const timer=setTimeout(()=>{client.destroy();reject(new NotificationDeliveryError('apns_timeout',true));},20000);

@@ -109,3 +109,25 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .community-terms th{position:sticky;top:0;z-index:1;background:#fff;font-weight:700}
 [data-theme="dark"] .community-terms th{background:#293246}
 .community-terms img{display:block;max-width:min(160px,100%);max-height:140px;object-fit:contain;margin-top:6px}
+
+/* Explicit username errors and the requested unread counters. */
+.community-panel .community-name-error{color:#dc2626;font-weight:600}
+.community-panel input[aria-invalid="true"]{border:2px solid #dc2626;outline-color:#dc2626}
+[data-theme="dark"] .community-panel .community-name-error{color:#f87171}
+[data-theme="dark"] .community-panel input[aria-invalid="true"]{border-color:#f87171;outline-color:#f87171}
+
+.notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:12px;font-weight:700;line-height:1;flex-shrink:0;vertical-align:middle}
+.community-nav .community-username-button{position:relative;display:inline-flex;align-items:center;gap:8px;overflow:visible}
+.community-username-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.community-username-button .notification-count{position:absolute;right:-6px;top:-6px}
+.community-username-button:has(.notification-count){padding-right:22px}
+.community-account-games .notification-count{margin-left:auto;margin-right:8px}
+.notification-inbox{margin-top:28px}
+.notification-inbox ul{list-style:none;padding:0;margin:16px 0}
+.notification-inbox li{border:1px solid var(--community-border);border-radius:8px;margin-bottom:10px}
+.notification-inbox li[data-unread="true"]{border-left:4px solid var(--community-accent)}
+.notification-inbox li>a{display:block;padding:16px;text-decoration:none;color:var(--community-text)}
+.notification-row-message{display:block;line-height:1.5;overflow-wrap:anywhere}
+.notification-inbox li[data-unread="true"] .notification-row-message{font-weight:700}
+.notification-inbox li small{display:block;margin-top:8px;color:var(--community-muted)}
+.notification-inbox li[data-unread="true"] .notification-read-state{font-weight:700;color:var(--community-text)}

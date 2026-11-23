@@ -291,7 +291,7 @@ public final class MainActivity extends ComponentActivity {
                 });
         }
         WebSettings settings = webView.getSettings();
-        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp NotificationOnboarding/1");
+        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp NotificationOnboarding/1 NotificationInbox/1");
         // The first-party site needs JS and DOM storage for its game and remembered sets.
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -338,6 +338,10 @@ public final class MainActivity extends ComponentActivity {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 if (NavigationPolicy.isInternal(url)) {
+                    if (request.isForMainFrame() && "/native/notifications/sync".equals(request.getUrl().getPath())) {
+                        if (NavigationPolicy.isInternal(view.getUrl())) NotificationInboxSync.sync(MainActivity.this);
+                        return true;
+                    }
                     if (request.isForMainFrame() && "/native/notifications".equals(request.getUrl().getPath())) {
                         if (NavigationPolicy.isInternal(view.getUrl())) {
                             if ("1".equals(request.getUrl().getQueryParameter("afterSignup"))) requestNotificationsAfterSignup();
@@ -362,7 +366,7 @@ public final class MainActivity extends ComponentActivity {
             @Override public void onPageCommitVisible(WebView view, String url) { revealPage(view, url); }
             @Override public void onPageFinished(WebView view, String url) {
                 revealPage(view, url);
-                if (NavigationPolicy.isInternal(url)) NotificationRegistration.sync(MainActivity.this, false, null);
+                if (NavigationPolicy.isInternal(url)) { NotificationRegistration.sync(MainActivity.this, false, null); NotificationInboxSync.sync(MainActivity.this); }
             }
 
             @Override public void onReceivedError(WebView view, WebResourceRequest request,
@@ -499,8 +503,12 @@ public final class MainActivity extends ComponentActivity {
         }
         if (logo != null) logo.resumeMotion();
         if (revealAnimation != null) revealAnimation.resume();
-        if (webView != null) { webView.resumeTimers(); webView.onResume(); }
+        if (webView != null) {
+            webView.resumeTimers(); webView.onResume();
+            if (NavigationPolicy.isInternal(webView.getUrl())) webView.evaluateJavascript("window.dispatchEvent(new Event('quizlet-notifications-changed'));", null);
+        }
         NotificationRegistration.sync(this, false, null);
+        NotificationInboxSync.sync(this);
     }
     @Override protected void onDestroy() {
         cancelReveal();

@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
+import {NotificationInbox} from './NotificationInbox';
 import {authClient} from '@/lib/community/auth-client';
 
 type AdminSettings={overtakenEmailEnabled:boolean;overtakenPushEnabled:boolean;ready:{email:boolean;android:boolean;apple:boolean};deliveries?:Record<string,number>};
@@ -42,7 +43,7 @@ export function NotificationPreferences(){
    {preferences?.canEmail&&<section><h2>Leaderboard emails</h2><button role="switch" aria-label="Leaderboard emails" aria-checked={preferences.emailEnabled} disabled={busy} onClick={()=>void toggle('emailEnabled')}>{preferences.emailEnabled?'On':'Off'}</button></section>}
    <section><h2>Push notifications</h2><button role="switch" aria-label="Leaderboard push notifications" aria-checked={preferences?.pushEnabled===true} disabled={!preferences||busy} onClick={()=>void toggle('pushEnabled')}>{!preferences?'Loading…':preferences.pushEnabled?'On':'Off'}</button>
    {native&&preferences?.pushEnabled?<p><a className="community-account-games" href="/native/notifications">Enable notifications on this device</a></p>:<p>Enable device notifications in the Android, iOS or Mac app.</p>}
-   {deviceStatus&&<p role="status">{deviceStatus}</p>}</section>
+   {deviceStatus&&<p role="status">{deviceStatus}</p>}</section><NotificationInbox/>
   </>}{error&&<p role="alert">{error}</p>}
  </main>;
 }

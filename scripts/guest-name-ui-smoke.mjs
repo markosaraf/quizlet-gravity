@@ -11,6 +11,7 @@ try{
   let session=scenario==='existing-guest'?fixture('Other guest','other guest'):scenario==='recovery'?fixture('Anonymous',null):scenario==='account'?fixture('My account','my account',false):null;
   let creates=0,updates=0;
   await page.route('**/api/community/config',r=>r.fulfill({json:{google:false,apple:false,recovery:false,quizletSearchEnabled:true}}));
+  await page.route('**/api/notifications/inbox*',r=>r.fulfill({json:{unreadCount:0}}));
   await page.route('**/api/admin/status',r=>r.fulfill({json:{admin:false}}));
   await page.route('**/api/auth/**',async r=>{
    const path=new URL(r.request().url()).pathname,data=r.request().method()==='POST'?r.request().postDataJSON():{};
@@ -40,6 +41,9 @@ try{
    const error=page.getByRole('alert').filter({hasText:taken});await expect(error).toBeVisible();
    if(scenario!=='recovery')await submit.click();
    await expect(error).toBeVisible();await expect(submit).toBeEnabled();
+   await expect(field).toHaveAttribute('aria-invalid','true');
+   await expect(field).toHaveCSS('border-top-color','rgb(220, 38, 38)');
+   await expect(error).toHaveCSS('color','rgb(220, 38, 38)');
    if(scenario==='existing-guest'){const box=await error.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=380,'Taken-name error fits above keyboard');await expect(page.getByRole('button',{name:'Other guest',exact:true,includeHidden:true})).toHaveCount(1);}
   }
   if(scenario==='signup'){assert.equal(creates,0);await page.close();console.log('PASS signup rejects guest and account names before sending signup');continue;}

@@ -36,8 +36,8 @@ export function RequiredPlayerName() {
      <Dialog.Description>Your account needs a name. Choose how you appear on games and leaderboards.</Dialog.Description>
      <form onSubmit={save}>
       <label htmlFor="required-player-name">Name</label>
-      <input id="required-player-name" autoComplete="username" required minLength={3} maxLength={24} value={name} onChange={e=>setName(e.target.value)} aria-describedby={error?'required-name-error':undefined}/>
-      {error&&<p id="required-name-error" role="alert">{error}</p>}
+      <input id="required-player-name" autoComplete="username" required minLength={3} maxLength={24} value={name} onChange={e=>setName(e.target.value)} aria-invalid={!!error} aria-describedby={error?'required-name-error':undefined}/>
+      {error&&<p id="required-name-error" className="community-name-error" role="alert">{error}</p>}
       <button className="community-primary" disabled={busy||!validNameForSaving(name)}>{busy?'Saving…':'Save name'}</button>
      </form>
      <button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const result=await authClient.signOut();if(result.error)throw Error(result.error.message);}catch{setError('Could not sign out. Please try again.');}finally{setBusy(false);}}}>Sign out</button>

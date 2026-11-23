@@ -11,6 +11,8 @@ final class PushNotifications: NSObject, UNUserNotificationCenterDelegate, URLSe
     private var pendingURL: URL?
     private var token: String?
     private var explicitRequest = false
+    private var inboxSyncRunning = false
+    private var inboxSyncPending = false
     private var lastRegistration = ""
     private var lastRegisteredAt = Date.distantPast
     private lazy var session = URLSession(configuration: .ephemeral, delegate: self, delegateQueue: nil)
@@ -116,6 +118,61 @@ final class PushNotifications: NSObject, UNUserNotificationCenterDelegate, URLSe
         }
     }
 
+    // Badge counts come from the authenticated inbox, never from page-supplied numbers.
+    func syncInbox() {
+        if inboxSyncRunning { inboxSyncPending = true; return }
+        guard let webView, trusted(webView.url) else { return }
+        inboxSyncRunning = true
+        webView.evaluateJavaScript("window.dispatchEvent(new Event('quizlet-notifications-changed'));", completionHandler: nil)
+        let center = UNUserNotificationCenter.current()
+        center.getDeliveredNotifications { notifications in
+            let identified = notifications.compactMap { n -> (String, String)? in
+                guard let id = n.request.content.userInfo["eventId"] as? String,
+                      UUID(uuidString: id) != nil else { return nil }
+                return (id, n.request.identifier)
+            }
+            DispatchQueue.main.async {
+                webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
+                    DispatchQueue.main.async {
+                        guard self.webView === webView, self.trusted(webView.url) else { self.inboxSyncRunning = false; return }
+                        let own = cookies.filter {
+                            ["quizletgravity.com", ".quizletgravity.com", "www.quizletgravity.com", ".www.quizletgravity.com"].contains($0.domain) &&
+                            ($0.expiresDate == nil || $0.expiresDate! > Date()) && "/api/notifications/inbox/status".hasPrefix($0.path)
+                        }
+                        var request = URLRequest(url: URL(string: self.origin + "/api/notifications/inbox/status")!)
+                        request.httpMethod = "POST"; request.timeoutInterval = 15
+                        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                        request.setValue(self.origin, forHTTPHeaderField: "Origin")
+                        request.setValue(HTTPCookie.requestHeaderFields(with: own)["Cookie"] ?? "", forHTTPHeaderField: "Cookie")
+                        request.httpBody = try? JSONSerialization.data(withJSONObject: ["ids": Array(identified.prefix(100).map { $0.0 })])
+                        self.session.dataTask(with: request) { data, response, error in
+                            DispatchQueue.main.async {
+                                defer {
+                                    self.inboxSyncRunning = false
+                                    if self.inboxSyncPending { self.inboxSyncPending = false; self.syncInbox() }
+                                }
+                                guard error == nil else { return }
+                                let status = (response as? HTTPURLResponse)?.statusCode
+                                if status == 401 {
+                                    center.removeDeliveredNotifications(withIdentifiers: identified.map { $0.1 })
+                                    center.setBadgeCount(0)
+                                    return
+                                }
+                                guard status == 200, let data,
+                                      let result = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                                      let count = result["unreadCount"] as? Int,
+                                      let clear = result["clearIds"] as? [String] else { return }
+                                let ids = Set(clear)
+                                center.removeDeliveredNotifications(withIdentifiers: identified.filter { ids.contains($0.0) }.map { $0.1 })
+                                center.setBadgeCount(count)
+                            }
+                        }.resume()
+                    }
+                }
+            }
+        }
+    }
+
     private func report(_ status: String) {
         explicitRequest = false
         guard let webView, trusted(webView.url), ["enabled", "denied", "error"].contains(status) else { return }
@@ -132,7 +189,7 @@ final class PushNotifications: NSObject, UNUserNotificationCenterDelegate, URLSe
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .list, .sound])
+        completionHandler([.banner, .list, .sound, .badge])
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {

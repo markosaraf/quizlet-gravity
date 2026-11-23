@@ -22,10 +22,11 @@ export async function processLeaderboardNotification(id:string,delivery:{email:D
  }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
  let accepted=false;
  try{
-  const {rows}=await db.query(`SELECT n.*,g.public_id,g.title,g.source_url,u.email,
+  const {rows}=await db.query(`SELECT n.*,i.id AS inbox_id,(SELECT count(*)::int FROM notification_inbox unread WHERE unread.recipient_id=n.recipient_id AND unread.read_at IS NULL AND NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id IN(unread.actor_id,unread.recipient_id)) AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE (b.blocker_id=unread.recipient_id AND b.blocked_id=unread.actor_id) OR (b.blocker_id=unread.actor_id AND b.blocked_id=unread.recipient_id))) AS unread_count,g.public_id,g.title,g.source_url,u.email,
    coalesce(a."displayUsername",a.username,a.name) AS actor_name,
    d.token,d.platform,d.environment,
    (n.created_at>now()-interval '24 hours'
+    AND (i.id IS NULL OR i.read_at IS NULL)
     AND EXISTS(SELECT 1 FROM community_settings WHERE key=CASE WHEN n.channel='email' THEN 'overtaken_email' ELSE 'overtaken_push' END AND enabled)
     AND NOT EXISTS(SELECT 1 FROM deleted_users x WHERE x.user_id IN(n.actor_id,n.recipient_id))
     AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE (b.blocker_id=n.recipient_id AND b.blocked_id=n.actor_id) OR (b.blocker_id=n.actor_id AND b.blocked_id=n.recipient_id))
@@ -35,12 +36,13 @@ export async function processLeaderboardNotification(id:string,delivery:{email:D
    ) AS eligible
    FROM leaderboard_notifications n JOIN shared_sets g ON g.id=n.set_id
    JOIN "user" u ON u.id=n.recipient_id JOIN "user" a ON a.id=n.actor_id
+   LEFT JOIN notification_inbox i ON i.run_id=n.run_id AND i.recipient_id=n.recipient_id
    LEFT JOIN notification_preferences p ON p.user_id=n.recipient_id
    LEFT JOIN notification_devices d ON d.id=n.device_id LEFT JOIN session s ON s.id=d.session_id
    WHERE n.id=$1`,[id]);
   const row=rows[0];
   if(!row?.eligible){await db.query("UPDATE leaderboard_notifications SET status='cancelled',last_error='no_longer_eligible',updated_at=now() WHERE id=$1",[id]);return;}
-  const job:NotificationJob={id,actor_name:row.actor_name,recipient_id:row.recipient_id,email:row.email,game:{id:row.set_id,public_id:row.public_id,title:row.title,source_url:row.source_url},...(row.channel==='push'?{device:{token:row.token,platform:row.platform,environment:row.environment}}:{})};
+  const job:NotificationJob={id,notification_id:row.inbox_id||undefined,unread_count:row.unread_count,actor_name:row.actor_name,recipient_id:row.recipient_id,email:row.email,game:{id:row.set_id,public_id:row.public_id,title:row.title,source_url:row.source_url},...(row.channel==='push'?{device:{token:row.token,platform:row.platform,environment:row.environment}}:{})};
   const provider=row.channel==='email'?delivery.email:row.platform==='android'?delivery.android:delivery.apple;
   const providerId=await provider(job);accepted=true;
   await db.query("UPDATE leaderboard_notifications SET status='sent',provider_id=$2,delivered_at=now(),updated_at=now(),last_error=NULL WHERE id=$1",[id,providerId]);

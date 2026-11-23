@@ -29,8 +29,12 @@ public final class LeaderboardMessagingService extends FirebaseMessagingService 
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent click = PendingIntent.getActivity(this, eventId.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         String body = data.getOrDefault("body", "Another player has overtaken you. Earn your place back!");
+        android.os.Bundle appearance = new android.os.Bundle();
+        // Supporting Android versions may show our actual gold launcher icon in the card.
+        // The status-bar glyph remains monochrome, as required by Android.
+        appearance.putBoolean("android.app.preferSmallIcon", false);
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this, NotificationRegistration.CHANNEL)
-                .setSmallIcon(R.drawable.ic_notification_q).setColor(0xff4255b4)
+                .addExtras(appearance).setNumber(1).setSmallIcon(R.drawable.ic_notification_q).setColor(0xff4255b4)
                 .setContentTitle(data.getOrDefault("title", "You’ve been overtaken!"))
                 .setContentText(body).setStyle(new NotificationCompat.BigTextStyle().bigText(body))
                 .setContentIntent(click).setAutoCancel(true).setOnlyAlertOnce(true);

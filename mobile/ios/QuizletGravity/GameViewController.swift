@@ -30,7 +30,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         view.backgroundColor = pageBackground
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
-        configuration.applicationNameForUserAgent = "QuizletGravityApp NotificationOnboarding/1"
+        configuration.applicationNameForUserAgent = "QuizletGravityApp NotificationOnboarding/1 NotificationInbox/1"
         #if targetEnvironment(macCatalyst)
         // Use Safari's desktop layout without iPad scaling or touch-layout overrides.
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
@@ -398,6 +398,13 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url else { decisionHandler(.cancel); return }
         if isInternal(url) {
+            if url.path == "/native/notifications/sync" {
+                if action.targetFrame?.isMainFrame == true, action.sourceFrame.isMainFrame, let source = action.sourceFrame.request.url, isInternal(source) {
+                    PushNotifications.shared.syncInbox()
+                }
+                decisionHandler(.cancel)
+                return
+            }
             if url.path == "/native/notifications" {
                 if action.targetFrame?.isMainFrame == true, action.sourceFrame.isMainFrame,
                    let source = action.sourceFrame.request.url, isInternal(source) {
@@ -430,6 +437,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         guard let url = webView.url, isInternal(url) else { fail(); return }
         PushNotifications.shared.attach(webView, controller: self)
         PushNotifications.shared.sync()
+        PushNotifications.shared.syncInbox()
         configureInputLayout()
         webView.evaluateJavaScript(Self.gameInputObserver, in: nil, in: .defaultClient, completionHandler: nil)
         #if !targetEnvironment(macCatalyst)
@@ -464,6 +472,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     func sceneDidBecomeActive() {
         PushNotifications.shared.refreshAuthorization()
         PushNotifications.shared.sync()
+        PushNotifications.shared.syncInbox()
         intro?.resume()
         configureInputLayout()
         if let url = webView.url, isInternal(url) {

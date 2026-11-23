@@ -5,13 +5,13 @@ export type OvertakenGame={id:string;public_id:string;title:string;source_url?:s
 const escape=(value:string)=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const origin='https://www.quizletgravity.com';
 
-export function overtakenMessage(opponent:string,game:OvertakenGame){
- return {title:'You’ve been overtaken!',body:`${opponent} has overtaken you in “${game.title}”. Earn your place back!`,url:origin+sharedSetPath(game)};
+export function overtakenMessage(opponent:string,game:OvertakenGame,open?:{id:string;token?:string}){
+ return {title:'You’ve been overtaken!',body:`${opponent} has overtaken you in “${game.title}”. Earn your place back!`,url:origin+sharedSetPath(game)+(open?'?notification='+encodeURIComponent(open.id)+(open.token?'&notificationToken='+encodeURIComponent(open.token):''):'')};
 }
 
-export function renderOvertakenEmail(opponent:string,game:OvertakenGame,{unsubscribeUrl}:{unsubscribeUrl:string}){
+export function renderOvertakenEmail(opponent:string,game:OvertakenGame,{unsubscribeUrl,open}:{unsubscribeUrl:string;open?:{id:string;token?:string}}){
  if(!unsubscribeUrl||new URL(unsubscribeUrl).origin!==origin)throw Error('Leaderboard emails require a working opt-out link');
- const message=overtakenMessage(opponent,game),url=escape(message.url);
+ const message=overtakenMessage(opponent,game,open),url=escape(message.url);
  const image=origin+'/api/game-preview/'+encodeURIComponent(game.id)+'?style=site-card-v2';
  const background=origin+'/assets/gravity/intro-bg@2x.jpg';
  const subject=opponent+' has overtaken you — Quizlet Gravity';

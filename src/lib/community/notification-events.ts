@@ -16,6 +16,11 @@ export async function enqueueOvertakenNotifications(client:Pick<PoolClient,'quer
    AND NOT EXISTS(SELECT 1 FROM user_blocks b WHERE
     (b.blocker_id=h.user_id AND b.blocked_id=$2) OR (b.blocker_id=$2 AND b.blocked_id=h.user_id))
    AND NOT EXISTS(SELECT 1 FROM deleted_users d WHERE d.user_id IN (h.user_id,$2))
+ ), inbox AS (
+  INSERT INTO notification_inbox(run_id,set_id,actor_id,recipient_id,actor_name)
+  SELECT $4,$1,$2,o.user_id,coalesce(a."displayUsername",a.username,a.name)
+  FROM overtaken o JOIN "user" a ON a.id=$2
+  ON CONFLICT(run_id,recipient_id) DO NOTHING
  ), destinations AS (
   SELECT o.user_id,'email'::text AS channel,'email'::text AS destination,NULL::uuid AS device_id
   FROM overtaken o JOIN "user" u ON u.id=o.user_id

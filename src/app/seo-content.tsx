@@ -36,7 +36,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "Do I need an account?",
-    "answer": "No. Choose a guest username to play, import and share games. Create an account to keep your scores across devices."
+    "answer": "No. Choose a guest username to play, import and share games. To earn scores for an account you can use across devices, sign in before playing."
   },
   {
     "question": "How do I import a Quizlet set?",
@@ -56,7 +56,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     "question": "What is the difference between a guest and an account?",
-    "answer": "A guest can lose access to their scores if app or browser data is cleared. An account lets you sign back in on any device."
+    "answer": "Guest scores stay under the guest name and do not transfer when you sign in or create an account. Clearing app or browser data can make you lose access to that guest profile. Sign in before playing to earn scores for your account and access them on other devices."
   },
   {
     "question": "How do I confirm my email or reset my password?",

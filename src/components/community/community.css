@@ -111,10 +111,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .community-terms img{display:block;max-width:min(160px,100%);max-height:140px;object-fit:contain;margin-top:6px}
 
 /* Explicit username errors and the requested unread counters. */
-.community-panel .community-name-error{color:#dc2626;font-weight:600}
-.community-panel input[aria-invalid="true"]{border:2px solid #dc2626;outline-color:#dc2626}
-[data-theme="dark"] .community-panel .community-name-error{color:#f87171}
-[data-theme="dark"] .community-panel input[aria-invalid="true"]{border-color:#f87171;outline-color:#f87171}
+.community-panel :is(.community-name-error,.community-auth-error){color:#dc2626;font-weight:600}
+.community-panel input[aria-invalid="true"]{outline:2px solid #dc2626;outline-offset:2px}
+[data-theme="dark"] .community-panel :is(.community-name-error,.community-auth-error){color:#f87171}
+[data-theme="dark"] .community-panel input[aria-invalid="true"]{outline-color:#f87171}
 
 .notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:12px;font-weight:700;line-height:1;flex-shrink:0;vertical-align:middle}
 .community-nav .community-username-button{position:relative;display:inline-flex;align-items:center;gap:8px;overflow:visible}
@@ -125,9 +125,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .notification-inbox{margin-top:28px}
 .notification-inbox ul{list-style:none;padding:0;margin:16px 0}
 .notification-inbox li{border:1px solid var(--community-border);border-radius:8px;margin-bottom:10px}
-.notification-inbox li[data-unread="true"]{border-left:4px solid var(--community-accent)}
-.notification-inbox li>a{display:block;padding:16px;text-decoration:none;color:var(--community-text)}
-.notification-row-message{display:block;line-height:1.5;overflow-wrap:anywhere}
+.notification-inbox li>a{display:flex;align-items:center;gap:20px;padding:16px;text-decoration:none;color:var(--community-text)}
+.notification-row-message{display:block;flex:1;min-width:0;line-height:1.5;overflow-wrap:anywhere}
 .notification-inbox li[data-unread="true"] .notification-row-message{font-weight:700}
-.notification-inbox li small{display:block;margin-top:8px;color:var(--community-muted)}
-.notification-inbox li[data-unread="true"] .notification-read-state{font-weight:700;color:var(--community-text)}
+.notification-status-icon{display:block;flex:0 0 28px;width:28px;height:28px;color:#dc2626}
+.notification-inbox li[data-unread="false"] .notification-status-icon{color:#15803d}
+[data-theme="dark"] .notification-status-icon{color:#f87171}
+[data-theme="dark"] .notification-inbox li[data-unread="false"] .notification-status-icon{color:#4ade80}

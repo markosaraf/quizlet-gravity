@@ -64,7 +64,7 @@ export function NotificationInbox(){
   {loading||!current?<p>Loading notifications…</p>:!state.items.length?<p>No leaderboard notifications yet.</p>:<ul>{state.items.map(item=><li key={item.id} data-unread={!item.read_at}>
    <Link prefetch={false} href={item.url+'?notification='+encodeURIComponent(item.id)}>
     <span className="notification-row-message"><strong>{item.actor_name}</strong> has overtaken you in “{item.title}”.</span>
-    <small><span className="notification-read-state">{item.read_at?'Opened':'Unread'}</span> | <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time></small>
+    <svg className="notification-status-icon" viewBox="0 0 28 28" fill="none" role="img" aria-label={item.read_at?'Opened':'Not opened'}><circle cx="14" cy="14" r="11" stroke="currentColor" strokeWidth="1.5"/>{item.read_at&&<path d="m9 14 3.3 3.3L19 10.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>}</svg>
    </Link>
   </li>)}</ul>}
   {(page>0||state.more)&&<div className="community-pagination"><button disabled={page===0||!current} onClick={()=>setPage(p=>p-1)}>Newer notifications</button><button disabled={!state.more||!current} onClick={()=>setPage(p=>p+1)}>Older notifications</button></div>}

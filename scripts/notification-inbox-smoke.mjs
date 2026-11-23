@@ -30,7 +30,19 @@ try{for(const width of [390,1280]){
  await expect(p.locator('.community-username-button .notification-count')).toHaveText('1');
  await p.goto(base+'/notifications',{waitUntil:'networkidle'});
  await expect(p.locator('.notification-inbox li[data-unread="false"]')).toHaveCount(2);
- await expect(p.locator('.notification-inbox li').first()).toContainText('Opened');
+ await expect(p.locator('.notification-inbox li').first().getByRole('img',{name:'Opened',exact:true})).toBeVisible();
+ await expect(p.locator('.notification-inbox time')).toHaveCount(0);
+ await expect(p.locator('.notification-inbox li small')).toHaveCount(0);
+ const unread=p.locator('.notification-inbox li[data-unread="true"]').first(),opened=p.locator('.notification-inbox li[data-unread="false"]').first();
+ await expect(unread.locator('svg')).toHaveCSS('color','rgb(220, 38, 38)');
+ await expect(opened.locator('svg')).toHaveCSS('color','rgb(21, 128, 61)');
+ for(const row of [unread,opened]){
+  await expect(row).toHaveCSS('border-left-width','1px');
+  const text=await row.locator('.notification-row-message').boundingBox(),icon=await row.locator('svg').boundingBox();
+  assert.ok(icon.x>=text.x+text.width,'Status icon is to the right of the message');
+  assert.ok(Math.abs(icon.y+icon.height/2-text.y-text.height/2)<2,'Status icon is vertically centered');
+ }
+ assert.ok(!(await p.locator('.notification-inbox').innerText()).match(/Unread|Opened|2026|\d+:\d+/));
  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await p.screenshot({path:`/tmp/qg-inbox-${width}.png`,fullPage:true});
  console.log('PASS inbox/both badges, explicit unread/opened styling, click-to-game marking, retained history at',width);await p.close();

@@ -42,7 +42,9 @@ try{
    if(scenario!=='recovery')await submit.click();
    await expect(error).toBeVisible();await expect(submit).toBeEnabled();
    await expect(field).toHaveAttribute('aria-invalid','true');
-   await expect(field).toHaveCSS('border-top-color','rgb(220, 38, 38)');
+   await expect(field).toHaveCSS('outline-color','rgb(220, 38, 38)');
+   await expect(field).toHaveCSS('border-top-width','1px');
+   await expect(field).toHaveCSS('border-top-color','rgba(0, 0, 0, 0.16)');
    await expect(error).toHaveCSS('color','rgb(220, 38, 38)');
    if(scenario==='existing-guest'){const box=await error.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=380,'Taken-name error fits above keyboard');await expect(page.getByRole('button',{name:'Other guest',exact:true,includeHidden:true})).toHaveCount(1);}
   }

@@ -128,7 +128,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .notification-inbox li>a{display:flex;align-items:center;gap:20px;padding:16px;text-decoration:none;color:var(--community-text)}
 .notification-row-message{display:block;flex:1;min-width:0;line-height:1.5;overflow-wrap:anywhere}
 .notification-inbox li[data-unread="true"] .notification-row-message{font-weight:700}
-.notification-status-icon{display:block;flex:0 0 28px;width:28px;height:28px;color:#dc2626}
+.notification-status-icon{display:block;flex:0 0 32px;width:32px;height:32px;color:#dc2626}
 .notification-inbox li[data-unread="false"] .notification-status-icon{color:#15803d}
 [data-theme="dark"] .notification-status-icon{color:#f87171}
 [data-theme="dark"] .notification-inbox li[data-unread="false"] .notification-status-icon{color:#4ade80}

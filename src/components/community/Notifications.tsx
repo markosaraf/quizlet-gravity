@@ -17,7 +17,7 @@ export function AdminNotificationSettings(){
   </div>)}
   {settings&&!settings.ready.apple&&<p>Apple push setup is still pending.</p>}
   {settings&&!settings.ready.android&&<p>Android push setup is still pending.</p>}
-  {settings?.deliveries&&<p>Last 7 days: {settings.deliveries.sent||0} sent · {settings.deliveries.pending||0} pending · {(settings.deliveries.failed||0)+(settings.deliveries.uncertain||0)} need attention</p>}
+  {settings?.deliveries&&<p>Last 7 days: {settings.deliveries.sent||0} sent | {settings.deliveries.pending||0} pending | {(settings.deliveries.failed||0)+(settings.deliveries.uncertain||0)} need attention</p>}
   {error&&<p role="alert">{error}</p>}
  </section>;
 }

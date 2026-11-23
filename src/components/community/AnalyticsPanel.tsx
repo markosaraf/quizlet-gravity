@@ -21,7 +21,7 @@ export function AnalyticsPanel({metrics,note}:{metrics:AnalyticsMetric[];note:st
   </button>)}</div>
   <div id={id} className="analytics-detail">
    <div className="analytics-chart-heading"><h2>{metric.chartLabel}</h2><span>Daily</span></div>
-   <p className="overview-note">{number(metric.current)} in selected period · {metric.previous===null?'previous period unavailable':`${number(metric.previous)} in previous period`}</p>
+   <p className="overview-note">{number(metric.current)} in selected period | {metric.previous===null?'previous period unavailable':`${number(metric.previous)} in previous period`}</p>
    <div className="analytics-hover" aria-live="polite">{active?<><strong>{active.date}: {number(active.value)}</strong>{active.previous!==null&&<span>{active.previousDate}: {number(active.previous)} in previous period</span>}</>:<span>Hover, tap or focus a point for daily counts.</span>}</div>
    <svg viewBox="0 0 1000 290" className="analytics-line-chart" role="group" aria-label={`${metric.chartLabel}. Current and previous period. Exact values in the table below.`} onPointerLeave={()=>setHover(null)}>
     <defs><linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity=".20"/><stop offset="100%" stopColor="#2563eb" stopOpacity=".03"/></linearGradient></defs>

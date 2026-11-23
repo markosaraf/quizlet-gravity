@@ -59,7 +59,7 @@ export function QuizletSearch({onImport, importing, edit}: {onImport: (url: stri
     {preview ? <div className="quizlet-preview">
       <button type="button" className="d-button d-secondary" disabled={importing} onClick={() => setPreview(null)}>Back to search results</button>
       <h3 ref={previewHeading} tabIndex={-1}>{preview.title}</h3>
-      <p>{preview.cards.length} terms{preview.creatorName ? ` · By ${preview.creatorName}` : ''}</p>
+      <p className="quizlet-preview-meta"><span>{preview.cards.length} terms</span>{preview.creatorName&&<>{' '}<span>By {preview.creatorName}</span></>}</p>
       <div className="quizlet-preview-actions">
       <button type="button" className="d-button d-primary" disabled={importing} onClick={() => onImport(preview.url)}>{importing ? 'Importing…' : edit ? 'Import & edit this set' : 'Import & play this set'}</button>
       </div>

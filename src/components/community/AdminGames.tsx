@@ -30,14 +30,14 @@ export function AdminGameCatalogue({query,leaderboards=false,showAllLeaderboards
  const data=current?.data;
  return <section className="admin-games" aria-label={leaderboards?'All game leaderboards':'Newest games'} aria-busy={!current}>
   {!current?<p role="status">Loading games…</p>:current.error?<div role="alert"><p>{current.error}</p><button type="button" onClick={()=>setRetry(n=>n+1)}>Retry</button></div>:data?<>
-   <p>{data.total.toLocaleString()} {data.total===1?'game':'games'} · Newest first</p>
+   <p>{data.total.toLocaleString()} {data.total===1?'game':'games'} | Newest first</p>
    {!data.games.length?<p>No matching games.</p>:<ol className="admin-game-list" start={offset+1}>
     {data.games.map(game=><li key={game.id}>
      <div className="admin-game-heading"><div>
       <time dateTime={game.created_at} title={new Date(game.created_at).toLocaleString(undefined,{timeZoneName:'short'})}>Created {new Date(game.created_at).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'})}</time>
       <h2><Link href={sharedSetPath(game)}>{game.title}</Link></h2>
-      <p>{game.term_count.toLocaleString()} terms · Added by {game.added_by}{game.creator_name&&<> · Quizlet creator: {game.creator_name}</>}</p>
-      {leaderboards&&<p>{game.player_count.toLocaleString()} {game.player_count===1?'player':'players'}{game.top_score!==null?<> · Best score: {game.top_score.toLocaleString()}</>:' · No scores yet'}</p>}
+      <p>{game.term_count.toLocaleString()} terms | Added by {game.added_by}{game.creator_name&&<> | Quizlet creator: {game.creator_name}</>}</p>
+      {leaderboards&&<p>{game.player_count.toLocaleString()} {game.player_count===1?'player':'players'}{game.top_score!==null?<> | Best score: {game.top_score.toLocaleString()}</>:' | No scores yet'}</p>}
      </div>{leaderboards&&!showAllLeaderboards&&<button type="button" aria-expanded={expanded===game.id} aria-controls={`board-${game.id}`} onClick={()=>setExpanded(value=>value===game.id?null:game.id)}>{expanded===game.id?'Hide leaderboard':'View leaderboard'}</button>}</div>
      {leaderboards&&(showAllLeaderboards||expanded===game.id)&&<div id={`board-${game.id}`}><Leaderboard id={game.id} adminView/></div>}
     </li>)}

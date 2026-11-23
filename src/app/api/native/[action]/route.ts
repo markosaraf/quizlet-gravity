@@ -21,11 +21,8 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{action:
   const previous=await auth.api.getSession({headers:request.headers});const client=await db.connect();try{await client.query('BEGIN');const {rows}=await client.query('SELECT * FROM native_handoffs WHERE code_hash=$1 AND expires_at>now() FOR UPDATE',[hash(input.code)]);const row=rows[0];if(!row||!timingSafeEqual(Buffer.from(row.challenge),Buffer.from(hash(input.verifier)))){await client.query('ROLLBACK');return json({error:'Sign-in link expired. Try again.'},400);}await client.query('DELETE FROM native_handoffs WHERE code_hash=$1',[hash(input.code)]);await client.query('COMMIT');const response=await auth.api.verifyOneTimeToken({body:{token:crypt(row.encrypted_token,true)},asResponse:true});if(!response.ok)return json({error:'Sign-in expired. Try again.'},400);
   const verified=await response.clone().json();const newId=verified?.user?.id||verified?.session?.userId;
   if(previous?.user.isAnonymous&&newId&&newId!==previous.user.id){
-   await client.query('BEGIN');
-   await client.query(`INSERT INTO high_scores(set_id,user_id,score,level,mode,achieved_at) SELECT set_id,$1,score,level,mode,achieved_at FROM high_scores WHERE user_id=$2 ON CONFLICT(set_id,user_id) DO UPDATE SET score=EXCLUDED.score,level=EXCLUDED.level,mode=EXCLUDED.mode,achieved_at=EXCLUDED.achieved_at WHERE EXCLUDED.score>high_scores.score`,[newId,previous.user.id]);
+   // Signing in may claim authored sets, never the guest's runs or scores.
    await client.query('UPDATE shared_sets SET created_by=$1 WHERE created_by=$2',[newId,previous.user.id]);
-   await client.query('DELETE FROM high_scores WHERE user_id=$1',[previous.user.id]);
-   await client.query('COMMIT');
   }
   const result=json({ok:true});for(const c of response.headers.getSetCookie())result.headers.append('Set-Cookie',c);return result;}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
  }

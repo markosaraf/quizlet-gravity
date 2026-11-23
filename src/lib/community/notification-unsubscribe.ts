@@ -24,5 +24,5 @@ export function readNotificationUnsubscribeToken(token:string):{user:string;emai
 }
 export function notificationEmailMatches(email:string,hash:string){return emailHash(email)===hash;}
 export function notificationUnsubscribeUrl(userId:string,email:string){
- return 'https://www.quizletgravity.com/notifications/email?token='+encodeURIComponent(notificationUnsubscribeToken(userId,email));
+ return 'https://www.quizletgravity.com/?open=leaderboard-email&token='+encodeURIComponent(notificationUnsubscribeToken(userId,email));
 }

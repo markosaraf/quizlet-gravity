@@ -41,13 +41,10 @@ export const auth = betterAuth({
   rateLimit: { enabled: true, storage: 'database', window: 60, max: 30, customRules: { '/send-verification-email': {window:60,max:3}, '/sign-up/email': {window:60,max:5}, '/sign-in/username': {window:60,max:5} } },
   session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 86400 },
   plugins: [oneTimeToken({expiresIn:2,storeToken:"hashed",disableClientRequest:true}),username({ minUsernameLength: 3, maxUsernameLength: 24, usernameValidator: validPlayerName, displayUsernameValidator: validPlayerName, usernameNormalization: normalizePlayerName, displayUsernameNormalization: displayPlayerName, validationOrder: {username:'post-normalization',displayUsername:'post-normalization'} }), anonymous({
+    // A guest remains the owner of their runs and scores after any sign-in.
+    // Deleting the anonymous user would cascade-delete that leaderboard history.
+    disableDeleteAnonymousUser: true,
     onLinkAccount: async ({ anonymousUser, newUser }) => {
-      await db.query(`INSERT INTO high_scores(set_id,user_id,score,level,mode,achieved_at)
-        SELECT set_id,$1,score,level,mode,achieved_at FROM high_scores WHERE user_id=$2
-        ON CONFLICT(set_id,user_id) DO UPDATE SET score=GREATEST(high_scores.score,EXCLUDED.score),
-        level=CASE WHEN EXCLUDED.score>high_scores.score THEN EXCLUDED.level ELSE high_scores.level END,
-        mode=CASE WHEN EXCLUDED.score>high_scores.score THEN EXCLUDED.mode ELSE high_scores.mode END,
-        achieved_at=CASE WHEN EXCLUDED.score>high_scores.score THEN EXCLUDED.achieved_at ELSE high_scores.achieved_at END`,[newUser.user.id,anonymousUser.user.id]);
       await db.query('UPDATE shared_sets SET created_by=$1 WHERE created_by=$2',[newUser.user.id,anonymousUser.user.id]);
     }
   })]

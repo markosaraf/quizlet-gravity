@@ -43,6 +43,17 @@ try{for(const[engineName,engine]of[['Chromium',chromium],['WebKit',webkit]]){
  enabled=false;await p.reload();await finish();await expect(p.getByRole('heading',{name:'Congratulations!'})).toBeVisible();await expect(p.getByRole('dialog')).toHaveCount(0);enabled=true;
  assert.deepEqual(errors,[]);await p.close();console.log('PASS',engineName,width,'challenge before results, all services/icons, copy, replay, toggle, header colours');
  }
+ for(const available of [false,true]){
+ const old=await b.newPage({viewport:{width:390,height:844},userAgent:'QuizletGravityApp Android/2.0.16'});
+ await old.addInitScript(available=>{window.shareCalls=0;Object.defineProperty(navigator,'share',{value:available?async()=>{window.shareCalls++}:undefined,configurable:true})},available);
+ await old.goto(base+'/123/test-flash-cards');await old.waitForFunction(()=>window.fixture?.store.getSnapshot()?.gameState==='FREE_FALL');await old.evaluate(()=>window.fixture.store._endGame());
+ await old.getByRole('button',{name:'Share now',exact:true}).click();await expect(old.locator('.challenge-services a')).toHaveCount(7);
+ for(const name of ['WhatsApp','Viber','X','Telegram','Messages','Email','LinkedIn'])await expect(old.getByRole('link',{name:'Share via '+name,exact:true})).toBeVisible();
+ await expect(old.getByRole('button',{name:'Copy link',exact:true})).toBeVisible();assert.equal(await old.evaluate(()=>window.shareCalls),0);
+ await old.getByRole('link',{name:'Share via Viber',exact:true}).click();await expect(old.getByRole('alert')).toContainText('cannot open Viber directly');
+ await old.screenshot({path:'/tmp/qg-old-app-sharing-'+engineName+'-'+available+'.png'});await old.close();
+ console.log('PASS',engineName,'older app shows all seven choices and copy, Web Share availability:',available);
+ }
  const p=await b.newPage({userAgent:'QuizletGravityApp NativeShare/1'});let nativeUrl='';
  await p.route('**/native/share?**',async route=>{nativeUrl=route.request().url();await route.abort()});
  await p.goto(base+'/123/test-flash-cards');await p.waitForFunction(()=>window.fixture?.store.getSnapshot()?.gameState==='FREE_FALL');await p.evaluate(()=>window.fixture.store._endGame());

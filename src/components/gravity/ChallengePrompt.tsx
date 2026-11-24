@@ -23,13 +23,15 @@ export function ChallengePrompt({points,level,title,mode,playerName,onContinue}:
  }
  function openShare(){
   setError('');
-  if(!native){setSharing(true);return;}
-  if(navigator.share){
-   void navigator.share(share).then(onContinue).catch(e=>{
-    if(e?.name==='AbortError')onContinue();else setError('Sharing could not open. You can copy the link instead.');
-   });
-  }else setError('Update Quizlet Gravity to open your device’s sharing panel. You can copy the link below.');
+  setSharing(true);
  }
+ function openService(event:React.MouseEvent<HTMLAnchorElement>,name:string){
+  if(native&&!nativeReady&&(name==='Messages'||name==='Viber')){
+   event.preventDefault();
+   setError(`This app version cannot open ${name} directly. Copy the link, or use the updated app’s sharing panel.`);
+  }
+ }
+
  return <Dialog.Root open onOpenChange={open=>{if(!open)onContinue();}}>
   <Dialog.Portal>
    <Dialog.Overlay className="challenge-overlay"/>
@@ -53,10 +55,10 @@ export function ChallengePrompt({points,level,title,mode,playerName,onContinue}:
     </>:<>
      <p className="challenge-caption">{share.text}</p>
      <div className="challenge-copy-row"><input aria-label="Game link" readOnly value={share.url} onFocus={e=>e.target.select()}/><button className="challenge-copy" onClick={()=>void copy()}><Copy size={18}/>{copied?'Copied':'Copy link'}</button></div>
-     <div className="challenge-services">{shareLinks(share,apple).map(service=><a key={service.name} href={service.href} target={service.href.startsWith('https:')?'_blank':undefined} rel="noopener noreferrer" aria-label={'Share via '+service.name}>
+     <div className="challenge-services">{shareLinks(share,apple).map(service=><a key={service.name} href={service.href} onClick={event=>openService(event,service.name)} target={service.href.startsWith('https:')?'_blank':undefined} rel="noopener noreferrer" aria-label={'Share via '+service.name}>
       <span className="challenge-service-icon">{service.icon==='email'?<Mail/>:service.icon==='messages'?<MessageCircle/>:<img src={'/assets/share/'+service.icon+'.svg'} alt="" width={28} height={28}/>}</span><span>{service.name}</span>
      </a>)}</div>
-     <p className="challenge-hint">Messages and Viber need a compatible app on this device.</p>
+     <p className="challenge-hint">{native&&!nativeReady?'Direct Viber and Messages sharing requires the updated app.':'Messages and Viber need a compatible app on this device.'}</p>
      {error&&<p role="alert">{error}</p>}
      <span role="status" className="challenge-status">{copied?'Link copied.':''}</span>
      <Dialog.Close className="challenge-later">Continue to results</Dialog.Close>

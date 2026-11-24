@@ -1,0 +1,13 @@
+.community-app-install{display:flex;align-items:center;gap:12px;padding:10px 20px 10px 8px;background:var(--community-surface);color:var(--community-text);border-bottom:1px solid var(--community-border)}
+.community-app-install-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0;border:0;border-radius:4px;background:transparent;color:var(--community-muted);cursor:pointer}
+.community-app-install-close:hover{background:var(--community-hover)}
+.community-app-install-icon{flex:none;border-radius:11px}
+.community-app-install-copy{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.3}
+.community-app-install-copy strong{font-size:16px;font-weight:600}
+.community-app-install-copy span{font-size:13px;color:var(--community-muted)}
+.community-app-install-stores{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-left:auto;padding:4px}
+.community-app-install-stores a{display:block;padding:0;min-height:40px}
+.community-app-install-stores img{display:block;width:120px;height:40px}
+.community-app-install :is(a,button):focus-visible{outline:2px solid var(--community-link);outline-offset:4px}
+body:has(.gravity-root[data-playing="true"]) .community-app-install{display:none}
+@media(max-width:480px){.community-app-install{gap:8px;padding-right:8px;flex-wrap:wrap}.community-app-install-copy{flex:1;min-width:150px}.community-app-install-stores{margin-left:60px}}

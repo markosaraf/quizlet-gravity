@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import {HeaderAppearance} from '@/components/community/HeaderAppearance';
+import {AppInstallBanner} from '@/components/community/AppInstallBanner';
 import {NotificationProvider} from '@/components/community/NotificationInbox';
 import { CommunityNav } from "@/components/community/Community";
 import { Toaster } from "@/components/ui/toaster";
@@ -151,6 +152,9 @@ export async function generateMetadata(): Promise<Metadata> {
       "Quizlet game",
     ],
     applicationName: "Quizlet Gravity",
+    // Safari owns the native banner's display, installed-app state and dismissal.
+    // Omit app-argument so authentication/unsubscribe tokens never enter a store link.
+    itunes: userAgent.includes('QuizletGravityApp') ? undefined : {appId: '6831804079'},
     authors: [{ name: "Marko Sarafijanovic (markosaraf)", url: "https://github.com/markosaraf" }],
     creator: "Marko Sarafijanovic",
     publisher: "Marko Sarafijanovic",
@@ -372,7 +376,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`antialiased ${poppins.variable}`}><NotificationProvider><HeaderAppearance/><CommunityNav />
+      <body className={`antialiased ${poppins.variable}`}><NotificationProvider><HeaderAppearance/><AppInstallBanner/><CommunityNav />
         {/* `${poppins.variable}` defines --font-poppins (used by the
             hurmegeosans fallback stack in gravity.css and by
             --font-sans in globals.css). */}

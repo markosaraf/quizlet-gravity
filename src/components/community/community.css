@@ -92,7 +92,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .community-account-games:hover{background:var(--community-hover);border-color:var(--community-accent)}
 
 /* Keep the public navigation on one row on the narrowest phones. */
-@media(max-width:380px){.community-nav>div:not(:has(a[href="/admin/users"])){flex-wrap:nowrap}.community-nav>div>a{flex-shrink:0}.community-nav button{flex:1;min-width:0}}
+@media(max-width:380px){.community-nav>div:not(:has(a[href="/admin/users"])){flex-wrap:nowrap}.community-nav>div>a{flex-shrink:0}.community-nav button{flex:0 1 auto;min-width:0}}
 
 /* Guest play stays visible in both themes, independent of the selected tab. */
 .community-panel .community-tabs button.community-guest-option{background:#d4af37;color:#000;border-color:#d4af37}

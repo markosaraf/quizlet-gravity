@@ -69,7 +69,7 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
   useEffect(()=>{
     if(!shared||!data||data.gameState!==GAME_STATES.GAME_OVER||!runRef.current||finishedRun.current===runRef.current)return;
     const id=runRef.current;finishedRun.current=id;
-    api(`runs/${id}/finish`,{score:data.points,level:data.level}).then(()=>{if(runRef.current!==id)return;setSavedRun(id);setFailedRun(null);setScoreMessage('Your best score is saved.');}).catch(e=>{if(runRef.current!==id)return;finishedRun.current=null;setFailedRun(id);setScoreMessage('Score not saved: '+e.message);});
+    api(`runs/${id}/finish`,{score:data.points,level:data.level}).then(()=>{if(runRef.current!==id)return;setSavedRun(id);setFailedRun(null);setScoreMessage('');}).catch(e=>{if(runRef.current!==id)return;finishedRun.current=null;setFailedRun(id);setScoreMessage('Score not saved: '+e.message);});
   },[data?.gameState,data?.points,data?.level,shared,scoreRetry]);
 
   // The stored side is the prompt, so collect keys from the opposite (answer) side.

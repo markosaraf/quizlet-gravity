@@ -2171,11 +2171,11 @@
 }
 
 /* ----------------- UPPER TAB (SITE HEADER): BLUE in light mode -----------------
-   Native launch blue (#4255ff; previous header #4255b4), with
+   Admin-selected blue (startup #4255ff or previous #4255b4), with
    WHITE text for everything inside (Q logo, "Quizlet", set title, Score/Level
    labels + values, and the mobile icon buttons). */
 [data-theme="light"] .GravitySiteHeader {
-  background: #4255ff;
+  background: var(--gravity-header-blue, #4255ff);
   color: #fff;
 }
 

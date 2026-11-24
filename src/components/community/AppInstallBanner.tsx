@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useSyncExternalStore} from 'react';
+import {useSyncExternalStore} from 'react';
 import {usePathname} from 'next/navigation';
 import './AppInstallBanner.css';
 
@@ -12,7 +12,6 @@ let dismissedInMemory = false;
 // the closed-test listing to visitors who cannot install it.
 const stores = [{
   id: 'apple',
-  name: 'App Store',
   href: 'https://apps.apple.com/app/id6831804079',
   badge: '/store-badges/app-store.svg',
   label: 'Get Apple app — Download on the App Store',
@@ -49,7 +48,6 @@ function shouldShow() {
 }
 
 export function AppInstallBanner() {
-  const [requestedStore, setRequestedStore] = useState<typeof stores[number] | null>(null);
   const visible = useSyncExternalStore(subscribe, shouldShow, () => false);
   const pathname = usePathname();
   if (!visible || /^\/(admin|native|native-auth|native-return|notifications|reset-password|delete-account|email-confirmed|welcome)(\/|$)/.test(pathname)) return null;
@@ -60,18 +58,23 @@ export function AppInstallBanner() {
     window.dispatchEvent(new Event(dismissalEvent));
   }
 
-  return <><aside className="community-app-install" aria-label="Get the Quizlet Gravity app">
+  return <aside className="community-app-install" aria-label="Get the Quizlet Gravity app">
     <button type="button" className="community-app-install-close" aria-label="Dismiss app banner" onClick={dismiss}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
     <img className="community-app-install-icon" src="/apple-icon.png?v=20261113-original-thick" alt="" width={48} height={48}/>
     <div className="community-app-install-copy"><strong>Quizlet Gravity</strong><span>For iPhone, iPad and Mac</span></div>
     <div className="community-app-install-stores">
-      {stores.map((store, index) => <a key={store.id} href={storeHref(store)} onClick={() => setRequestedStore(store)} className={index === 0 ? 'community-app-install-primary' : undefined} aria-label={store.label}>
+      {stores.map((store, index) => <a key={store.id} href={storeHref(store)} onClick={event => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) { dismiss(); return; }
+        event.preventDefault();
+        const href = event.currentTarget.href;
+        dismiss();
+        // Navigate explicitly so removing the banner cannot cancel link activation.
+        window.location.assign(href);
+      }} className={index === 0 ? 'community-app-install-primary' : undefined} aria-label={store.label}>
         <img src={store.badge} alt="Download on the App Store" width={120} height={40}/>
       </a>)}
     </div>
-  </aside>{requestedStore && <p className="community-app-install-fallback" role="status">
-    Didn’t open? <a href={requestedStore.href} target="_blank" rel="noopener noreferrer">Open {requestedStore.name} website<span className="community-app-install-sr-only"> (opens in a new tab)</span></a>
-  </p>}</>;
+  </aside>;
 }

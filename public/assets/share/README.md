@@ -1,0 +1,1 @@
+Brand marks from Simple Icons v14.0.0, with LinkedIn from v13.0.0 (CC0): https://github.com/simple-icons/simple-icons/tree/14.0.0/icons . Trademarks belong to their respective owners. Messages and Email use Lucide icons.

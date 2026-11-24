@@ -291,7 +291,7 @@ public final class MainActivity extends ComponentActivity {
                 });
         }
         WebSettings settings = webView.getSettings();
-        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp NotificationOnboarding/1 NotificationInbox/1");
+        settings.setUserAgentString(settings.getUserAgentString() + " QuizletGravityApp NotificationOnboarding/1 NotificationInbox/1 NativeShare/1");
         // The first-party site needs JS and DOM storage for its game and remembered sets.
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -338,6 +338,23 @@ public final class MainActivity extends ComponentActivity {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 if (NavigationPolicy.isInternal(url)) {
+                    if ("/native/share".equals(request.getUrl().getPath())) {
+                        if (request.isForMainFrame() && request.hasGesture() && foreground
+                                && NavigationPolicy.isInternal(view.getUrl())) {
+                            Uri share = request.getUrl();
+                            String title = share.getQueryParameter("title"), text = share.getQueryParameter("text"), target = share.getQueryParameter("url");
+                            if (SharePolicy.valid(title, text, target)) {
+                                Intent send = new Intent(Intent.ACTION_SEND);
+                                send.setType("text/plain");
+                                send.putExtra(Intent.EXTRA_SUBJECT, title);
+                                send.putExtra(Intent.EXTRA_TITLE, title);
+                                send.putExtra(Intent.EXTRA_TEXT, text + "\n" + target);
+                                try { startActivity(Intent.createChooser(send, "Share your challenge")); }
+                                catch (ActivityNotFoundException e) { Toast.makeText(MainActivity.this, "No sharing app is available.", Toast.LENGTH_LONG).show(); }
+                            }
+                        }
+                        return true;
+                    }
                     if (request.isForMainFrame() && "/native/notifications/sync".equals(request.getUrl().getPath())) {
                         if (NavigationPolicy.isInternal(view.getUrl())) NotificationInboxSync.sync(MainActivity.this);
                         return true;

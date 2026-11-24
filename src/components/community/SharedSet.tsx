@@ -1,4 +1,5 @@
 'use client';
+import {publicGameLink} from '@/lib/gravity/challenge-share';
 import {useRouter} from 'next/navigation';
 import {SafetyActions} from './Safety';
 import {DeleteSetButton} from './Admin';
@@ -37,7 +38,7 @@ export function SharedSet({id,initialSet}:{id:string;initialSet:SetRecord}){
   <h1>{set.title}</h1><small>{set.term_count} terms</small>
   {set.source_url?<p>Original Quizlet set creator: {set.creator_url?<a href={set.creator_url} target="_blank" rel="noreferrer">{set.creator_name}</a>:set.creator_name||'Unavailable'} | <a href={set.source_url} target="_blank" rel="noreferrer">Original set</a>{!set.quizlet_id&&<><br/>Quizlet Gravity set creator: {set.added_by}</>}</p>:<p>Quizlet Gravity set creator: {set.added_by}</p>}
   <div className="community-actions">
-   <button onClick={()=>{navigator.clipboard.writeText(location.href).then(()=>setCopied(true)).catch(()=>alert('Copy this page’s URL from your address bar.'));}}>{copied?'Link copied':'Copy game link'}</button>
+   <button onClick={()=>{navigator.clipboard.writeText(publicGameLink(location.pathname)).then(()=>setCopied(true)).catch(()=>alert('Copy this page’s URL from your address bar.'));}}>{copied?'Link copied':'Copy game link'}</button>
    <button onClick={play}>Play &amp; learn</button>
    <DeleteSetButton id={set.id} title={set.title}/>
   </div>

@@ -1,9 +1,10 @@
 import {db} from './db';
 
 export async function communitySettings(){
- const {rows}=await db.query("SELECT key,enabled FROM community_settings WHERE key=ANY($1::text[])",[['tutorial','special_letters','special_characters','game_page_total','quizlet_search']]);
+ const {rows}=await db.query("SELECT key,enabled FROM community_settings WHERE key=ANY($1::text[])",[['tutorial','special_letters','special_characters','game_page_total','quizlet_search','challenge_share']]);
  const values=new Map<string,boolean>(rows.map(row=>[row.key,row.enabled]));
  return {
+  challengeShareEnabled:values.get('challenge_share')!==false,
   quizletSearchEnabled:values.get('quizlet_search')!==false,
   gamePageTotalEnabled:values.get('game_page_total')!==false,
   tutorialEnabled:values.get('tutorial')!==false,

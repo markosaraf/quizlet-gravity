@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import {authClient} from '@/lib/community/auth-client';
 import { api } from '@/components/community/Community';
 import { GAME_STATES } from '@/lib/gravity/constants';
 import { gravityStore } from '@/lib/gravity/store';
@@ -16,10 +17,14 @@ import { setGameStarted } from './LandingSections';
 
 export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{shared?:{set:GravitySet;terms:GravityTerm[]};localGame?:{set:GravitySet;terms:GravityTerm[]};autoPlay?:boolean;exitHref?:string}) {
   const textSize = useGameplayTextSize();
+  const {data:session}=authClient.useSession();
+  const [playerName,setPlayerName]=useState('You');
+  const [challengeEnabled,setChallengeEnabled]=useState(false);
   const [characterVisibility,setCharacterVisibility]=useState({specialLettersEnabled:true,specialCharactersEnabled:true});
   useEffect(()=>{
     let active=true;
     const refresh=()=>{void api('config').then(config=>{
+      if(active)setChallengeEnabled(config.challengeShareEnabled===true);
       if(active)setCharacterVisibility({specialLettersEnabled:config.specialLettersEnabled!==false,specialCharactersEnabled:config.specialCharactersEnabled!==false});
     }).catch(()=>{});};
     refresh();
@@ -56,7 +61,7 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
   useEffect(()=>{const initial=shared??localGame;if(initial){handleStartSet(initial.set,initial.terms);if(autoPlay){gravityStore.changeDifficultyLevel('BEGINNER');gravityStore.changeShowingSide('word');gravityStore.startGame();}}return()=>gravityStore.dispose();},[shared,localGame,autoPlay,handleStartSet]);
   const beginGame=async(restart=false)=>{
     if(startingRef.current)return;
-    startingRef.current=true;setStarting(true);setScoreMessage('');setSavedRun(null);setFailedRun(null);
+    startingRef.current=true;setPlayerName(session?.user.displayUsername||session?.user.username||'You');setStarting(true);setScoreMessage('');setSavedRun(null);setFailedRun(null);
     try{if(shared){const run=await api('runs',{setId:shared.set.id,mode:gravityStore.getSnapshot().difficultyLevel});runRef.current=run.id;finishedRun.current=null;}
       if(restart)gravityStore.restartGame();else gravityStore.startGame();
     }catch(e){setScoreMessage((e as Error).message);}finally{startingRef.current=false;setStarting(false);}
@@ -189,6 +194,10 @@ export function GravityApp({shared,localGame,autoPlay=false,exitHref='/sets'}:{s
 
             {data.gameState === GAME_STATES.GAME_OVER ? (
               <GameOverView
+                challengeEnabled={challengeEnabled}
+                title={data.set.title}
+                mode={data.difficultyLevel}
+                playerName={playerName}
                 points={data.points}
                 level={data.level}
                 sharedSetId={shared?.set.id}

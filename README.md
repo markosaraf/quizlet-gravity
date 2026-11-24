@@ -71,3 +71,11 @@ This is my independent project, and I am not affiliated with Quizlet. I keep the
 Use Node.js 24. Run `npm ci`, configure an ignored `.env.local` from `.env.example`, then run `npm run dev -- --port 3035`. Check changes with `npm run typecheck` and `npm test`.
 
 See [development and operations](docs/development.md) for database schemas, indexing, authentication and deployment configuration, and [mobile build instructions](mobile/BUILDING.md) for apps. Keep credentials and release signing material outside Git.
+
+## Challenge sharing and header colour history
+
+The administrator can enable or disable **Challenge a friend** under Admin → Users. It is enabled by default. At game end the invitation precedes Congratulations; dismissing it continues to the existing results. Scores are saved independently of sharing. Website players can copy the public game link or open WhatsApp, Viber, X, Telegram, Messages, Email or LinkedIn. Sharing opens a composer; it never automatically sends a message. Destination apps control previews and available contacts. Viber and Messages require a compatible installed handler. Local unpublished sets share the homepage rather than exposing private terms.
+
+Android 2.0.17 (29) and iOS/macOS 2.0.6 (33) advertise `NativeShare/1` and open the native share panel from a user-clicked, first-party `/native/share` link. The handler accepts only bounded text and public Quizlet Gravity URLs, with no credentials, queries or fragments. Older apps use Web Share where available or offer copying with an update hint.
+
+On 24 November 2026, the blue navigation header (`.community-nav`) and light-theme gameplay header (`[data-theme="light"] .GravitySiteHeader`) changed from **#4255B4 / rgb(66, 85, 180)** to **#4255FF / rgb(66, 85, 255)**, matching the Android `indigo` resource and Apple intro background. To revert, restore `#4255B4` in those two selectors. The dark gameplay header and the remaining palette retain their previous colours.

@@ -123,7 +123,7 @@ export async function POST(request:NextRequest,{params}:Context){
  if(path.join('/')==='settings'){
   try{
    const input=await request.json();
-   const fields={quizletSearchEnabled:'quizlet_search',gamePageTotalEnabled:'game_page_total',tutorialEnabled:'tutorial',specialLettersEnabled:'special_letters',specialCharactersEnabled:'special_characters'} as const;
+   const fields={challengeShareEnabled:'challenge_share',quizletSearchEnabled:'quizlet_search',gamePageTotalEnabled:'game_page_total',tutorialEnabled:'tutorial',specialLettersEnabled:'special_letters',specialCharactersEnabled:'special_characters'} as const;
    if(!input||typeof input!=='object'||Array.isArray(input))return json({error:'Choose on or off.'},400);
    const entries=Object.entries(input);
    if(!entries.length||entries.some(([key,value])=>!Object.hasOwn(fields,key)||typeof value!=='boolean'))return json({error:'Choose on or off.'},400);

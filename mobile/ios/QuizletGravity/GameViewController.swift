@@ -30,7 +30,7 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         view.backgroundColor = pageBackground
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
-        configuration.applicationNameForUserAgent = "QuizletGravityApp NotificationOnboarding/1 NotificationInbox/1"
+        configuration.applicationNameForUserAgent = "QuizletGravityApp NotificationOnboarding/1 NotificationInbox/1 NativeShare/1"
         #if targetEnvironment(macCatalyst)
         // Use Safari's desktop layout without iPad scaling or touch-layout overrides.
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
@@ -391,6 +391,29 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
         authSession?.start()
     }
 
+    private func presentChallengeShare(_ request: URL) {
+        guard presentedViewController == nil,
+              let items = URLComponents(url: request, resolvingAgainstBaseURL: false)?.queryItems,
+              let title = items.first(where: { $0.name == "title" })?.value,
+              let text = items.first(where: { $0.name == "text" })?.value,
+              let value = items.first(where: { $0.name == "url" })?.value,
+              !title.isEmpty, title.count <= 200, !text.isEmpty, text.count <= 1000, value.count <= 2048,
+              let target = URL(string: value), isInternal(target), target.query == nil, target.fragment == nil else { return }
+        let path = target.path
+        let publicGame = path == "/" || path == "/example"
+            || path.range(of: "^/sets/[0-9a-fA-F-]{36}/?$", options: .regularExpression) != nil
+            || path.range(of: "^/(?:[a-zA-Z]{2}(?:-[a-zA-Z]{2})?/)?[0-9]{1,20}/[^/]+-flash-cards/?$", options: .regularExpression) != nil
+        guard publicGame else { return }
+        let panel = UIActivityViewController(activityItems: [text, target], applicationActivities: nil)
+        // UIActivityViewController uses the platform share panel on iOS and Mac Catalyst.
+        if let popover = panel.popoverPresentationController {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+            popover.permittedArrowDirections = []
+        }
+        present(panel, animated: true)
+    }
+
     private func isInternal(_ url: URL) -> Bool {
         url.scheme?.lowercased() == "https" && ["www.quizletgravity.com", "quizletgravity.com"].contains(url.host?.lowercased() ?? "") && url.user == nil && url.password == nil && (url.port == nil || url.port == 443)
     }
@@ -398,6 +421,15 @@ final class GameViewController: UIViewController, WKNavigationDelegate, WKUIDele
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url else { decisionHandler(.cancel); return }
         if isInternal(url) {
+            if url.path == "/native/share" {
+                if action.navigationType == .linkActivated, action.targetFrame?.isMainFrame == true,
+                   action.sourceFrame.isMainFrame, let source = action.sourceFrame.request.url,
+                   isInternal(source), UIApplication.shared.applicationState == .active {
+                    presentChallengeShare(url)
+                }
+                decisionHandler(.cancel)
+                return
+            }
             if url.path == "/native/notifications/sync" {
                 if action.targetFrame?.isMainFrame == true, action.sourceFrame.isMainFrame, let source = action.sourceFrame.request.url, isInternal(source) {
                     PushNotifications.shared.syncInbox()

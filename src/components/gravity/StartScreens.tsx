@@ -1,3 +1,5 @@
+import {useState} from 'react';
+import {ChallengePrompt} from './ChallengePrompt';
 import { Leaderboard } from '@/components/community/Leaderboard';
 import { DIFFICULTY_ORDER, GAME_STATES } from '@/lib/gravity/constants';
 import { STRINGS, format } from '@/lib/gravity/strings';
@@ -325,6 +327,7 @@ export function StartView({
 /* ---------------- Game over view ---------------- */
 
 export function GameOverView({
+  challengeEnabled, title, mode, playerName,
   points,
   level,
   sharedSetId,
@@ -333,6 +336,10 @@ export function GameOverView({
   onRestart,
   onNewSet,
 }: {
+  challengeEnabled: boolean;
+  title: string;
+  mode: Difficulty;
+  playerName: string;
   points: number;
   level: number;
   sharedSetId?: string;
@@ -341,6 +348,8 @@ export function GameOverView({
   onRestart: () => void;
   onNewSet: () => void;
 }) {
+  const [dismissed,setDismissed]=useState(false);
+  if(challengeEnabled&&!dismissed)return <ChallengePrompt points={points} level={level} title={title} mode={mode} playerName={playerName} onContinue={()=>setDismissed(true)}/>;
   return (
     <div className="GravityUIModal">
       <div className="GravityUIModal-box">

@@ -7,10 +7,11 @@ try{
  for(const width of [390,1280]){
   const page=await browser.newPage({viewport:{width,height:900}});
   const game={id:'12345678-1234-4234-8234-123456789012',public_id:'1000000000000999',title:'French food',term_count:3,added_by:'Test owner',created_by:'owner',revision:'2026-11-25 12:00:00.123456+00',cards:[{term:'le pain',definition:'bread'},{term:'le lait',definition:'milk',termImage:'/icon-192.png'},{term:'la pomme',definition:'apple'}]};
-  let deleted=false,deleteCount=0,update=null,failDelete=false;
+  let deleted=false,deleteCount=0,update=null,failDelete=false,pendingUpload=null;
   await page.route('**/api/**',route=>{
    const path=new URL(route.request().url()).pathname;
    if(path.endsWith('/get-session'))return route.fulfill({json:{user:{id:'owner',name:'Test owner',username:'testowner',displayUsername:'Test owner',emailVerified:true},session:{id:'test',userId:'owner',expiresAt:'2030-01-01T00:00:00Z'}}});
+   if(path==='/api/set-images'){pendingUpload=route;return;}
    if(path==='/api/community/config')return route.fulfill({json:{}});
    if(path==='/api/admin/status')return route.fulfill({json:{admin:false}});
    if(path.includes('notifications'))return route.fulfill({json:{unreadCount:0,items:[]}});
@@ -32,6 +33,14 @@ try{
   await expect(page.getByRole('heading',{name:'Edit your game'})).toBeVisible();
   await expect(page.getByLabel('Game title')).toHaveValue('French food');await expect(page.getByRole('textbox',{name:'Term 1',exact:true})).toHaveValue('le pain');
   await expect(page.getByRole('textbox',{name:'Answer 1',exact:true})).toHaveValue('bread');
+  await page.getByLabel('Term 2: add image',{exact:true}).setInputFiles({name:'image.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+afo0AAAAASUVORK5CYII=','base64')});
+  await expect.poll(()=>pendingUpload).not.toBeNull();
+  await page.getByRole('button',{name:'Remove pair 1',exact:true}).click();
+  await pendingUpload.fulfill({json:{url:'/api/set-images/11111111-1111-4111-8111-111111111111'}});
+  await expect(page.getByRole('img',{name:'Term 1 image',exact:true})).toHaveAttribute('src','/api/set-images/11111111-1111-4111-8111-111111111111');
+  await expect(page.getByRole('textbox',{name:'Term 1',exact:true})).toHaveValue('le lait');
+  await expect(page.getByRole('img',{name:'Term 2 image',exact:true})).toHaveCount(0);
+  await page.reload();await expect(page.getByRole('textbox',{name:'Term 1',exact:true})).toHaveValue('le pain');
   await page.getByRole('button',{name:'Remove pair 3',exact:true}).click();
   await page.getByLabel('Game title').fill('French foods');await page.getByRole('textbox',{name:'Answer 1',exact:true}).fill('loaf');
   await page.screenshot({path:`/tmp/qg-edit-game-${width}.png`,fullPage:true});

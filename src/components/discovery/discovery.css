@@ -77,3 +77,5 @@
 .local-tour-active .d-landing .d-alternatives .d-button{background:rgba(248,249,252,.22)}
 [data-theme="dark"] .local-tour-active .d-landing .d-alternatives .d-button,
 .local-tour-active [data-theme="dark"] .d-landing .d-alternatives .d-button{background:rgba(41,50,70,.22)}
+
+.d-editor-fields{border:0;padding:0;margin:0;min-width:0}.d-remove-pair{grid-column:1 / -1;justify-self:end;font-size:14px;padding:6px 10px}

@@ -132,3 +132,5 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .notification-inbox li[data-unread="false"] .notification-status-icon{color:#15803d}
 [data-theme="dark"] .notification-status-icon{color:#f87171}
 [data-theme="dark"] .notification-inbox li[data-unread="false"] .notification-status-icon{color:#4ade80}
+
+.community-owned-set{display:flex;flex-direction:column;gap:20px}.community-page a.community-set-content{display:block;flex:1;color:inherit;text-decoration:none}.community-game-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.community-game-actions>a,.community-game-actions>button{display:inline-flex;justify-content:center;align-items:center;padding:10px 16px;border:1px solid var(--community-border);border-radius:6px;background:var(--community-field);color:var(--community-link);font:inherit;text-decoration:none;cursor:pointer}.community-game-actions>button:disabled{opacity:.6;cursor:wait}

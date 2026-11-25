@@ -1,3 +1,4 @@
+import {updateOwnedSet,deleteOwnedSet} from '@/lib/community/owned-sets';
 import {safelyProcessGameIndexing} from '@/lib/community/game-indexing';
 import { after, NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
@@ -48,6 +49,11 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{path:str
  return json({sets:rows.slice(0,24).map(({catalogue_total,...set})=>set),total:Number(rows[0]?.catalogue_total||0),hasMore:rows.length>24,nextOffset:offset+24});
  }
  if(path[0]==='sets'&&uuid.safeParse(path[1]).success){
+ if(path[2]==='edit'&&path.length===3){
+ if(!viewer)return json({error:'Log in to edit your game.'},401);
+ const {rows}=await db.query('SELECT *,updated_at::text AS revision FROM shared_sets WHERE id=$1 AND created_by=$2',[path[1],viewer]);
+ return rows[0]?json(rows[0]):json({error:'Game not found or you do not own it.'},404);
+ }
  if(path[2]==='leaderboard'){
  const size=leaderboardPageSize(request.nextUrl.searchParams.get('limit'));
  const {rows}=await db.query(leaderboardQuery,[path[1],page(request),viewer,size,request.nextUrl.searchParams.get('around')==='me']);
@@ -74,6 +80,19 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{path:st
  const session=await auth.api.getSession({headers:request.headers});if(!session)return json({error:'Choose a guest name or sign in first.'},401);
  if(!session.user.isAnonymous&&!session.user.emailVerified)return json({error:'Confirm your email before continuing.'},403);
  await limit(request,'write',30);const input=await body(request);
+ if(path[0]==='sets'&&uuid.safeParse(path[1]).success&&path.length===3){
+ if(path[2]==='update'){
+ const v=z.object({title:z.string().trim().min(1).max(200),cards:cardsSchema,revision:z.string().min(1).max(64).refine(value=>Number.isFinite(Date.parse(value)),'Reload the game before saving.')}).parse(input);
+ try{assertShareable(v.title,v.cards);}catch(e){return json({error:(e as Error).message},400);}
+ const result=await updateOwnedSet(db,path[1],session.user.id,v);
+ if(result.error)return json({error:result.error},result.status);
+ after(()=>safelyProcessGameIndexing().then(()=>{}));return json(result.set);
+ }
+ if(path[2]==='delete'){
+ if(!await deleteOwnedSet(db,path[1],session.user.id))return json({error:'Game not found or you do not own it.'},404);
+ after(()=>safelyProcessGameIndexing().then(()=>{}));return json({deleted:true});
+ }
+ }
  if(path[0]==='sets'&&path.length===1){
  const v=z.object({title:z.string().trim().min(1).max(200),cards:cardsSchema,sourceSetId:uuid.optional()}).parse(input);
  try{assertShareable(v.title,v.cards);}catch(e){return json({error:(e as Error).message},400);}

@@ -1,3 +1,4 @@
+import {quizletImportUpdate} from './owned-sets';
 import {after} from 'next/server';
 import {safelyProcessGameIndexing} from './game-indexing';
 import { createHash } from 'node:crypto';
@@ -10,6 +11,6 @@ export function fingerprint(cards:Card[]){return createHash('sha256').update(can
 export async function saveQuizletSet(result:QuizletImportResult,userId:string){
  assertShareable(result.title,result.cards);
  const {rows}=await db.query(`INSERT INTO shared_sets(public_id,quizlet_id,fingerprint,title,creator_name,creator_url,source_url,created_by,cards,term_count,import_version)
- VALUES($1,$1,$2,$3,$4,$5,$6,$7,$8,$9,2) ON CONFLICT(quizlet_id) DO UPDATE SET cards=EXCLUDED.cards,term_count=EXCLUDED.term_count,import_version=2 RETURNING *`,
+ VALUES($1,$1,$2,$3,$4,$5,$6,$7,$8,$9,2) ON CONFLICT(quizlet_id) DO UPDATE SET ${quizletImportUpdate} RETURNING *`,
  [result.setId,'quizlet:'+result.setId,result.title,result.creatorName||null,result.creatorUrl||null,result.url,userId,JSON.stringify(result.cards),result.cards.length]);after(()=>safelyProcessGameIndexing().then(()=>{}));return rows[0];
 }

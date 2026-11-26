@@ -80,6 +80,9 @@ Android 2.0.17 (29) and iOS/macOS 2.0.6 (33) advertise `NativeShare/1` and open 
 
 On 24 November 2026, the blue navigation header (`.community-nav`) and light-theme gameplay header (`[data-theme="light"] .GravitySiteHeader`) changed from **#4255B4 / rgb(66, 85, 180)** to **#4255FF / rgb(66, 85, 255)**, matching the Android `indigo` resource and Apple intro background. Admin → Users → **Header blue** now switches between **Startup blue (#4255FF)** and **Previous blue (#4255B4)** for everyone. The choice persists as `startup_header_blue` in `community_settings`, defaults to startup blue, and applies through `--gravity-header-blue` to those two selectors. It updates immediately for the administrator and when other visitors open or return to the page. No new app build is needed. The dark gameplay header and the remaining palette retain their previous colours.
 
+On 26 November 2026, **In-between blue** was added as a third admin choice. Its exact sRGB channel midpoint is **rgb(66, 85, 217.5)** (between blue channels 180 and 255; the nearest 8-bit hex is #4255DA). CSS retains the fractional channel rather than rounding it. The existing two colours and selected setting are preserved. The `midpoint_header_blue` boolean overrides the previous two-way setting when enabled; choosing either endpoint disables it in the same database statement. This is a website update and works in the installed apps without a new native build.
+
+
 ### Website app-install banner (25 November 2026)
 
 Apple's [Smart App Banner guidance](https://developer.apple.com/documentation/webkit/promoting-apps-with-smart-app-banners) recommends an unobtrusive, dismissible banner above the page. The website now supplies `apple-itunes-app` metadata for app ID `6831804079`; Safari on iPhone/iPad controls its native View/Open action and close button. Native QuizletGravity app user agents receive no install prompt.

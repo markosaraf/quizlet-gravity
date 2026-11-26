@@ -123,10 +123,12 @@ export async function POST(request:NextRequest,{params}:Context){
  if(path.join('/')==='settings'){
   try{
    const input=await request.json();
-   const fields={startupHeaderBlueEnabled:'startup_header_blue',challengeShareEnabled:'challenge_share',quizletSearchEnabled:'quizlet_search',gamePageTotalEnabled:'game_page_total',tutorialEnabled:'tutorial',specialLettersEnabled:'special_letters',specialCharactersEnabled:'special_characters'} as const;
+   const fields={midpointHeaderBlueEnabled:'midpoint_header_blue',startupHeaderBlueEnabled:'startup_header_blue',challengeShareEnabled:'challenge_share',quizletSearchEnabled:'quizlet_search',gamePageTotalEnabled:'game_page_total',tutorialEnabled:'tutorial',specialLettersEnabled:'special_letters',specialCharactersEnabled:'special_characters'} as const;
    if(!input||typeof input!=='object'||Array.isArray(input))return json({error:'Choose on or off.'},400);
    const entries=Object.entries(input);
    if(!entries.length||entries.some(([key,value])=>!Object.hasOwn(fields,key)||typeof value!=='boolean'))return json({error:'Choose on or off.'},400);
+   // An older open admin page choosing an endpoint colour also leaves midpoint mode.
+   if(Object.hasOwn(input,'startupHeaderBlueEnabled')&&!Object.hasOwn(input,'midpointHeaderBlueEnabled'))entries.push(['midpointHeaderBlueEnabled',false]);
    const keys=entries.map(([key])=>fields[key as keyof typeof fields]);
    await db.query("INSERT INTO community_settings(key,enabled) SELECT * FROM unnest($1::text[],$2::boolean[]) ON CONFLICT(key) DO UPDATE SET enabled=EXCLUDED.enabled,updated_at=now()",[keys,entries.map(([,value])=>value)]);
    return json(await communitySettings());

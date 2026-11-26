@@ -1,3 +1,12 @@
+/** Compare decoded route parameters and percent-encoded URL paths consistently. */
+export function matchesSharedSetPath(path:string,canonical:string) {
+ const segments=(value:string)=>value.split('/').map(segment=>{
+  try{return decodeURIComponent(segment);}catch{return segment;}
+ });
+ const actual=segments(path),expected=segments(canonical);
+ return actual.length===expected.length&&actual.every((segment,index)=>segment===expected[index]);
+}
+
 /** Quizlet-style URLs, on our own domain. Internal UUIDs stay private to API calls. */
 export function sharedSetPath(set:{public_id:string;title:string;source_url?:string|null}) {
  // Preserve the imported Quizlet slug and optional locale, without tracking parameters.

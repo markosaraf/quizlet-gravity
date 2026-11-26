@@ -2,7 +2,7 @@ import {cache} from 'react';
 import type {Metadata} from 'next';
 import {notFound,permanentRedirect} from 'next/navigation';
 import {db} from '@/lib/community/db';
-import {sharedSetPath} from '@/lib/community/set-links';
+import {sharedSetPath,matchesSharedSetPath} from '@/lib/community/set-links';
 import {gameUrl,gameDescription} from '@/lib/game-seo';
 import {SharedSet} from '@/components/community/SharedSet';
 
@@ -25,7 +25,7 @@ export async function generateMetadata({params}:Props):Promise<Metadata>{
 export default async function SetPage({params}:Props){
  const path='/'+(await params).setPath.join('/');
  const game=await loadGame(path);const canonical=sharedSetPath(game);
- if(decodeURI(canonical)!==path)permanentRedirect(canonical);
+ if(!matchesSharedSetPath(path,canonical))permanentRedirect(canonical);
  const structured={'@context':'https://schema.org','@type':'LearningResource',name:game.title,
   description:gameDescription(game),url:gameUrl(game),learningResourceType:'Flashcards and study game',isAccessibleForFree:true};
  return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structured).replace(/</g,'\\u003c')}}/><SharedSet key={game.id} id={game.id} initialSet={game}/></>;

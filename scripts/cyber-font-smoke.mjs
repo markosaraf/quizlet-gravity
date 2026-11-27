@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {chromium,expect} from '@playwright/test';
 const base=process.env.SMOKE_BASE||'http://localhost:4395';
 const browser=await chromium.launch();
@@ -20,6 +21,7 @@ try{
   }
   return route.fulfill({json:{users:[],sets:[],reports:[],notifications:[],unreadCount:0,ready:{},template:{}}});
  });
+ if(process.env.SMOKE_ACCESS_FILE)await page.goto(readFileSync(process.env.SMOKE_ACCESS_FILE,'utf8').trim());
  await page.goto(base);await page.locator('.community-username-button').click();
  const logo=page.getByRole('button',{name:'Cybertruck font',exact:true});await expect(logo).toBeVisible();
  assert.equal(await logo.locator('img').getAttribute('src'),'/assets/robotaxi/gold.svg');

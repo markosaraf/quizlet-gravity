@@ -11,7 +11,8 @@ export function CyberAppearanceProvider({children}:{children:ReactNode}){
  const [settings,setSettings]=useState(defaultCyberSettings);
  const [personal,setPersonal]=useState<{id:string;mode:CyberMode|null}|null>(null);
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
- const currentId=useRef(id);currentId.current=id;
+ const currentId=useRef(id);
+ useEffect(()=>{currentId.current=id;},[id]);
  useEffect(()=>{
   let active=true,revision=0;
   async function refresh(){const request=++revision;try{const r=await fetch('/api/community/config',{cache:'no-store'});if(!r.ok)return;const value=await r.json();if(active&&request===revision)setSettings({...defaultCyberSettings,...value});}catch{}}

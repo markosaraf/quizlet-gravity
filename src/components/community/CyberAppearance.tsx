@@ -45,7 +45,7 @@ export function RobotaxiFontButton(){
  const {mode,busy,error,choose}=context;
  function start(){cancel();held.current=false;if(busy)return;timer.current=setTimeout(()=>{held.current=true;void choose(mode==='all'?'off':'all');},2000);}
  return <><button type="button" className="robotaxi-font-button" aria-label="Cybertruck font" aria-pressed={mode!=='off'} disabled={busy}
-  title="Click to toggle Cybertruck font while keeping Quizlet text. Hold for 2 seconds to toggle Cybertruck for all text."
+  title="Click to toggle Cybertruck font while keeping the header name and falling asteroid text. Hold for 2 seconds to toggle Cybertruck for all text."
   onPointerDown={e=>{if(e.button===0)start();}} onPointerUp={cancel} onPointerLeave={cancel} onPointerCancel={cancel} onBlur={cancel}
   onContextMenu={e=>e.preventDefault()} onKeyDown={e=>{if(e.key===' '&&!e.repeat)start();}} onKeyUp={cancel}
   onClick={()=>{cancel();if(held.current){held.current=false;return;}void choose(mode==='off'?'interface':'off');}}>
@@ -53,7 +53,7 @@ export function RobotaxiFontButton(){
  </button>{error&&<span role="alert">{error}</span>}</>;
 }
 const options=[
- {key:'cyberNonQuizletEnabled',label:'Cybertruck for non-Quizlet text',description:'Use Blender-TSL for everyone, preserving the original Quizlet font.'},
+ {key:'cyberNonQuizletEnabled',label:'Cybertruck except header and asteroids',description:'Use Blender-TSL for everyone. Keep the original Quizlet font only for the header name and falling asteroid text.'},
  {key:'cyberLogoEnabled',label:'Show Robotaxi font switch to users',description:'Show the gold logo beside Your account. Click changes only that account. Hold for 2 seconds includes all text.'},
  {key:'cyberAllEnabled',label:'Cybertruck for all text',description:'Use Blender-TSL everywhere for everyone, including Quizlet text.'},
 ] as const;

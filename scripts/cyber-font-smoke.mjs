@@ -28,10 +28,15 @@ try{
  await page.evaluate(()=>{const p=document.createElement('p');p.id='plain-font-probe';p.textContent='Ordinary text';document.body.appendChild(p);});
  const mode=async value=>expect(page.locator('html')).toHaveAttribute('data-cyber-font',value);
  await logo.click();await mode('interface');
- assert.match(await page.locator('.community-panel h2').evaluate(e=>getComputedStyle(e).fontFamily),/^hurmegeosans/);
+ assert.match(await page.locator('.community-panel h2').evaluate(e=>getComputedStyle(e).fontFamily),/Blender TSL/);
+ assert.match(await page.locator('.community-brand').evaluate(e=>getComputedStyle(e).fontFamily),/^hurmegeosans/);
+ await page.evaluate(()=>{const a=document.createElement('div');a.className='GravityTerm-text';a.textContent='Asteroid prompt';a.id='asteroid-font-probe';document.body.appendChild(a);});
+ assert.match(await page.locator('#asteroid-font-probe').evaluate(e=>getComputedStyle(e).fontFamily),/^hurmegeosans/);
  assert.match(await page.locator('#plain-font-probe').evaluate(e=>getComputedStyle(e).fontFamily),/Blender TSL/);
  await logo.click();await mode('off');
  const box=await logo.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.waitForTimeout(2100);await page.mouse.up();await mode('all');
+ assert.match(await page.locator('#asteroid-font-probe').evaluate(e=>getComputedStyle(e).fontFamily),/Blender TSL/);
+ assert.match(await page.locator('.community-brand').evaluate(e=>getComputedStyle(e).fontFamily),/Blender TSL/);
  assert.equal(writes,3,'Long press sends exactly one change, without a trailing click');
  assert.match(await page.locator('.community-panel h2').evaluate(e=>getComputedStyle(e).fontFamily),/Blender TSL/);
  await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.fonts.check('700 20px "Blender TSL"')));
@@ -42,12 +47,12 @@ try{
  settings={...settings,cyberLogoEnabled:false,cyberNonQuizletEnabled:true};await page.reload();await mode('interface');await page.locator('.community-username-button').click();await expect(logo).toHaveCount(0);
  settings={...settings,cyberAllEnabled:true};await page.reload();await mode('all');
  await page.goto(base+'/admin/users');
- await page.getByRole('switch',{name:'Cybertruck for non-Quizlet text',exact:true}).click();
+ await page.getByRole('switch',{name:'Cybertruck except header and asteroids',exact:true}).click();
  // It was already on in this deliberately inconsistent mock; toggling it off leaves all-text mode.
- await page.getByRole('switch',{name:'Cybertruck for non-Quizlet text',exact:true}).click();
+ await page.getByRole('switch',{name:'Cybertruck except header and asteroids',exact:true}).click();
  assert.equal(settings.cyberAllEnabled,false);await mode('interface');
  await page.getByRole('switch',{name:'Show Robotaxi font switch to users'}).click();assert.equal(settings.cyberLogoEnabled,true);
  await page.getByRole('switch',{name:'Cybertruck for all text',exact:true}).click();assert.equal(settings.cyberNonQuizletEnabled,false);await mode('all');
  await page.screenshot({path:'/tmp/quizlet-cyber-admin.png',fullPage:true});
- console.log('PASS: original Quizlet preserved, ordinary text changes, all mode, one change per 2s hold, cancelled hold, saved preference reload, account isolation, hidden logo, three admin controls.');
+ console.log('PASS: header and asteroid Quizlet preserved, all other text changes, all mode, one change per 2s hold, cancelled hold, saved preference reload, account isolation, hidden logo, three admin controls.');
 }finally{await browser.close();}

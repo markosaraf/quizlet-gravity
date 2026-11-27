@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import {CyberAppearanceProvider} from '@/components/community/CyberAppearance';
 import {HeaderAppearance} from '@/components/community/HeaderAppearance';
 import {AppInstallBanner} from '@/components/community/AppInstallBanner';
 import {NotificationProvider} from '@/components/community/NotificationInbox';
@@ -376,7 +377,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`antialiased ${poppins.variable}`}><NotificationProvider><HeaderAppearance/><AppInstallBanner/><CommunityNav />
+      <body className={`antialiased ${poppins.variable}`}><CyberAppearanceProvider><NotificationProvider><HeaderAppearance/><AppInstallBanner/><CommunityNav />
         {/* `${poppins.variable}` defines --font-poppins (used by the
             hurmegeosans fallback stack in gravity.css and by
             --font-sans in globals.css). */}
@@ -386,7 +387,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
-        </NotificationProvider>
+        </NotificationProvider></CyberAppearanceProvider>
         <Toaster />
         <Analytics />
       </body>

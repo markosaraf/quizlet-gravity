@@ -54,7 +54,7 @@ export function RobotaxiFontButton(){
 }
 const options=[
  {key:'cyberNonQuizletEnabled',label:'Cybertruck except header and asteroids',description:'Use Blender-TSL for everyone. Keep the original Quizlet font only for the header name and falling asteroid text.'},
- {key:'cyberLogoEnabled',label:'Show Robotaxi font switch to users',description:'Show the gold logo beside Your account. Click changes only that account. Hold for 2 seconds includes all text.'},
+ {key:'cyberLogoEnabled',label:'Show Robotaxi font switch to users',description:'Show the gold logo at the bottom of Your account. Click changes only that account. Hold for 2 seconds includes all text.'},
  {key:'cyberAllEnabled',label:'Cybertruck for all text',description:'Use Blender-TSL everywhere for everyone, including Quizlet text.'},
 ] as const;
 export function CyberFontSettings(){

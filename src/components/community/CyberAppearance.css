@@ -6,7 +6,7 @@
 @font-face{font-family:'Blender TSL';src:url('/fonts/blender-tsl/Blender-TSL-BoldItalic.otf') format('opentype');font-weight:600 900;font-style:italic;font-display:swap}
 html[data-cyber-font='interface'],html[data-cyber-font='all']{--cyber-interface-font:'Blender TSL'}
 html:is([data-cyber-font='interface'],[data-cyber-font='all']) body,html:is([data-cyber-font='interface'],[data-cyber-font='all']) body *{font-family:'Blender TSL',Arial,sans-serif!important}
-.community-panel h2 .robotaxi-font-button{display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;margin-inline-start:12px;padding:6px;min-height:44px;border:0;background:transparent;box-shadow:none;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.community-panel .robotaxi-font-button{display:flex;width:fit-content;align-items:center;justify-content:center;margin:12px auto 0;padding:6px;min-height:44px;border:0;background:transparent;box-shadow:none;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .robotaxi-font-button img{width:88px;height:36px;object-fit:contain;pointer-events:none}
 .robotaxi-font-button:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 
